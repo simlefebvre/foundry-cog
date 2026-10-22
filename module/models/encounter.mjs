@@ -236,8 +236,6 @@ export default class EncounterData extends ActorData {
         Utils.getTooltip("Bonus", bonuses),
       )
     }
-
-    this.magic = this.abilities.vol.value + (this.attributes.nc === 0.5 ? 0 : this.attributes.nc)
   }
 
   _prepareHPMax() {

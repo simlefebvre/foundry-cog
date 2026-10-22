@@ -899,7 +899,7 @@
     "abilities": {
       "long": {
         "all": "Toutes les caractéristiques",
-        "agi": "Agilité",
+        "dex": "Dexerité",
         "con": "Constitution",
         "for": "Force",
         "per": "Perception",
@@ -908,7 +908,7 @@
         "vol": "Volonté"
       },
       "short": {
-        "agi": "AGI",
+        "dex": "DEX",
         "con": "CON",
         "for": "FOR",
         "per": "PER",

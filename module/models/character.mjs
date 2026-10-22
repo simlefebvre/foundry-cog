@@ -366,9 +366,9 @@ export default class CharacterData extends ActorData {
         const defense = armor.system.defense
         maxAgility = 8 - defense
       }
-      if (this.abilities.agi.value > maxAgility) {
-        this.abilities.agi.value = Math.min(this.abilities.agi.value, maxAgility)
-        this.abilities.agi.tooltipValue = this.abilities.agi.tooltipValue.concat(Utils.getTooltip("Max armure", maxAgility))
+      if (this.abilities.dex.value > maxAgility) {
+        this.abilities.dex.value = Math.min(this.abilities.dex.value, maxAgility)
+        this.abilities.dex.tooltipValue = this.abilities.dex.tooltipValue.concat(Utils.getTooltip("Max armure", maxAgility))
       }
     }
   }

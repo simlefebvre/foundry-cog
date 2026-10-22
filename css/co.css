@@ -726,7 +726,7 @@ a.roll-check-enricher:hover {
 .co.application.dialog.edit-abilities-dialog .window-content .abilities-table {
   display: grid;
   gap: 0;
-  grid-template-columns: 200px repeat(7, 1fr);
+  grid-template-columns: 200px repeat(6, 1fr);
   grid-template-rows: 40px 23px repeat(4, 40px) 50px;
   grid-auto-flow: column;
   align-items: stretch;
@@ -3161,7 +3161,7 @@ a.roll-check-enricher:hover {
   border: 2px solid var(--co-sheet-accent-alt);
   display: grid;
   font-size: 20px;
-  grid-template-columns: repeat(7, minmax(80px, 1fr)) auto;
+  grid-template-columns: repeat(6, minmax(80px, 1fr)) auto;
 }
 .co.application.sheet.actor .window-content .abilities .ability {
   text-align: center;
@@ -3586,7 +3586,7 @@ a.roll-check-enricher:hover {
 }
 .co.application.sheet.actor.character-mini .window-content .abilities {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   font-size: 17px;
 }
 .co.application.sheet.actor.character-mini .window-content .abilities .ability-id {

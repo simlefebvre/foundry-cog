@@ -76,13 +76,12 @@ export default class COActor extends Actor {
       return rollData
     }
 
-    rollData.agi = this.system.abilities.agi.value
+    rollData.agi = this.system.abilities.dex.value
     rollData.for = this.system.abilities.for.value
     rollData.con = this.system.abilities.con.value
     rollData.per = this.system.abilities.per.value
     rollData.cha = this.system.abilities.cha.value
     rollData.int = this.system.abilities.int.value
-    rollData.vol = this.system.abilities.vol.value
     rollData.def = this.system.combat.def.value
     rollData.ini = this.system.combat.init.value
 

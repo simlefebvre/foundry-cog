@@ -93,11 +93,6 @@ export const MODIFIERS_TARGET = {
     label: "CO.abilities.long.int",
     subtype: "ability",
   },
-  vol: {
-    id: "vol",
-    label: "CO.abilities.long.vol",
-    subtype: "ability",
-  },
   melee: {
     id: "melee",
     label: "CO.combat.long.melee",

@@ -1,7 +1,7 @@
 export const ABILITIES = {
-  agi: {
-    id: "agi",
-    label: "CO.abilities.long.agi",
+  dex: {
+    id: "dex",
+    label: "CO.abilities.long.dex",
   },
   con: {
     id: "con",
@@ -22,10 +22,6 @@ export const ABILITIES = {
   int: {
     id: "int",
     label: "CO.abilities.long.int",
-  },
-  vol: {
-    id: "vol",
-    label: "CO.abilities.long.vol",
   },
 }
 
@@ -56,7 +52,7 @@ export const COMBAT = {
   def: {
     id: "def",
     label: "CO.combat.long.def",
-    ability: "agi",
+    ability: "dex",
   },
   melee: {
     id: "melee",
@@ -66,12 +62,12 @@ export const COMBAT = {
   ranged: {
     id: "ranged",
     label: "CO.combat.long.ranged",
-    ability: "agi",
+    ability: "dex",
   },
   magic: {
     id: "magic",
     label: "CO.combat.long.magic",
-    ability: "vol",
+    ability: "int",
   },
   crit: {
     id: "crit",
@@ -94,12 +90,12 @@ export const ATTACK_TYPE = {
   ranged: {
     id: "ranged",
     label: "CO.combat.long.ranged",
-    ability: "agi",
+    ability: "dex",
   },
   magic: {
     id: "magic",
     label: "CO.combat.long.magic",
-    ability: "vol",
+    ability: "int",
   },
 }
 

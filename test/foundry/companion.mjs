@@ -27,7 +27,7 @@ export async function checkCompanions() {
       type: "encounter",
       system: {
         companion: { isCompanion: true, master: master.uuid },
-        abilities: { agi: { base: 3, formula: "@master.atm" }, vol: { base: 2 } },
+        abilities: { dex: { base: 3, formula: "@master.atm" } },
         attributes: { nc: 3, hp: { base: 12, value: 10, formula: "2 * @master.atm" } },
         combat: {
           melee: { base: 1, formula: "@master.atm", bonuses: { sheet: 2 } },
@@ -36,8 +36,8 @@ export async function checkCompanions() {
         },
       },
     })
-    equal(companion.system.abilities.agi.base, 3, "la base saisie reste disponible")
-    equal(companion.system.abilities.agi.value, masterMagic, "la caractéristique utilise le maître")
+    equal(companion.system.abilities.dex.base, 3, "la base saisie reste disponible")
+    equal(companion.system.abilities.dex.value, masterMagic, "la caractéristique utilise le maître")
     equal(companion.system.attributes.hp.max, 2 * masterMagic, "les PV utilisent le maître")
     equal(companion.getRollData().atm, 5, "@atm reste VOL + NC")
     equal(companion.system.combat.magic.value, masterMagic, "l'ajustement magique du compagnon reste distinct")
@@ -108,12 +108,12 @@ export async function checkCompanions() {
     equal(rendered?.textContent.includes(`+${5 + masterMagic}`), true, "le bouton rendu affiche la valeur effective")
     await companion.sheet.close()
 
-    await companion.update({ "system.abilities.agi.formula": "0" })
-    equal(companion.system.abilities.agi.value, 0, "un zéro saisi est conservé")
-    await companion.update({ "system.abilities.agi.formula": "" })
-    equal(companion.system.abilities.agi.value, 3, "vider la formule restaure la base")
-    await companion.update({ "system.abilities.agi.formula": "@master.inconnu" })
-    equal(companion.system.abilities.agi.value, 3, "une formule invalide conserve la base")
+    await companion.update({ "system.abilities.dex.formula": "0" })
+    equal(companion.system.abilities.dex.value, 0, "un zéro saisi est conservé")
+    await companion.update({ "system.abilities.dex.formula": "" })
+    equal(companion.system.abilities.dex.value, 3, "vider la formule restaure la base")
+    await companion.update({ "system.abilities.dex.formula": "@master.inconnu" })
+    equal(companion.system.abilities.dex.value, 3, "une formule invalide conserve la base")
     equal(companion.system.companionFormulaErrors.length, 1, "une formule invalide est signalée")
     await companion.system.toggleCompanion(false)
     equal(companion.system.combat.melee.value, 3, "désactiver restaure la base et ses bonus")

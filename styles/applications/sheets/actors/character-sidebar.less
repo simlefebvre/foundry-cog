@@ -1,0 +1,86 @@
+.sheet-sidebar {
+  background-color: var(--co-sheet-accent);
+  .scrollable {
+    .sidebar-section {
+      &.melee-section,
+      &.ranged-section,
+      &.magic-section {
+        background-color: var(--co-stat-attack);
+
+        .field,
+        .labelled-field {
+          color: var(--co-stat-attack);
+        }
+      }
+
+      &:nth-child(8) {
+        .labelled-field i {
+          color: var(--co-stat-damages);
+        }
+      }
+
+      &.resource-section {
+        background-color: var(--co-stat-resource);
+        margin-top: 8px;
+
+        .field,
+        .labelled-field,
+        .labelled-field input {
+          color: var(--co-stat-resource);
+        }
+        .current {
+          width: 25px;
+        }
+        .fa-clover {
+          cursor: pointer;
+        }
+        .fa-clover:hover {
+          text-shadow: 0px 0px 4px darkred;
+        }
+      }
+    }
+  }
+  span.max,
+  span.slash {
+    color: var(--co-sheet-accent-alt);
+  }
+  .state-name {
+    list-style: "\1F782";
+    margin-left: 5px;
+    color: var(--co-surface);
+    img {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+  }
+  .status-effect{
+    margin-left: 5px;
+    display: flex;
+    img {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  }
+
+  input.vision-slider:not(:checked)::before {
+    color: var(--co-surface);
+  }
+
+  .companion-list {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 5px;
+    margin-left: 5px;
+
+    .companion-icon {
+      border-radius: 50%;
+      cursor: pointer;
+      object-fit: cover;
+    }
+  }
+}

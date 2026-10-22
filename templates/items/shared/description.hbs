@@ -1,0 +1,20 @@
+{{!log "Chroniques Oubliées | description" this}}
+<section class="tab standard-form description{{#if tabs.description.active}} active{{/if}}" data-group="primary" data-tab="description">
+        {{formGroup systemFields.origin value=system.origin disabled=locked}}
+        <fieldset class="description">
+            <legend>{{localize "CO.ui.description"}}</legend>
+            {{ formInput systemFields.description enriched=enrichedDescription value=system.description name="system.description" toggled=true }}
+        </fieldset>
+        {{#if (eq itemType "capacity")}}
+            <fieldset class="description">
+                <legend>{{localize "CO.ui.inGame"}}</legend>
+                {{ formInput systemFields.inGame enriched=enrichedInGame value=system.inGame name="system.inGame" toggled=true }}
+            </fieldset>
+        {{/if}}
+        {{#if isGM}}
+            <fieldset class="item-gm-notes">
+                <legend>{{localize "CO.ui.gmNotes"}}</legend>
+                {{formInput systemFields.gmNotes enriched=enrichedGmNotes value=system.gmNotes name="system.gmNotes" toggled=true}}
+            </fieldset>
+        {{/if}}
+</section>

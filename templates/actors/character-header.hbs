@@ -1,0 +1,75 @@
+{{!log "Chroniques Oubliées | Character header" this}}
+<header class="sheet-header">
+  <div class="image-container">
+    <img class="actor-img {{#if unlocked}}resetImage{{/if}}" src="{{actor.img}}" {{#if unlocked}}data-action="editImage" data-edit="img"{{/if}} data-tooltip="{{actor.name}}" />
+    <a class="hover-icon" data-action="shareImage" data-tooltip="{{localize 'CO.ui.shareImage'}}"><i class="fas fa-image fa-fw"></i></a>
+  </div>
+  {{#if unlocked}}
+    <input class="name" name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'CO.label.long.name'}}" spellcheck="false" />
+  {{else}}
+    <span class="name">{{actor.name}}</span>
+  {{/if}}
+  <div class="level">
+    <label class="level-label">{{localize "CO.label.short.level"}}</label>
+    {{#if unlocked}}
+      <input class="adjustable" type="text" name="system.attributes.level" value="{{attributes.level}}" data-dtype="Number" />
+    {{else}}
+      {{#if viewLimited}}
+        <span>??</span>
+      {{else}}
+        <span>{{attributes.level}}</span>
+      {{/if}}
+    {{/if}}
+  </div>
+  <div class="traits">
+    <div class="species">
+      {{#if (gt features.length 0)}}
+        <a class="item-img item" data-item-uuid="{{features.[0].uuid}}" data-action="editItem" style="background-image: url('{{features.[0].img}}')"></a>
+        <span>{{features.[0].name}}</span>
+      {{/if}}
+    </div>
+    {{#unless viewLimited}}
+    <div class="profiles">
+      {{#if (gt profiles.length 0)}}
+        <a class="item-img item" data-item-uuid="{{profiles.[0].uuid}}" data-action="editItem" style="background-image: url('{{profiles.[0].img}}')"></a>
+        <span>{{profiles.[0].name}}</span>
+      {{/if}}
+      {{#if (gt profiles.length 1)}}
+        <span class="slash">/</span>
+        <a class="item-img item" data-item-uuid="{{profiles.[1].uuid}}" data-action="editItem" style="background-image: url('{{profiles.[1].img}}')"></a>
+        <span>{{profiles.[1].name}}</span>
+      {{/if}}
+    </div>
+    {{/unless}}
+  </div>
+  <ol class="abilities">
+    {{#each abilities as |ability id|}}
+      <li class="ability" data-ability="{{id}}">
+        <div class="ability-id draggable" data-roll-target="{{id}}" data-tooltip="{{localize (concat 'CO.abilities.long.' id)}}" data-tooltip-direction="UP">
+          {{localize (concat "CO.abilities.short." id)}}
+          {{#unless ../viewLimited}} 
+            {{#if ability.superior}}<i class="fas fa-asterisk"></i>{{/if}}
+          {{/unless}}
+        </div>        
+        {{#if ../viewLimited}}
+          <div class="ability-mod">??</div>
+        {{else}}
+          {{#if ../editable}}
+            <a class="ability-mod" data-action="roll" data-roll-type="skillcheck" data-roll-target="{{id}}" data-tooltip="{{ability.tooltipValue}}">
+                {{numberFormat ability.value decimals=0 sign=true}}
+              </a>            
+          {{else}}
+             <div class="ability-mod">{{numberFormat ability.value decimals=0 sign=true}}</div>
+          {{/if}}
+        {{/if}}        
+      </li>
+    {{/each}}
+    <li class="abilities-controls controls">
+      {{#if unlocked}}
+        <a class="abilities-edit" data-action="editAbilities" data-tooltip="{{localize 'CO.ui.editStats'}}">
+          <i class="fas fa-fw fa-edit"></i>
+        </a>
+      {{/if}}
+    </li>
+  </ol>
+</header>

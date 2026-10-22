@@ -1,0 +1,134 @@
+.sheet-header {
+  .theme-dark & {
+    background: linear-gradient(5deg, var(--co-item-dark) 60%, #000000);
+  }
+  .theme-light & {
+    background: linear-gradient(5deg, var(--co-item-light) 60%, var(--co-item-dark));
+  }
+}
+.window-content {
+  gap: 0;
+  .theme-dark & {
+    background-color: #00000094;
+  }
+  .theme-light & {
+    background-color: #584a756b;
+  }
+
+  fieldset {
+    margin-bottom: 15px;
+    gap: 4px;
+  }
+  .form-group {
+    gap: 10px;
+    margin-top: 3px;
+  }
+  select {
+    text-align: left;
+  }
+  legend {
+    margin-bottom: 5px;
+    text-align: center;
+    .theme-dark & {
+      color: var(--co-item-light);
+    }
+    .theme-light & {
+      color: var(--co-item-dark);
+    }
+  }
+
+  .half-panel {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 15px;
+  }
+  .form-header {
+    padding: 4px 10px 0px 15px;
+    border-radius: 12px 12px 0px 0px;
+    .theme-dark & {
+      background-color: var(--co-item-dark);
+      color: var(--co-text-light);
+    }
+    .theme-light & {
+      background-color: var(--co-item-light);
+      color: var(--co-text-dark);
+    }
+  }
+  .panel-right {
+    .path-list {
+      margin-right: 7px;
+    }
+  }
+  .panel-equipment {
+    .equipment-list {
+      margin-right: 7px;
+    }
+  }
+  .proficiencies-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: start;
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: -5px;
+
+      .grid {
+        display: flex;
+        flex-direction: column;
+        height: 200px;
+
+        label {
+          margin-bottom: -8px;
+          input {
+            background-color: transparent;
+            height: auto;
+          }
+        }
+      }
+    }
+  }
+}
+
+.modifiers-container {
+  .modifier {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr 0.6fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0px 8px;
+    margin-bottom: 4px;
+    padding: 0 8px;
+
+    .theme-dark & {
+      border: 1px solid var(--co-item-dark);
+    }
+    .theme-light & {
+      border: 1px solid var(--co-item-light);
+    }
+
+    .form-group:nth-last-child(2),
+    .form-group:nth-last-child(3) {
+      grid-column: auto / span 2;
+
+      label {
+        flex: 2;
+      }
+
+      input[type="text"] {
+        flex: 11;
+      }
+    }
+    input,
+    select {
+      height: 25px;
+    }
+
+    button,
+    .emptyButton {
+      grid-column: 5;
+      grid-row: 1 / 3;
+    }
+  }
+}

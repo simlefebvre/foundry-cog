@@ -1,0 +1,34 @@
+// Les éditeurs inline (biographie, propriétés) restent dans le flux
+// plutôt qu'en position absolue (comportement V14 pour les journaux)
+prose-mirror,
+.prosemirror {
+  flex: 1;
+  max-width: 100%;
+  min-height: 50px;
+  max-height: 100%;
+  position: relative;
+
+  >button {
+    display: none;
+  }
+
+  .editor-menu {
+    padding: 4px;
+  }
+
+  &:hover:not([open]) {
+    >button {
+      display: flex;
+    }
+  }
+}
+
+prose-mirror .editor-content,
+.prosemirror .editor-content {
+  position: relative;
+  white-space: wrap;
+}
+prose-mirror .editor-container,
+.prosemirror .editor-container {
+  overflow: hidden auto;
+}

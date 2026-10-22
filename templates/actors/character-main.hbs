@@ -1,0 +1,54 @@
+{{!-- Character Main Tab Template --}}
+{{!log "Chroniques Oubliées | Character main" this}}
+<section class="tab standard-form main{{#if tabs.main.active}} active{{/if}}" data-group="primary" data-tab="main">
+    <div class="section-container actions">
+        <div class="section-header">
+            <h4>{{localize "CO.ui.actions"}}</h4>
+            <div class="actions-controls controls">
+                <a class="item-control"> 
+                    <button type="button" class="btn-mini-sheet" data-action="openMiniSheet" data-tooltip="Vue actions">
+                        <i class="fa-solid fa-star"></i>
+                    </button>
+                </a>
+                <a class="item-control">
+                    <button type="button" class="btn-sort-items-default {{#if isActionsSortedByDefault}}active{{/if}}" data-action="sortActionsByDefault" data-tooltip="{{localize 'CO.ui.sortByDefault'}}" data-tooltip-direction="UP">
+                        <i class="fa-solid fa-arrow-down-a-z"></i>
+                    </button>
+                </a>
+                <a class="item-control">
+                    <button type="button" class="btn-sort-items-rank {{#if isActionsSortedByRank}}active{{/if}}" data-action="sortActionsByRank" data-tooltip="{{localize 'CO.ui.sortByRank'}}" data-tooltip-direction="UP">
+                        <i class="fa-solid fa-ranking-star"></i>
+                    </button>
+                </a>
+                <a class="item-control">
+                    <button type="button" class="btn-sort-items-type {{#if isActionsSortedByType}}active{{/if}}" data-action="sortActionsByType" data-tooltip="{{localize 'CO.ui.sortByType'}}" data-tooltip-direction="UP">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                </a>
+                <a class="item-control">
+                    <button type="button" class="btn-sort-items-action-type {{#if isActionsSortedByActionType}}active{{/if}}" data-action="sortActionsByActionType" data-tooltip="{{localize 'CO.ui.sortByActionType'}}" data-tooltip-direction="UP">
+                        <i class="fa-solid fa-shapes"></i>
+                    </button>
+                </a>
+                {{!-- Actions de repos : apportées par un module de contenu, aucun bouton si le registre est vide --}}
+                {{#each restActions as |rest|}}
+                    <a class="item-control">
+                        <i class="{{rest.icon}}" data-action="useRest" data-rest="{{rest.id}}" data-tooltip="{{localize rest.label}}" data-tooltip-direction="UP"></i>
+                    </a>
+                {{/each}}
+                {{!-- Postures défensives : apportées par un module de contenu, aucun bouton si le registre est vide --}}
+                {{#each defenseStances as |stance|}}
+                    <a class="item-control"
+                        data-tooltip-direction="UP"
+                        data-tooltip="{{#if stance.active}}{{localize stance.deactivateLabel}}{{else}}{{localize stance.activateLabel}}{{/if}}"
+                        data-action="{{#if stance.active}}deactivateDef{{else}}activateDef{{/if}}"
+                        data-effect="{{stance.id}}">
+                            <i class="{{stance.icon}} {{#if stance.active}}enabled{{else}}disabled{{/if}} toggle-effect"></i>
+                    </a>
+                {{/each}}
+            </div>
+        </div>
+        <!-- ACTIONS -->
+        {{> "systems/co2/templates/actors/shared/actions.hbs" this}}
+    </div>
+</section>

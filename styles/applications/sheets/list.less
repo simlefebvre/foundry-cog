@@ -1,0 +1,27 @@
+.list-3col,
+.list-4col {
+  display: grid;
+  gap: 2px 0;
+  align-items: center;
+}
+
+.list-3col {
+  grid-template-columns: 42px 1fr 28px;
+
+  >:nth-child(3n + 1) {
+    margin-right: 8px;
+  }
+}
+
+.list-4col {
+  grid-template-columns: 32px 42px 1fr 28px;
+
+  >:nth-child(4n + 1):not(:first-child) {
+    font-size: 150%;
+    font-weight: bold;
+  }
+
+  >:nth-child(4n + 2) {
+    margin-right: 8px;
+  }
+}

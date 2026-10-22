@@ -1,0 +1,647 @@
+import { SYSTEM } from "../../config/system.mjs"
+import Utils from "../../helpers/utils.mjs"
+import COActor from "../../documents/actor.mjs"
+import CustomEffectData from "./custom-effect.mjs"
+import { CORoll } from "../../documents/roll.mjs"
+import CoChat from "../../chat.mjs"
+
+/**
+ * Resolver
+ *
+ * @class
+ * @param {string} type Le type d'action.
+ * @param {number} skill Le niveau de skill requis pour l'action ? ou la formule de skill a utiliser (attaque)
+ *  skill.difficulty skill.formula (array)
+ * @param {number} dmg La valeur de dommages ou de soin de l'action.
+ * @param {string} target Le type de cible de l'action : self, character, encounter
+ */
+export class Resolver extends foundry.abstract.DataModel {
+  static defineSchema() {
+    const fields = foundry.data.fields
+    return {
+      type: new fields.StringField({ required: true, initial: "auto" }),
+      bonusDiceAdd: new fields.BooleanField({ initial: false }),
+      malusDiceAdd: new fields.BooleanField({ initial: false }),
+      skill: new fields.ObjectField(),
+      dmg: new fields.ObjectField(),
+      target: new fields.SchemaField({
+        type: new fields.StringField({ required: true, choices: SYSTEM.RESOLVER_TARGET, initial: SYSTEM.RESOLVER_TARGET.none.id }),
+        number: new fields.StringField({ required: true, nullable: false, initial: "0" }),
+        scope: new fields.StringField({ required: true, choices: SYSTEM.RESOLVER_SCOPE, initial: SYSTEM.RESOLVER_SCOPE.all.id }),
+      }),
+      additionalEffect: new fields.SchemaField({
+        active: new fields.BooleanField({ initial: false }),
+        applyOn: new fields.StringField({ required: true, choices: SYSTEM.RESOLVER_RESULT, initial: SYSTEM.RESOLVER_RESULT.success.id }),
+        successThreshold: new fields.NumberField({ integer: true, positive: true }),
+        statuses: new fields.SetField(new fields.StringField({ required: true, blank: true, choices: SYSTEM.RESOLVER_ADDITIONAL_EFFECT_STATUS })),
+        duration: new fields.StringField({ required: true, nullable: false, initial: "0" }),
+        unit: new fields.StringField({ required: true, choices: SYSTEM.COMBAT_UNITE, initial: SYSTEM.COMBAT_UNITE.round.id }),
+        formula: new fields.StringField({ required: false }),
+        formulaType: new fields.StringField({ required: false, choices: SYSTEM.RESOLVER_FORMULA_TYPE }),
+        elementType: new fields.StringField({ required: false }),
+      }),
+      // Ajout de la possibilité de faire un jet de sauvegarde pour la cible et applique l'effet en cas d'échec ou de succès selon le "applyOn" (ajout de saveFailure et saveSuccess)
+      saveAbility: new fields.StringField({ required: false, choices: SYSTEM.ABILITIES, initial: undefined }),
+      saveDifficulty: new fields.StringField({ required: false, nullable: false, initial: undefined }), // Peut être une formule
+      // Ajout des seuils de succès automatiques
+      halfDmgOnSave: new fields.BooleanField({ initial: true }),
+      hasAttackSuccessThreshold: new fields.BooleanField({ initial: false }), // Si true alors on a un seuil de succès auto
+      attackSuccessThreshold: new fields.NumberField({ integer: true, positive: true }), // Le seuil minimum pour faire un succes auto (ex : 15 pour 15-20)
+    }
+  }
+
+  get resolvers() {
+    return {
+      attack: function () {},
+      heal: function () {},
+      auto: function () {},
+      consume: function () {},
+      buffDebuff: function () {},
+      save: function () {},
+    }
+  }
+
+  async resolve(actor, item, action, type) {
+    switch (this.type) {
+      case SYSTEM.RESOLVER_TYPE.attack.id:
+        return await this.attack(actor, item, action, type)
+      case SYSTEM.RESOLVER_TYPE.auto.id:
+        return await this.auto(actor, item, action)
+      case SYSTEM.RESOLVER_TYPE.heal.id:
+        return await this.heal(actor, item, action)
+      case SYSTEM.RESOLVER_TYPE.consumable.id:
+        return await this.consume(actor, item, action)
+      case SYSTEM.RESOLVER_TYPE.buffDebuff.id:
+        return await this.buffDebuff(actor, item, action)
+      case SYSTEM.RESOLVER_TYPE.save.id:
+        return await this.save(actor, item, action)
+      default:
+        return false
+    }
+  }
+
+  hasOptionalTargets() {
+    return this.target.type === SYSTEM.RESOLVER_TARGET.none.id || (this.target.type === SYSTEM.RESOLVER_TARGET.single.id && (!this.target.number || this.target.number === "0"))
+  }
+
+  getOptionalTargetCount() {
+    return canvas.tokens?.placeables?.length ?? 999
+  }
+
+  getEvaluatedTargetNumber(actor, item) {
+    const formula = this.target.number
+    if (!formula || formula === "0") return 0
+    try {
+      const result = Utils.evaluateCoModifier(actor, formula, item?.uuid)
+      return Math.max(0, Math.floor(result))
+    } catch (e) {
+      console.warn(`CO2 | Unable to evaluate target number formula "${formula}":`, e)
+      return 0
+    }
+  }
+
+  getResolverTargets(actor, actionName, { allowTargetDependentDifficulty = false, difficultyFormula = "", item = null } = {}) {
+    const hasOptionalTargets = this.hasOptionalTargets()
+    const hasTargetDependentDifficulty =
+      allowTargetDependentDifficulty && typeof difficultyFormula === "string" && (difficultyFormula.includes("@cible") || difficultyFormula.includes("@oppose"))
+
+    if (hasOptionalTargets && hasTargetDependentDifficulty) {
+      return actor.acquireTargets(SYSTEM.RESOLVER_TARGET.multiple.id, SYSTEM.RESOLVER_SCOPE.all.id, this.getOptionalTargetCount(), actionName)
+    }
+
+    const evaluatedNumber = this.getEvaluatedTargetNumber(actor, item)
+    return actor.acquireTargets(this.target.type, this.target.scope, evaluatedNumber, actionName)
+  }
+
+  shouldBlockMissingTargets(targets) {
+    if (targets.length > 0) return false
+    if (!canvas.ready) return false
+    if (!this.hasOptionalTargets() && (this.target.type === SYSTEM.RESOLVER_TARGET.single.id || this.target.type === SYSTEM.RESOLVER_TARGET.multiple.id)) {
+      if (game.user.targets.size === 0) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNoTargetOrTooManyTargets"))
+      } else {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNoValidTarget"))
+      }
+      return true
+    }
+    return false
+  }
+
+  /**
+   * Resolver pour les actions de type Attaque
+   * @param {COActor} actor : l'acteur pour lequel s'applique l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action
+   * @param {("attack"|"damage")} type : type de resolver
+   */
+  async attack(actor, item, action, type) {
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver attack`), actor, item, action, type)
+
+    let skillFormula = this.skill.formula
+    skillFormula = Utils.evaluateFormulaCustomValues(actor, skillFormula, item.uuid)
+    let skillFormulaEvaluated = Roll.replaceFormulaData(skillFormula, actor.getRollData())
+    const skillFormulaTooltip = this.skill.formula
+
+    let damageFormula = this.dmg.formula
+    damageFormula = Utils.evaluateFormulaCustomValues(actor, damageFormula, item.uuid)
+    let damageFormulaEvaluated = Roll.replaceFormulaData(damageFormula, actor.getRollData())
+    const damageFormulaTooltip = this.dmg.formula
+
+    // Création de l'éventuel custom effect
+    let customEffect
+    if (this.additionalEffect.active) {
+      customEffect = await this._createCustomEffect(actor, item, action)
+    }
+
+    // Gestion des cibles
+    let targets = []
+    const hasOptionalTargets = this.hasOptionalTargets()
+
+    // Pour une action sans cible imposée, on autorise librement 0 à x cibles sélectionnées par l'utilisateur.
+    targets = this.getResolverTargets(actor, action.actionName, { allowTargetDependentDifficulty: true, difficultyFormula: this.skill.difficulty, item })
+
+    if (this.shouldBlockMissingTargets(targets)) {
+      return false
+    }
+
+    if (this.target.type === SYSTEM.RESOLVER_TARGET.single.id && targets.length > 1) {
+      ui.notifications.warn(game.i18n.format("CO.notif.warningIncorrectTargets", { number: 1, action: action.actionName }))
+      return false
+    }
+
+    if (this.target.type !== SYSTEM.RESOLVER_TARGET.none.id && hasOptionalTargets && targets.length === 0 && canvas.ready && game.user.targets.size > 0) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningNoValidTarget"))
+      return false
+    }
+
+    const effectiveTargetType = hasOptionalTargets ? (targets.length > 0 ? SYSTEM.RESOLVER_TARGET.single.id : SYSTEM.RESOLVER_TARGET.none.id) : this.target.type
+
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver attack - Targets", targets))
+
+    const attack = await actor.rollAttack(item, {
+      auto: false,
+      type,
+      actionName: action.label,
+      actionType: action.type,
+      chatFlavor: action.chatFlavor,
+      skillFormula: skillFormulaEvaluated,
+      skillFormulaSource: skillFormula,
+      damageFormula: damageFormulaEvaluated,
+      skillFormulaTooltip,
+      damageFormulaTooltip,
+      critical: this.skill.crit,
+      difficulty: this.skill.difficulty,
+      bonusDice: this.bonusDiceAdd ? 1 : 0,
+      malusDice: this.malusDiceAdd ? 1 : 0,
+      customEffect,
+      additionalEffect: this.additionalEffect,
+      hasAttackSuccessThreshold: this.hasAttackSuccessThreshold,
+      attackSuccessThreshold: this.attackSuccessThreshold,
+      targetType: effectiveTargetType,
+      targetScope: this.target.scope,
+      targets: targets,
+    })
+    if (!attack) return false
+    // Gestion des effets supplémentaires
+    // Pour les jets opposés, les effets sont gérés via le message de chat (bouton "Appliquer DM" ou résolution du jet opposé)
+    const isOpposedRoll = typeof this.skill.difficulty === "string" && this.skill.difficulty.includes("@oppose")
+    if (this.additionalEffect.active && !isOpposedRoll) {
+      // Multi-cibles : vérifier la condition par cible et n'appliquer qu'aux cibles éligibles
+      if (attack.targetResults?.length > 0) {
+        const globalResult = attack.results[0]
+        const eligible = attack.targetResults.filter((tr) => {
+          if (tr.needsOppositeRoll) return false
+          const result = { ...tr, total: globalResult.total, isSuccessThreshold: globalResult.isSuccessThreshold }
+          return Resolver.shouldManageAdditionalEffect(result, this.additionalEffect)
+        })
+        if (eligible.length > 0) {
+          const filteredTargets = eligible.map((tr) => ({ uuid: tr.uuid, name: tr.name, actor: fromUuidSync(tr.uuid) })).filter((t) => t.actor)
+          await this._manageAdditionalEffect(actor, item, action, attack.selectedStatuses, filteredTargets)
+        }
+      }
+      // Pas de cibles ou cible unique sans targetResults : utiliser le résultat global
+      else if (Resolver.shouldManageAdditionalEffect(attack.results[0], this.additionalEffect)) {
+        await this._manageAdditionalEffect(actor, item, action, attack.selectedStatuses)
+      }
+    }
+
+    return true
+  }
+
+  static shouldManageAdditionalEffect(result, additionalEffect) {
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.always.id) return true
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.success.id && result.isSuccess) return true
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.successTreshold.id && result.isSuccess && result.total >= result.difficulty + additionalEffect.successThreshold)
+      return true
+    // Ajout des seuil de succès auto
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.attackSuccessTreshold.id && result.isSuccess && result.isSuccessThreshold) return true
+
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.saveSuccess.id && result.isSuccess) return true
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.saveFailure.id && !result.isSuccess && result.total) return true
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.critical.id && result.isCritical) return true
+    if (additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.failure.id && result.isFailure) return true
+    return false
+  }
+
+  /**
+   * Resolver pour les actions de type Attaque automatique
+   * @param {COActor} actor : l'acteur pour lequel s'applique l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action
+   */
+  async auto(actor, item, action) {
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver auto`), actor, item, action)
+
+    let damageFormula = this.dmg.formula
+    damageFormula = Utils.evaluateFormulaCustomValues(actor, damageFormula, item.uuid)
+    let damageFormulaEvaluated = Roll.replaceFormulaData(damageFormula, actor.getRollData())
+    const damageFormulaTooltip = this.dmg.formula
+
+    // Gestion des dommages automatiques uniquement si la formule est définie
+    if (this.dmg.formula && this.dmg.formula !== "" && this.dmg.formula !== "0") {
+      // Gestion des cibles
+      const targets = this.getResolverTargets(actor, action.actionName, { item })
+      if (this.shouldBlockMissingTargets(targets)) {
+        return false
+      }
+
+      if (this.target.type !== SYSTEM.RESOLVER_TARGET.none.id && this.hasOptionalTargets() && targets.length === 0 && canvas.ready && game.user.targets.size > 0) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNoValidTarget"))
+        return false
+      }
+
+      if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver auto - Targets", targets))
+
+      const attack = await actor.rollAttack(item, {
+        auto: true,
+        type: "damage",
+        actionName: action.label,
+        damageFormula: damageFormulaEvaluated,
+        damageFormulaTooltip,
+        bonusDice: this.bonusDiceAdd === true ? 1 : 0,
+        malusDice: this.malusDiceAdd === true ? 1 : 0,
+        targetType: this.hasOptionalTargets() ? (targets.length > 0 ? SYSTEM.RESOLVER_TARGET.single.id : SYSTEM.RESOLVER_TARGET.none.id) : this.target.type,
+        targetScope: this.target.scope,
+        targets: targets,
+      })
+      if (!attack) return false
+    }
+
+    // Gestion des effets supplémentaires s'il s'applique toujours
+    if (this.additionalEffect.active && this.additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.always.id) {
+      await this._manageAdditionalEffect(actor, item, action)
+    }
+
+    return true
+  }
+
+  /**
+   * Resolver pour les actions de type Soin
+   * @param {COActor} actor : l'acteur pour lequel s'applique l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action.
+   */
+  async heal(actor, item, action) {
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver heal`), actor, item, action)
+
+    let healFormula = this.skill.formula
+    healFormula = Utils.evaluateFormulaCustomValues(actor, healFormula, item.uuid)
+    let healFormulaEvaluated = Roll.replaceFormulaData(healFormula, actor.getRollData())
+
+    // Gestion des cibles
+    const targets = this.getResolverTargets(actor, action.actionName, { item })
+    if (this.shouldBlockMissingTargets(targets)) {
+      return false
+    }
+
+    if (canvas.ready && this.target.scope !== SYSTEM.RESOLVER_SCOPE.all.id && targets.length > 0 && game.user.targets.size > targets.length) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningInvalidScopeTargets"))
+      return false
+    }
+
+    if (this.target.type !== SYSTEM.RESOLVER_TARGET.none.id && this.hasOptionalTargets() && targets.length === 0 && canvas.ready && game.user.targets.size > 0) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningNoValidTarget"))
+      return false
+    }
+
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver heal - Targets", targets))
+
+    const heal = await actor.rollHeal(item, {
+      actionName: action.label,
+      healFormula: healFormulaEvaluated,
+      targetType: this.hasOptionalTargets() ? (targets.length > 0 ? SYSTEM.RESOLVER_TARGET.single.id : SYSTEM.RESOLVER_TARGET.none.id) : this.target.type,
+      targets: targets,
+    })
+    if (!heal) return false
+
+    // Gestion des effets supplémentaires s'il s'applique toujours
+    if (this.additionalEffect.active && this.additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.always.id) {
+      await this._manageAdditionalEffect(actor, item, action)
+    }
+    return true
+  }
+
+  /**
+   * Resolver pour les actions de type Sauvegarde
+   * @param {COActor} actor : l'acteur pour lequel s'applique l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action.
+   */
+  async save(actor, item, action) {
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver save`), actor, item, action)
+
+    const saveAbility = this.saveAbility
+
+    let difficultyFormula = this.saveDifficulty
+    difficultyFormula = Utils.evaluateCoModifierWithDiceValue(actor, difficultyFormula, item.uuid)
+    const resultat = await new Roll(difficultyFormula).evaluate()
+    difficultyFormula = resultat.total.toString()
+    let difficultyFormulaEvaluated = Roll.replaceFormulaData(difficultyFormula, actor.getRollData())
+
+    let showDifficulty = false
+    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
+
+    // Jet de dommages si une formule est définie
+    let dmgRoll = null
+    let dmgTotal = null
+    let dmgFormula = null
+    let dmgTooltip = null
+    const hasDmgFormula = this.dmg?.formula && this.dmg.formula !== "" && this.dmg.formula !== "0"
+    if (hasDmgFormula) {
+      let damageFormula = this.dmg.formula
+      damageFormula = Utils.evaluateFormulaCustomValues(actor, damageFormula, item.uuid)
+      damageFormula = Roll.replaceFormulaData(damageFormula, actor.getRollData())
+      dmgRoll = await new CORoll(damageFormula).evaluate()
+      dmgTotal = dmgRoll.total
+      dmgFormula = damageFormula
+      dmgTooltip = await dmgRoll.getTooltip()
+    }
+
+    // Création de l'éventuel custom effect
+    let customEffect
+    if (this.additionalEffect.active) {
+      customEffect = await this._createCustomEffect(actor, item, action)
+    }
+
+    // Gestion des cibles — pour une sauvegarde, "aucune cible" ou "cible unique optionnelle" est traitée comme "cible unique"
+    let targets
+    let effectiveTargetType
+    if (this.hasOptionalTargets()) {
+      effectiveTargetType = SYSTEM.RESOLVER_TARGET.single.id
+      targets = actor.acquireTargets(effectiveTargetType, this.target.scope, 1, action.actionName)
+      if (targets.length === 0) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNoTargetOrTooManyTargets"))
+        return false
+      }
+    } else {
+      effectiveTargetType = this.target.type
+      targets = this.getResolverTargets(actor, action.actionName, { item })
+      if (this.shouldBlockMissingTargets(targets)) {
+        return false
+      }
+    }
+
+    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver save - Targets", targets))
+
+    const save = await actor.rollAskSave(item, {
+      actionName: action.label,
+      ability: saveAbility,
+      difficulty: difficultyFormulaEvaluated,
+      difficultyFormula: this.saveDifficulty,
+      showDifficulty,
+      targetType: effectiveTargetType,
+      targets: targets,
+      customEffect,
+      additionalEffect: this.additionalEffect,
+      dmgRoll,
+      dmgTotal,
+      dmgFormula,
+      dmgTooltip,
+      halfDmgOnSave: this.halfDmgOnSave,
+    })
+    if (!save) return false
+
+    return true
+  }
+
+  /**
+   * Resolver pour les actions de type buff ou debuff.
+   * Un buff ou un debuff est une amélioration/affaiblissement temporaire d'un ou plusieurs individus
+   * on doit forcément avoir coché la case effets supplémentaire pour définir une durée en round à minima
+   * @param {COActor} actor : l'acteur qui execute l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action
+   */
+  async buffDebuff(actor, item, action) {
+    if (this.additionalEffect.active && this.additionalEffect.applyOn === SYSTEM.RESOLVER_RESULT.always.id) {
+      return await this._manageAdditionalEffect(actor, item, action)
+    } else {
+      return false
+    }
+  }
+
+  /**
+   * Resolver pour les actions de type Consommer. Va simplement consommer un item
+   * @param {COActor} actor : l'acteur pour lequel s'applique l'action
+   * @param {COItem} item : la source de l'action
+   * @param {Action} action : l'action.
+   */
+  async consume(actor, item, action) {
+    let quantity = item.system.quantity.current - 1
+    if (quantity === 0 && item.system.quantity.destroyIfEmpty) {
+      await actor.deleteEmbeddedDocuments("Item", [item.id])
+    } else {
+      await item.update({ "system.quantity.current": quantity })
+    }
+    return true
+  }
+
+  /**
+   * Gère l'application d'un effet supplémentaire sur un acteur pendant un combat.
+   *
+   * @async
+   * @param {Actor} actor L'acteur sur lequel l'effet sera appliqué.
+   * @param {Item} item L'objet déclenchant l'effet supplémentaire.
+   * @param {Object} action L'action contenant les modificateurs et autres données pertinentes.
+   * @param {Array|null} selectedStatuses Un tableau de statuts sélectionnés par l'utilisateur, ou null pour utiliser les statuts configurés.
+   * @returns {Promise<bool>} Résout lorsque l'effet a été appliqué avec succès.
+   *
+   *
+   * @description
+   * Cette méthode gère la création et l'application d'un effet personnalisé basé sur l'acteur,
+   * l'objet et l'action fournis. Elle évalue la durée et la formule de l'effet, détermine les
+   * cibles appropriées et applique l'effet en conséquence. Si aucun combat n'est actif ou démarré,
+   * la méthode s'arrête avec une notification d'avertissement.
+   *
+   * - Évalue la durée et la formule de l'effet en utilisant des valeurs personnalisées et les données de l'acteur.
+   * - Calcule le round où l'effet prendra fin en fonction de l'état du combat.
+   * - Filtre les modificateurs applicables à partir de l'action.
+   * - Crée un objet `CustomEffectData` pour représenter l'effet.
+   * - Applique l'effet à l'acteur ou à ses cibles, selon le type de cible.
+   * - Envoie un événement socket au MJ si l'utilisateur n'est pas MJ et que des cibles sont impliquées.
+   *
+   * @example
+   * // Exemple d'utilisation :
+   * await _manageAdditionalEffect(actor, item, action);
+   */
+  async _manageAdditionalEffect(actor, item, action, selectedStatuses = null, filteredTargets = null) {
+    // Si pas de combat, pas d'effet sur la durée
+    if (
+      (!game.combat || !game.combat.started) &&
+      this.additionalEffect.unit !== SYSTEM.COMBAT_UNITE.unlimited.id &&
+      this.additionalEffect.unit !== SYSTEM.COMBAT_UNITE.instant.id
+    ) {
+      // FIXME Debug pour l'instant, à supprimer
+      ui.notifications.warn(game.i18n.localize("CO.label.long.customEffectInCombat"))
+      return false
+    }
+
+    // Application de l'effet en fonction de la gestion des cibles
+    // Soi-même : le MJ ou un joueur peut appliquer l'effet
+    if (this.target.type === SYSTEM.RESOLVER_TARGET.self.id) {
+      const ceSelf = await this._createCustomEffect(actor, item, action, true, selectedStatuses)
+      await actor.applyCustomEffect(ceSelf)
+    } else {
+      // Utiliser les cibles pré-filtrées si fournies, sinon acquérir depuis le canvas
+      let targets
+      if (filteredTargets) {
+        targets = filteredTargets
+      } else {
+        let targetType = this.target.type
+        if (this.target.type === SYSTEM.RESOLVER_TARGET.none.id) targetType = SYSTEM.RESOLVER_TARGET.single.id
+        targets = actor.acquireTargets(targetType, this.target.scope, this.getEvaluatedTargetNumber(actor, item), action.name)
+      }
+
+      if (targets.length === 0) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNoValidTarget"))
+        return false
+      }
+
+      const uuidList = targets.map((t) => t.uuid)
+
+      // Créer l'effet pour les autres
+      const ceOthers = await this._createCustomEffect(actor, item, action, false, selectedStatuses)
+
+      // Appliquer l'effet aux cibles
+      if (game.user.isGM) await Promise.all(targets.map((target) => target.actor.applyCustomEffect(ceOthers)))
+      else {
+        await game.users.activeGM.query("co2.applyCustomEffect", { ce: ceOthers, targets: uuidList })
+      }
+
+      // Vérifier si on a des modifiers avec apply="self" ou "both" qui doivent aussi s'appliquer au lanceur
+      const hasSelfModifiers = action.modifiers?.some((m) => m.apply === SYSTEM.MODIFIERS_APPLY.self.id || m.apply === SYSTEM.MODIFIERS_APPLY.both.id)
+      if (hasSelfModifiers) {
+        const ceSelf = await this._createCustomEffect(actor, item, action, true, selectedStatuses)
+        await actor.applyCustomEffect(ceSelf)
+      }
+
+      // On affiche un message pour signaler
+      const targetNames = targets ? targets.map((t) => t.name).join(", ") : ""
+      const skillName = item.name === action.actionName ? item.name : `${item.name} - ${action.actionName}`
+      const message = game.i18n.format("CO.notif.applyEffect", { actorName: actor.name, skillName: skillName, targetNames: targetNames })
+      new CoChat(actor).withTemplate(SYSTEM.TEMPLATE.MESSAGE).withData({ message: message }).create()
+    }
+    return true
+  }
+
+  async _createCustomEffect(actor, item, action, isSelfTarget = false, selectedStatuses = null) {
+    if (
+      (!game.combat || game.combat.round === null) &&
+      this.additionalEffect.unit !== SYSTEM.COMBAT_UNITE.unlimited.id &&
+      this.additionalEffect.unit !== SYSTEM.COMBAT_UNITE.instant.id
+    ) {
+      ui.notifications.warn(game.i18n.localize("CO.label.long.customEffectInCombat"))
+      return
+    }
+    let ce
+    // Evaluation de la durée si besoin
+    let evaluatedDuration = Utils.evaluateFormulaCustomValues(actor, this.additionalEffect.duration)
+    evaluatedDuration = Roll.replaceFormulaData(evaluatedDuration, actor.getRollData())
+    // Si on a un dé il faut l'evaluer
+    if (evaluatedDuration.match("\\d+[d|D]\\d+")) {
+      let roll = new CORoll(evaluatedDuration)
+      evaluatedDuration = (await roll.evaluate()).total
+    }
+    // TODO Vérifier si eval est nécessaire ici
+    if (/[+\-*/%]/.test(evaluatedDuration)) evaluatedDuration = eval(evaluatedDuration)
+    let duration = parseInt(evaluatedDuration)
+    if (!(duration >= 1)) duration = 1
+
+    // Calcul du round de fin
+    let remainingTurn
+    if (this.additionalEffect.unit === SYSTEM.COMBAT_UNITE.round.id) {
+      remainingTurn = duration
+    } else if (this.additionalEffect.unit === SYSTEM.COMBAT_UNITE.second.id) {
+      remainingTurn = Math.round(duration / CONFIG.time.roundTime)
+    }
+
+    // Evaluation de la formule à partir de l'acteur à l'origine de l'effet
+    let evaluatedFormula = ""
+    if (this.additionalEffect.formula) {
+      evaluatedFormula = Utils.evaluateFormulaCustomValues(actor, this.additionalEffect.formula)
+      evaluatedFormula = Roll.replaceFormulaData(evaluatedFormula, actor.getRollData())
+    }
+
+    // Les modifiers qui s'appliquent selon la cible
+    let modifiers = []
+    if (action.modifiers?.length > 0) {
+      if (isSelfTarget) {
+        // Pour "Soi-même" : inclure les modifiers avec apply="self" ou apply="both"
+        modifiers = action.modifiers.filter((m) => m.apply === SYSTEM.MODIFIERS_APPLY.self.id || m.apply === SYSTEM.MODIFIERS_APPLY.both.id)
+      } else {
+        // Pour "Les autres" : inclure les modifiers avec apply="others" ou apply="both"
+        modifiers = action.modifiers.filter((m) => m.apply === SYSTEM.MODIFIERS_APPLY.others.id || m.apply === SYSTEM.MODIFIERS_APPLY.both.id)
+      }
+    }
+
+    if (modifiers.length > 0) {
+      // Calcul de la valeur des modifiers
+      for (let i = 0; i < modifiers.length; i++) {
+        let modValue = modifiers[i].evaluate(actor, true)
+        modifiers[i] = {
+          ...modifiers[i],
+          value: modValue.toString(),
+        }
+      }
+    }
+
+    // Le nom de l'effet est actorId.actionName[.self]
+    // avec actorId : l'id de l'acteur qui applique l'effet
+    // et actionName : le nom de l'action qui génère l'effet (libellé de l'action, ou nom de l'item)
+    // Le suffixe .self distingue l'effet "retour sur le lanceur" de l'effet posé sur les cibles,
+    // pour éviter que les deux ne partagent le même slug si le lanceur figure aussi parmi ses cibles
+    // (auquel cas applyCustomEffect() les traiterait comme un doublon et perdrait l'un des deux)
+
+    const effectName = isSelfTarget ? `${actor.id}.${action.actionName}.self` : `${actor.id}.${action.actionName}`
+
+    // Utiliser les statuts sélectionnés par l'utilisateur si disponibles, sinon les statuts configurés
+    const statusesToApply = selectedStatuses && selectedStatuses.length > 0 ? new Set(selectedStatuses) : this.additionalEffect.statuses
+
+    // Création de l'effet
+    ce = new CustomEffectData({
+      name: action.actionName,
+      source: item.uuid,
+      statuses: statusesToApply,
+      unit: this.additionalEffect.unit,
+      duration,
+      startedAt: game.combat ? game.combat.round : 0,
+      remainingTurn,
+      modifiers,
+      formula: evaluatedFormula,
+      formulaType: this.additionalEffect.formulaType,
+      elementType: this.additionalEffect.elementType,
+      slug: effectName.slugify(),
+    })
+
+    return ce
+  }
+
+  get hasAdditionalEffect() {
+    return this.additionalEffect.active
+  }
+
+  get hasDamageFormulaDefined() {
+    return this.dmg.formula && this.dmg.formula !== "" && this.dmg.formula !== "0"
+  }
+}

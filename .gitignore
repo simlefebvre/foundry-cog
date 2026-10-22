@@ -1,0 +1,13 @@
+# Node Modules
+node_modules/
+
+# Foundry VTT
+packs
+styles/**/*.css
+
+# Tools
+.claudeignore
+CLAUDE.md
+.claude/
+docs/
+source/

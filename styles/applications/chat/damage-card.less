@@ -1,0 +1,336 @@
+.co.chat-card.roll-card.damage-card {
+  .card-header {
+    border-top: none;
+    color: inherit;
+    padding: 2px 0 4px;
+
+    .damage-item-card {
+      border-color: color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
+    }
+
+    .damage-details .card-details-content {
+      border-color: color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
+    }
+  }
+
+  .card-content {
+    .result {
+      width: 100%;
+      gap: 10px;
+    }
+
+    .damage-total-group {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+
+      .total-result {
+        margin: 0;
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+      }
+      .dm-text {
+        font-size: var(--font-size-18);
+      }
+
+      .damage-options {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .temp-dm {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+
+        label {
+          font-size: var(--font-size-12);
+          font-weight: bold;
+        }
+
+        input[type="checkbox"] {
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  // --- Targets section uses common .targets-collapsible / .targets-header ---
+  section.targets {
+    .targets-header {
+      color: var(--co-chat-damages);
+    }
+
+    .apply-content {
+      padding: 4px 0;
+    }
+
+    .apply-source-control {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 6px;
+
+      .apply-mode-btn {
+        --button-size: 1rem;
+        height: 20px;
+        padding: 2px 4px;
+        font-size: var(--font-size-12);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        background: transparent;
+        color: var(--color-text-light-6);
+        cursor: pointer;
+        transition: color 0.15s ease;
+
+        i {
+          font-size: var(--font-size-11);
+          margin-right: 2px;
+        }
+
+        &:hover {
+          color: var(--co-chat-damages);
+        }
+
+        &.active {
+          color: var(--co-chat-damages);
+        }
+      }
+    }
+  }
+
+  // --- Liste des cibles ---
+  .apply-target-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 28px;
+  }
+
+  .apply-target-row {
+    display: flex;
+    flex-direction: column;
+    padding: 1px 4px;
+    border-bottom: 1px solid #8888889c;
+    margin-top: 2px;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .target-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .target-portrait {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: none;
+      position: relative;
+      top: 10px;
+    }
+
+    .target-name {
+      flex: 1;
+      font-weight: bold;
+      font-size: var(--font-size-14);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      &.empty-message {
+        font-weight: normal;
+        font-style: italic;
+        font-size: var(--font-size-11);
+        opacity: 0.7;
+      }
+    }
+
+    .target-dr-label {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: var(--font-size-11);
+      font-weight: bold;
+      white-space: nowrap;
+      cursor: pointer;
+      margin-right: 15px;
+
+      input[type="checkbox"] {
+        margin: 0;
+      }
+    }
+
+    .target-damage {
+      font-weight: bold;
+      font-size: var(--font-size-20);
+      min-width: 32px;
+      text-align: right;
+      color: var(--co-chat-damages);
+      font-variant-numeric: tabular-nums;
+    }
+
+    // --- Forçage manuel de la valeur (MJ) ---
+    .force-damage-btn {
+      flex: 0 0 auto;
+      --button-size: 1rem;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-size-11);
+      border: 1px solid transparent;
+      border-radius: 3px;
+      background: transparent;
+      color: inherit;
+      opacity: 0.5;
+      cursor: pointer;
+      transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease,
+        color 0.15s ease;
+
+      &:hover {
+        opacity: 1;
+        background: color-mix(in srgb, var(--co-chat-damages) 12%, transparent);
+      }
+
+      &.active {
+        opacity: 1;
+        color: white;
+        background: var(--co-chat-damages);
+        border-color: var(--co-chat-damages);
+      }
+    }
+
+    // Champ de saisie de la valeur forcée, calé sur le rendu de .target-damage
+    .target-damage-input {
+      width: 48px;
+      min-width: 48px;
+      height: 24px;
+      padding: 0 4px;
+      font-weight: bold;
+      font-size: var(--font-size-20);
+      text-align: right;
+      color: var(--co-chat-damages);
+      font-variant-numeric: tabular-nums;
+      border: 1px solid var(--co-chat-damages);
+      border-radius: 3px;
+      background: color-mix(in srgb, var(--co-chat-damages) 8%, transparent);
+    }
+
+    // En mode manuel, la valeur affichée est cliquable pour rééditer
+    &.manual .target-damage {
+      cursor: pointer;
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
+    }
+
+    .target-controls {
+      display: flex;
+      align-items: center;
+      margin-top: -8px;
+      padding-bottom: 3px;
+    }
+  }
+
+  // --- Boutons multiplicateurs ---
+  .damage-multipliers {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    margin-left: 44px;
+    margin-right: 0px;
+
+    .multiplier-btn {
+      flex: 1;
+      --button-size: 1rem;
+      height: 20px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-size-14);
+      font-weight: bold;
+      border: 1px solid var(--color-border-light-2);
+      border-radius: 3px;
+      background: #88888857;
+      color: inherit;
+      cursor: pointer;
+      transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        background: color-mix(in srgb, var(--co-chat-damages) 12%, transparent);
+        border-color: var(--co-chat-damages);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      &.active {
+        background: var(--co-chat-damages);
+        border-color: var(--co-chat-damages);
+        color: white;
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--co-chat-damages) 40%, transparent);
+      }
+
+      // Inerte en mode manuel (valeur forcée par le MJ)
+      &.disabled {
+        opacity: 0.35;
+        pointer-events: none;
+        box-shadow: none;
+      }
+    }
+    .btn-heal.active {
+      background: var(--co-chat-heal);
+      border-color: var(--co-chat-heal);
+      color: white;
+      box-shadow: 0 1px 3px color-mix(in srgb, var(--co-chat-heal) 40%, transparent);
+    }
+  }
+
+  // --- Bouton Appliquer ---
+  .apply-damage-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 5px 10px;
+    font-size: var(--font-size-12);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid var(--co-chat-damages);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--co-chat-damages) 12%, transparent);
+    color: var(--co-chat-damages);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--co-chat-damages) 25%, transparent);
+    }
+
+    i {
+      font-size: var(--font-size-11);
+    }
+  }
+}

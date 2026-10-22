@@ -1,0 +1,62 @@
+{{!log "Chroniques Oubliées | attack" this}}
+<section class="tab standard-form attack{{#if tabs.details.active}} active{{/if}}" data-group="primary" data-tab="details">
+    <section class="half-panel">
+        <section class="panel-left">
+
+            {{#if debugMode}}
+                <fieldset class="debug">
+                    <legend>{{localize "CO.ui.debug"}}</legend>
+                    {{formGroup fields._id value=item.id disabled=true localize=true label="CO.ui.id"}}
+                    {{formGroup systemFields.slug value=system.slug disabled=true localize=true}}
+                </fieldset>
+            {{/if}}
+
+            <fieldSet class="infoInitial">
+                <legend>{{localize "CO.ui.typeAttack"}}</legend>
+                <div class="form-group">
+                    <label>{{localize "CO.label.long.subtype"}}</label>
+                    <div class="form-fields">
+                        <select name="system.subtype" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+                            {{selectOptions @root.choiceAttackType selected=system.subtype localize=true}}
+                        </select>
+                    </div>
+                </div>                
+            </fieldSet> 
+        </section>
+
+        <section class="panel-right">
+            <fieldSet class="properties">
+                <legend>{{localize "CO.label.long.properties"}}</legend>
+                <!-- PORTEE -->
+                {{#if (or system.isRanged system.isMagic)}}
+                    <div class="form-group">
+                        <label>{{localize "CO.ui.range"}}</label>
+                        <div class="form-fields border-right">
+                            <input class="field-value" name="system.range.value" type="number" value="{{system.range.value}}" data-dtype="Number" {{#if @root.locked}}readonly{{/if}}>
+                            <input class="field-value" name="system.range.unit" type="text" value="{{system.range.unit}}" placeholder="{{localize 'CO.ui.unit'}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}>                
+                        </div>
+                    </div>    
+                {{/if}}
+                <label>
+                    <input type="checkbox" name="system.properties.reloadable" {{checked systemSource.properties.reloadable}} {{#if @root.locked}}class="disabled"{{/if}}/>
+                    {{systemFields.properties.fields.reloadable.label}}
+                </label>   
+
+                 <!-- RECHARGEABLE --> 
+                {{#if system.properties.reloadable}}
+                    <fieldset>
+                        <legend>{{localize "CO.ui.rechargeable"}}</legend>
+                        <div class="form-group">
+                            <label>{{localize "CO.Attack.FIELDS.charges.current.label"}} / {{localize "CO.Attack.FIELDS.charges.max.label"}}</label>
+                            <div class="form-fields border-right">
+                                {{formInput systemFields.charges.fields.current value=systemSource.charges.current placeholder=0 localize=true disabled=locked}}
+                                /
+                                {{formInput systemFields.charges.fields.max value=systemSource.charges.max placeholder=0 localize=true disabled=locked}}
+                            </div>
+                        </div>
+                    </fieldset>
+                {{/if}}
+            </fieldSet>
+        </section>
+    </section>
+</section>

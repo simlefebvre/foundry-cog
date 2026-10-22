@@ -1,0 +1,152 @@
+export default class COChatMessage extends ChatMessage {
+  /** @inheritDoc */
+  async renderHTML({ canDelete, canClose = false, ...rest } = {}) {
+    const html = await super.renderHTML({ canDelete, canClose, ...rest })
+    this._enrichChatCard(html)
+    return html
+  }
+
+  /**
+   * Get the Actor which is the author of a chat card.
+   * @returns {Actor|void}
+   */
+  getAssociatedActor() {
+    if (this.speaker.scene && this.speaker.token) {
+      const scene = game.scenes.get(this.speaker.scene)
+      const token = scene?.tokens.get(this.speaker.token)
+      if (token) return token.actor
+    }
+    return game.actors.get(this.speaker.actor)
+  }
+
+  /**
+   * Enriches the chat card HTML by adding avatar and name elements.
+   * Creates and appends an avatar image and stacked name display to the message sender element.
+   * The displayed content depends on whether the message content is visible to the current user.
+   *
+   * @param {HTMLElement} html The HTML element of the chat card to be enriched.
+   * @private
+   * @returns {void}
+   */
+  _enrichChatCard(html) {
+    const actor = this.getAssociatedActor()
+
+    let img
+    let nameText
+    if (this.isContentVisible) {
+      img = actor?.img ?? this.author.avatar
+      nameText = this.alias
+    } else {
+      img = this.author.avatar
+      nameText = this.author.name
+    }
+
+    const avatar = document.createElement("a")
+    avatar.classList.add("avatar")
+    if (actor) avatar.dataset.uuid = actor.uuid
+    const avatarImg = document.createElement("img")
+    Object.assign(avatarImg, { src: img, alt: nameText })
+    avatar.append(avatarImg)
+
+    const name = document.createElement("span")
+    name.classList.add("name-stacked")
+    const title = document.createElement("span")
+    title.classList.add("title")
+    title.append(nameText)
+    name.append(title)
+
+    const sender = html.querySelector(".message-sender")
+    sender?.replaceChildren(avatar, name)
+    // Html.querySelector(".whisper-to")?.remove()
+  }
+
+  /**
+   * Met à jour le message après l'utilisation d'un point de chance
+   *
+   * @param {Object} options The options object
+   * @param {string} options.existingMessageId The ID of the existing message to update
+   * @param {Array} options.rolls The array of roll objects to add to the message
+   * @param {*} options.result The result value to store in the message's system data
+   * @returns {Promise<void>} A promise that resolves when the message update is complete
+   * @private
+   * @static
+   * @async
+   */
+  static async _handleQueryUpdateMessageAfterLuck({ existingMessageId, rolls, result, targetResults } = {}) {
+    const message = game.messages.get(existingMessageId)
+    if (!message) return
+    const updateData = { rolls: rolls }
+    if (result !== undefined && result !== null) updateData["system.result"] = result
+    if (targetResults !== undefined) updateData["system.targetResults"] = targetResults
+    await message.update(updateData)
+  }
+
+  /**
+   * Met à jour le message après un jet opposé
+   *
+   * @param {Object} options The options object
+   * @param {string} options.existingMessageId The ID of the existing message to update
+   * @param {Array} options.rolls The array of roll objects to add to the message
+   * @param {*} options.result The result value to store in the message's system data
+   * @returns {Promise<void>} A promise that resolves when the message update is complete
+   * @private
+   * @static
+   * @async
+   */
+  static async _handleQueryUpdateMessageAfterOpposedRoll({ existingMessageId, rolls, result, targetResults, linkedDamageMessageId, effectsApplied } = {}) {
+    const message = game.messages.get(existingMessageId)
+    if (!message) return
+    const updateData = {}
+    if (rolls) updateData.rolls = rolls
+    if (result !== undefined && result !== null) updateData["system.result"] = result
+    if (targetResults !== undefined) updateData["system.targetResults"] = targetResults
+    if (linkedDamageMessageId) updateData["system.linkedDamageMessageId"] = linkedDamageMessageId
+    if (effectsApplied) updateData["system.effectsApplied"] = true
+    await message.update(updateData)
+  }
+
+  /**
+   * Met à jour le message après un jet opposé
+   *
+   * @param {Object} options The options object
+   * @param {string} options.existingMessageId The ID of the existing message to update
+   * @param {Array} options.rolls The array of roll objects to add to the message
+   * @param {*} options.result The result value to store in the message's system data
+   * @returns {Promise<void>} A promise that resolves when the message update is complete
+   * @private
+   * @static
+   * @async
+   */
+  static async _handleQueryUpdateMessageAfterSavedRoll({ existingMessageId, rolls, targetResults, dmgApplied, effectsApplied, appliedTempDamage } = {}) {
+    const message = game.messages.get(existingMessageId)
+    if (!message) return
+    const updateData = {}
+    if (rolls !== undefined) updateData.rolls = rolls
+    if (targetResults !== undefined) updateData["system.targetResults"] = targetResults
+    if (dmgApplied !== undefined) updateData["system.dmgApplied"] = dmgApplied
+    if (effectsApplied !== undefined) updateData["system.effectsApplied"] = effectsApplied
+    if (appliedTempDamage !== undefined) updateData["system.appliedTempDamage"] = appliedTempDamage
+    await message.update(updateData)
+  }
+
+  /**
+   * Met à jour les targetResults d'un message (ex : persistance des multiplicateurs de dommages)
+   *
+   * @param {Object} options
+   * @param {string} options.existingMessageId L'ID du message à mettre à jour
+   * @param {Array} options.targetResults Les targetResults mis à jour
+   * @returns {Promise<void>}
+   * @private
+   * @static
+   * @async
+   */
+  static async _handleQueryUpdateTargetResults({ existingMessageId, targetResults, effectsApplied, customEffect, additionalEffect } = {}) {
+    const message = game.messages.get(existingMessageId)
+    if (!message) return
+    const updateData = { "system.targetResults": targetResults }
+    if (effectsApplied) updateData["system.effectsApplied"] = true
+    if (customEffect) updateData["system.customEffect"] = customEffect
+    if (additionalEffect) updateData["system.additionalEffect"] = additionalEffect
+    await message.update(updateData)
+  }
+}

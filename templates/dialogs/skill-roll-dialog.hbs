@@ -1,0 +1,128 @@
+{{!log "Chroniques Oubliées | dialog skill-roll" this}}
+<section class="skill-roll-1">
+  <div class="icone"><i class="fa-solid fa-dice"></i></div>
+  <div class="form-group">
+    <div class="form-fields-radio">
+      <div class="radio-row">
+          <input type="radio" name="dice" id="diceMalus" value="malus" {{#if (eq dice "malus")}}checked{{/if}} />
+          <label for="dice">{{localize 'CO.ui.rollMalus'}}</label>
+      </div>
+      <div class="radio-row">
+          <input type="radio" name="dice" id="diceStandard" value="standard" {{#if (eq dice "standard")}}checked{{/if}}/>
+          <label for="dice">{{localize 'CO.ui.rollStandard'}}</label>
+      </div>
+      <div class="radio-row">
+          <input type="radio" name="dice" id="diceBonus" value="bonus" {{#if (eq dice "bonus")}}checked{{/if}}/>
+          <label for="dice">{{localize 'CO.ui.rollBonus'}}</label>
+      </div>
+    </div>
+  </div>
+
+  {{#if showDifficulty}}
+      <div class="icone"><i class="fas fa-fw fa-shield-alt"></i></div>
+      <div class="form-group diffGroup">
+        {{#if showOppositeRoll}}
+          <div class="opposite-check">
+            <label>
+              <input type="checkbox" name="oppositeRoll" id="oppositeRoll" />
+              {{localize "CO.ui.oppositeRoll"}}
+            </label>
+          </div>
+          <div class="opposite-ability" style="display:none">
+            <div class="form-fields">
+              <select name="oppositeAbility" id="oppositeAbility">
+                {{#each abilities as |ability key|}}
+                  <option value="{{key}}">{{localize ability.label}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        {{/if}}
+        <div class="standard-difficulty">
+          <label class="textCenter">{{localize "CO.label.long.difficulty"}}</label>
+          <div class="form-fields">
+            <input class="field-value textCenter" id="difficulty" name="difficulty" type="text" value="{{difficulty}}" data-dtype="Number" />
+          </div>
+        </div>
+      </div>
+  {{/if}}
+  <div class="icone"><i class="fa-solid fa-user-secret"></i></div>
+  <div class="form-group rollMode">
+    <label class="near" for="rollMode">{{localize "CO.roll.visibility"}}</label>
+    <div class="form-fields">
+      <select name="rollMode" id="rollMode">
+        {{selectOptions rollModes selected=rollMode localize=true}}
+      </select>
+    </div>
+  </div>
+</section>
+
+<section class="skill-roll-2">
+  <div class="icone"><i class="fa-solid fa-dice-d20"></i></div>
+  <div class="form-group">
+    <label>Formule</label>
+    <div class="form-fields">
+      <input class="field-value" id="formula" name="formula" type="text" value="{{formula}}" data-dtype="String" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="textCenter">{{localize "CO.label.long.bonus"}}</label>
+    <div class="form-fields" data-tooltip="Saisir un nombre positif">      
+      {{ numberInput bonus min=0 step=1 name="bonus" class="field-value textCenter"}}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="textCenter">{{localize "CO.label.long.malus"}}</label>
+    <div class="form-fields" data-tooltip="Saisir un nombre négatif">
+      {{ numberInput malus max=0 step=1 name="malus" class="field-value textCenter"}}
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="textCenter">{{localize "CO.ui.totalBonus"}}</label>
+    <div class="form-fields">
+      <input class="field-value textCenter" id="totalSkillBonuses" name="totalSkillBonuses" type="text" value="{{numberFormat totalSkillBonuses sign=true}}" data-dtype="Number" />
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="textCenter">{{localize "CO.label.long.critrange"}}</label>
+    <div class="form-fields">
+      <input class="field-value textCenter" id="critical" name="critical" type="text" value="{{critical}}" data-dtype="String" />
+    </div>
+  </div>
+</section>
+
+<section class="skill-roll-3">
+    {{#if skills}}
+    <div class="skill-roll-skills">{{skills}}</div>
+    {{/if}}
+    {{#if hasSkillBonuses}}
+        <div class="form-fields skillBonuses">
+            <div class="flex1 skill-bonuses" id="skill-bonuses">
+            {{#each skillBonuses as |bonus id|}}
+                {{!log 'skillBonuses' bonus id}}
+                <div class="bonus-item flexrow {{#if bonus.selected}}checked{{/if}}" data-value="{{bonus.value}}">
+                  <span class="bonus-value flex0">{{numberFormat bonus.value decimals=0 sign=true}}</span>
+                  <div class="bonus-description">
+                    <span class="bonus-name flex1">{{bonus.name}} {{#if bonus.hasPathName}}({{bonus.pathName}}){{/if}}</span>
+                    <span class="bonus-name flex2">{{bonus.additionalInfos}}</span>
+                  </div>
+                </div>
+            {{/each}}
+            </div>
+        </div>
+    {{/if}}
+</section>
+
+<input class="field-value" id="hasLuckyPoints" name="hasLuckyPoints" type="hidden" value="{{hasLuckyPoints}}" data-dtype="Boolean">
+
+{{#if hasTargets}}
+  <hr />
+  <label class="targets-label">Les cibles du jet opposé</label>
+  <div class="targets">
+    {{#each targets as |target id|}}
+      <div class="target">
+        <img class="actor-image" src="{{token.document.texture.src}}" data-tooltip="{{target.name}}" height="50px" width="50px" data-id="{{actor.id}}" data-uuid="{{uuid}}" />
+      </div>
+    {{/each}}
+  </div>
+{{/if}}

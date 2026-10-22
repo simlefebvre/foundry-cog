@@ -1,0 +1,127 @@
+{{!-- Character Biography Tab Template --}}
+{{!log "Chroniques Oubliées | biography" this}}
+<section class="tab standard-form biography{{#if tabs.biography.active}} active{{/if}}" data-group="primary" data-tab="biography">
+    
+    {{#unless viewLimited}} 
+        <div class="features section-container">
+            <div class="section-header">
+                <h4>{{localize "CO.label.long.profile"}} &amp; {{localize "CO.ui.features"}}</h4>
+            </div>
+            <!-- PROFILS & FEATURES-->
+            <div class="section-body-no-flex">
+                <ol class="features-container items-container">
+                    <ol class="item-list">
+                        {{#each profiles as |item id|}}
+                            <li class="item flexrow" data-item-uuid="{{item.uuid}}" data-item-id="{{item._id}}" data-item-type="{{item.type}}">
+                                <div class="item-name flexrow">
+                                    <a class="item-img" data-action="editItem" style="background-image: url('{{item.img}}')"></a>
+                                    <h4 data-tooltip="{{item.enrichedTooltip}}" data-tooltip-direction="UP">{{item.name}}</h4>
+                                </div>
+                                <div class="item-controls-2">
+                                {{#if ../unlocked}}
+                                    <a class="item-control" data-action="deleteItem" data-tooltip={{localize "CO.ui.remove"}}><i class="fas fa-trash"></i></a>
+                                {{/if}}
+                                </div>
+                            </li>
+                        {{/each}}
+                        {{#each features as |item id|}}
+                            <li class="item flexrow" data-item-uuid="{{item.uuid}}" data-item-id="{{item._id}}" data-item-type="{{item.type}}">
+                                <div class="item-name flexrow">
+                                    <a class="item-img" data-action="editItem" style="background-image: url('{{item.img}}')"></a>
+                                    <h4 data-tooltip="{{item.enrichedTooltip}}" data-tooltip-direction="UP">{{item.name}}</h4>
+                                </div>
+                                <div class="item-controls-2">
+                                {{#if ../unlocked}}
+                                    <a class="item-control" data-action="deleteItem" data-tooltip={{localize "CO.ui.remove"}}><i class="fas fa-trash"></i></a>
+                                {{/if}}
+                                </div>
+                            </li>
+                        {{/each}}
+                    </ol>
+                </ol>
+            </div>
+        </div>
+    {{/unless}}
+    {{#if viewLimited}}
+        <div class="form-group">
+            <label>{{localize "CO.ui.size"}}</label>
+            <div class="form-fields">
+                <select data-action="sizeChange" name="system.details.size" data-type="String" disabled style="width:100%">
+                    {{selectOptions choiceSize selected=details.size localize=true}}
+                </select>
+            </div>
+        </div>
+    {{else}}
+        <h4 class="form-header"><a data-action="toggleSection" data-toggle-type="biography-misc">{{localize "CO.ui.misc"}}</a></h4>
+        <div class="misc foldable {{ifThen biographyMiscExpanded 'expanded' 'folded'}}">
+            <div class="biography-details">
+                <div class="form-group size-group">
+                    <label>{{localize "CO.ui.size"}}</label>
+                    <div class="form-fields">
+                        <select data-action="sizeChange" name="system.details.size" data-type="String" class="{{#unless unlocked}}disabled{{/unless}}">
+                            {{selectOptions choiceSize selected=details.size localize=true}}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{{localize "CO.ui.languages"}}</label>
+                    <div class="form-fields">
+                        <input
+                            class="field-value"
+                            name="system.details.languages"
+                            type="text"
+                            value="{{system.details.languages}}"
+                            placeholder="{{localize 'CO.ui.languages'}}"
+                            data-dtype="String"
+                            {{#unless unlocked}}readonly{{/unless}}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+
+    <h4 class="form-header"><a data-action="toggleSection" data-toggle-type="biography-bio">{{localize "CO.ui.biography"}}</a></h4>
+    <div class="bio notes foldable {{ifThen biographyBioExpanded 'expanded' 'folded'}}">
+        {{#if (or unlocked hasBiographyPublic)}}
+        <div class="notes-section">
+            <label class="details-label">{{localize "CO.ui.public"}}</label>
+            <div class="notes-text">
+                {{formInput systemFields.details.fields.biography.fields.public enriched=enrichedBiographyPublic value=system.details.biography.public name="system.details.biography.public" toggled=true}}
+            </div>
+        </div>
+        {{/if}}
+        {{#if editable}}
+            {{#if (or unlocked hasBiographyPrivate)}}
+            <div class="notes-section">
+                <label class="details-label">{{localize "CO.ui.private"}}</label>
+                <div class="notes-text">
+                    {{formInput systemFields.details.fields.biography.fields.private enriched=enrichedBiographyPrivate value=system.details.biography.private name="system.details.biography.private" toggled=true}}
+                </div>
+            </div>
+            {{/if}}
+        {{/if}}
+    </div>
+
+    <h4 class="form-header"><a data-action="toggleSection" data-toggle-type="biography-appearance">{{localize "CO.ui.appearance"}}</a></h4>
+    <div class="appearance notes foldable {{ifThen biographyAppearanceExpanded 'expanded' 'folded'}}">
+        {{#if (or unlocked hasAppearancePublic)}}
+        <div class="notes-section">
+            <label class="details-label">{{localize "CO.ui.public"}}</label>
+            <div class="notes-text">
+                 {{formInput systemFields.details.fields.appearance.fields.public enriched=enrichedAppearancePublic value=system.details.appearance.public name="system.details.appearance.public" toggled=true}}
+            </div>
+        </div>
+        {{/if}}
+        {{#if editable}}
+            {{#if (or unlocked hasAppearancePrivate)}}
+            <div class="notes-section">
+                <label class="details-label">{{localize "CO.ui.private"}}</label>
+                <div class="notes-text">
+                    {{formInput systemFields.details.fields.appearance.fields.private enriched=enrichedAppearancePrivate value=system.details.appearance.private name="system.details.appearance.private" toggled=true}}
+                </div>
+            </div>
+            {{/if}}
+        {{/if}}
+    </div>
+</section>

@@ -1,0 +1,226 @@
+<div class="resolver" data-item-id="{{id}}" data-action-id="{{idx}}" data-item-type="resolver">
+  {{! Type & Bonus/Malus & Delete button }}
+  <div class="form-group-stacked type">
+    <label>{{localize "CO.ui.type"}}</label>
+    <div class="form-fields">
+      <select name="system.actions.{{idx}}.resolvers.{{id}}.type" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+        {{selectOptions @root.choiceResolverTypes selected=r.type localize=true}}
+      </select>
+      {{#if (eq r.type @root.choiceResolverTypes.attack.id)}}
+        <label class="checkbox">
+          <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.bonusDiceAdd" {{checked r.bonusDiceAdd}} {{#if @root.locked}}class="disabled"{{/if}}/>
+          {{localize "CO.modifier.subtype.bonusDice"}}
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.malusDiceAdd" {{checked r.malusDiceAdd}} {{#if @root.locked}}class="disabled"{{/if}}/>
+          {{localize "CO.modifier.subtype.malusDice"}}
+        </label>
+      {{/if}}
+      {{#if @root.unlocked}}
+        <button type="button" class="action" data-action="deleteResolver"><i class="fas fa-trash"></i></button>
+      {{/if}}
+    </div>
+  </div>
+  {{#if (eq r.type @root.choiceResolverTypes.attack.id)}}
+    {{! Formula parts }}
+    <div class="form-group-stacked like-grid formula">
+      <label>
+        <div><span data-tooltip="{{localize 'CO.ui.formulaTooltip'}}" data-tooltip-direction="UP">{{localize "CO.ui.skillformula"}}</span></div>
+        <div><span data-tooltip="{{localize 'CO.ui.critTooltip'}}" data-tooltip-direction="UP">{{localize "CO.ui.crit"}}</span></div>
+        <div><span data-tooltip="{{localize 'CO.ui.formulaTooltip'}}" data-tooltip-direction="UP">{{localize "CO.ui.difficulty"}}</span></div>
+        <div><span>{{localize "CO.ui.dmg"}}</span></div>
+      </label>
+      <div class="form-fields">
+        <input name="system.actions.{{idx}}.resolvers.{{id}}.skill.formula" type="text" value="{{r.skill.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+        <input name="system.actions.{{idx}}.resolvers.{{id}}.skill.crit" type="text" value="{{r.skill.crit}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+        <input name="system.actions.{{idx}}.resolvers.{{id}}.skill.difficulty" type="text" value="{{r.skill.difficulty}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+        <input name="system.actions.{{idx}}.resolvers.{{id}}.dmg.formula" type="text" value="{{r.dmg.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+      </div>
+    </div>
+  {{/if}}
+  {{#if (eq r.type @root.choiceResolverTypes.save.id) }}
+            <div class="form-group save">
+              {{! Liste des abilités possible}}
+              <div class="form-fields">
+                <select name="system.actions.{{idx}}.resolvers.{{id}}.saveAbility" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+                  {{selectOptions @root.choiceModifierSkillTargetsWithoutAll selected=r.saveAbility localize=true}}
+                </select>
+              </div>
+              {{! seuil de difficulté}}
+              <div class="form-fields">
+              <label>{{localize "CO.ui.saveDifficulty"}}
+                <input
+                  class="field-value"
+                  name="system.actions.{{idx}}.resolvers.{{id}}.saveDifficulty"
+                  type="text"
+                  value="{{r.saveDifficulty}}"
+                  data-dtype="String"
+                  {{#if @root.locked}}readonly{{/if}}
+                />
+              </label>
+              </div>
+            </div>
+            <div class="form-group-stacked like-grid save-dmg">
+              <label>
+                <span>{{localize "CO.ui.dmg"}}</span>
+              </label>
+              <div class="form-fields">
+                <input name="system.actions.{{idx}}.resolvers.{{id}}.dmg.formula" type="text" value="{{r.dmg.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+                <label class="checkbox">
+                  <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.halfDmgOnSave" {{checked r.halfDmgOnSave}} {{#if @root.locked}}class="disabled"{{/if}}/>
+                  {{localize "CO.ui.halfDmgOnSave"}}
+                </label>
+              </div>
+            </div>
+          {{/if}}
+
+  {{#if (eq r.type @root.choiceResolverTypes.auto.id)}}
+    {{! Damages }}
+    <div class="form-group-stacked damages">
+      <label>{{localize "CO.ui.dmg"}}</label>
+      <input name="system.actions.{{idx}}.resolvers.{{id}}.dmg.formula" type="text" value="{{r.dmg.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+    </div>
+  {{/if}}
+  {{! Heal }}
+  {{#if (eq r.type @root.choiceResolverTypes.heal.id)}}
+    <div class="form-group-stacked heal">
+      <label>
+        {{localize "CO.ui.healformula"}}
+      </label>
+      <input name="system.actions.{{idx}}.resolvers.{{id}}.skill.formula" type="text" value="{{r.skill.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+    </div>
+  {{/if}}
+  {{! Target }}
+  {{#unless (eq r.type @root.choiceResolverTypes.consumable.id) }}
+    <div class="form-group-stacked like-grid target">
+      <label>
+        <span>{{localize "CO.ui.target"}}</span>
+      </label>
+      <div class="form-fields">
+        <select name="system.actions.{{idx}}.resolvers.{{id}}.target.type" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+          {{selectOptions @root.choiceResolverTargets selected=r.target.type localize=true}}
+        </select>
+        {{#if (eq r.target.type "multiple")}}
+          <input class="center-input" name="system.actions.{{idx}}.resolvers.{{id}}.target.number" type="text" value="{{r.target.number}}" data-dtype="String" data-tooltip="{{#if (lookup @root.evaluatedTargetNumbers (concat idx '-' id))}}{{lookup @root.evaluatedTargetNumbers (concat idx '-' id)}}{{else}}{{localize 'CO.resolver.target.number'}}{{/if}}" {{#if @root.locked}}readonly{{/if}}>
+        {{/if}}
+        {{#if (or (eq r.target.type "single") (eq r.target.type "multiple"))}}
+          <select name="system.actions.{{idx}}.resolvers.{{id}}.target.scope" data-type="String" data-tooltip={{localize "CO.resolver.scope.title"}} {{#if @root.locked}}class="disabled"{{/if}}>
+            {{selectOptions @root.choiceResolverScopes selected=r.target.scope localize=true}}
+          </select>
+        {{/if}}
+      </div>
+    </div>
+  {{/unless}}
+  {{! Seuil de succes auto}}
+  {{#if (eq r.type @root.choiceResolverTypes.attack.id)}}
+  <div class="form-group effects">
+      <label class="checkbox">
+        <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.hasAttackSuccessThreshold" {{checked r.hasAttackSuccessThreshold}} {{#if @root.locked}}class="disabled"{{/if}}/>
+        {{localize "CO.resolver.hasAttackSuccessThreshold"}}
+      </label>
+       {{#if r.hasAttackSuccessThreshold}}
+          <input
+              class="field-value"
+              name="system.actions.{{idx}}.resolvers.{{id}}.attackSuccessThreshold"
+              type="text"
+              value="{{r.attackSuccessThreshold}}"
+              data-dtype="String"
+              {{#if @root.locked}}readonly{{/if}}
+          />
+       {{/if}}
+  </div>
+  {{/if}}
+{{! Additional effects }}
+{{#unless (eq r.type @root.choiceResolverTypes.consumable.id)}}
+    <div class="form-group effects">
+      <label class="checkbox">
+        <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.active" {{checked r.additionalEffect.active}} {{#if @root.locked}}class="disabled"{{/if}}/>
+        {{localize "CO.resolver.additionalEffect.active"}}
+      </label>
+      <div class="form-fields">
+        {{#if r.additionalEffect.active}}
+          <span>{{localize "CO.resolver.additionalEffect.applyOn"}}</span>
+          <select name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.applyOn" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+            {{#if (eq r.type @root.choiceResolverTypes.attack.id)}}
+              {{#if r.hasAttackSuccessThreshold}}
+                {{selectOptions @root.choiceResolverApplyOn selected=r.additionalEffect.applyOn localize=true}}
+              {{else}}
+                {{selectOptions @root.choiceResolverApplyOnWithoutThreshold selected=r.additionalEffect.applyOn localize=true}}
+              {{/if}}
+            {{else if (eq r.type @root.choiceResolverTypes.save.id)}}
+              {{selectOptions @root.choiceResolverApplyOnSave selected=r.additionalEffect.applyOn localize=true}}
+            {{else}}
+              {{selectOptions @root.choiceResolverApplyOnAlways selected=r.additionalEffect.applyOn localize=true}}
+            {{/if}}
+          </select>
+          {{#if (eq r.additionalEffect.applyOn "successTreshold")}}
+            <input
+              class="field-value"
+              name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.successThreshold"
+              type="text"
+              value="{{r.additionalEffect.successThreshold}}"
+              data-dtype="String"
+              {{#if @root.locked}}readonly{{/if}}
+            />
+          {{/if}}
+        {{/if}}
+      </div>
+    </div>
+    {{#if r.additionalEffect.active}}
+      <div class="form-group-stacked like-grid effects">
+        <label>
+          <span>{{localize "CO.resolver.additionalEffect.formulaType"}}</span>
+          <span class="center-input" data-tooltip="{{localize 'CO.resolver.additionalEffect.applyFormulaTooltip'}}" data-tooltip-direction="UP">
+            {{localize "CO.resolver.additionalEffect.applyFormula"}}
+          </span>
+          <span data-tooltip="{{localize 'CO.resolver.additionalEffect.elementType'}}" data-tooltip-direction="UP">
+            {{localize "CO.resolver.additionalEffect.elementType"}}
+          </span>
+        </label>
+        <div class="form-fields">
+          <select name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.formulaType" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+            {{selectOptions @root.choiceResolverEffectFormulaTypes selected=r.additionalEffect.formulaType localize=true}}
+          </select>
+          <input class="center-input" name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.formula" type="text" value="{{r.additionalEffect.formula}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}} />
+          <select name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.elementType" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+            {{selectOptions @root.choiceResolverEffectElementTypes selected=r.additionalEffect.elementType localize=true blank=""}}
+          </select>
+        </div>
+      </div>
+      {{! Status }}
+      <div class="form-group status">
+        <label data-tooltip="{{localize 'CO.resolver.additionalEffect.statusAvailable'}}" data-tooltip-direction="UP">
+          {{localize "CO.resolver.additionalEffect.statusAvailable"}}
+        </label>
+        <div class="form-fields tags{{#if @root.locked}} locked{{/if}}">
+          {{formGroup
+            @root.resolverSystemFields.additionalEffect.fields.statuses
+            name=(concat "system.actions." idx ".resolvers." id ".additionalEffect.statuses")
+            value=r.additionalEffect.statuses
+            localize=true
+          }}
+        </div>
+      </div>
+      {{! Duration }}
+      <div class="form-group duration">
+        <label>{{localize "CO.ui.duration"}}</label>
+        <div class="form-fields">
+          {{#if (or (eq r.additionalEffect.unit "round") (eq r.additionalEffect.unit "second"))}}
+          <input
+            class="field-value"
+            name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.duration"
+            type="text"
+            value="{{r.additionalEffect.duration}}"
+            placeholder="{{localize 'CO.resolver.additionalEffect.duration'}}"
+            data-dtype="String"
+            {{#if @root.locked}}readonly{{/if}}
+          />
+          {{/if}}
+          <select name="system.actions.{{idx}}.resolvers.{{id}}.additionalEffect.unit" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+            {{selectOptions @root.choiceResolverEffectDurationUnit selected=r.additionalEffect.unit localize=true}}
+          </select>
+        </div>
+      </div>  
+    {{/if}}
+  {{/unless}}
+</div>

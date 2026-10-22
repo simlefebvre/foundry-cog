@@ -1,0 +1,16 @@
+{{!log 'resolvers-partial' this}}
+<h4 class="form-header resolvers">
+    <a data-action="toggleSection">{{localize "CO.ui.resolvers"}}</a>
+    {{#if @root.unlocked}}<a data-action="addResolver" data-tooltip="{{localize 'CO.ui.add'}}"><i class="fas fa-add"></i></a>{{/if}}
+</h4>
+<div class="resolvers-container foldable">
+    {{#if action.resolvers}}
+        {{#each action.resolvers as |r id|}}
+            {{> "systems/co2/templates/items/parts/resolver-part.hbs" r=r id=id idx=../idx }}
+        {{/each}}
+    {{else}}
+        <div class="empty">
+            {{localize "CO.notif.resolvers.empty"}}
+        </div>
+    {{/if}}
+</div>

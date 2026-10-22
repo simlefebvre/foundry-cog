@@ -1,0 +1,3252 @@
+import { SYSTEM } from "../config/system.mjs"
+import CustomEffectData from "../models/schemas/custom-effect.mjs"
+import { CORoll, COSkillRoll, COAttackRoll, COHealRoll } from "./roll.mjs"
+import { CoFeatureModifierChoiceDialog } from "../dialogs/feature-modifier-choice-dialog.mjs"
+import CoChat from "../chat.mjs"
+import Utils from "../helpers/utils.mjs"
+import { resolveStatusId } from "../helpers/status-rules.mjs"
+import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
+
+/**
+ * @class COActor
+ * @classdesc
+ * @extends {Actor}
+ *
+ * @function
+ */
+export default class COActor extends Actor {
+  /**
+   * Ajoute un objet à l'acteur s'il n'existe pas déjà lors de la création de cet acteur.
+   *
+   * Cette méthode vérifie si l'acteur possède déjà un item correspondant au type d'item donné
+   * Si ce n'est pas le cas, elle l'ajoute et l'équipe automatiquement.
+   * @param {string} uuid Identifiant unique d'un document qui sert de base à la copie, provenant du compendium
+   * @param {string} type Type d'item ajouté
+   */
+  async addBaseItemItem(uuid, type) {
+    let equipments
+    switch (type) {
+      case SYSTEM.ITEM_TYPE.equipment.id:
+        equipments = this.equipments
+        break
+      case SYSTEM.ITEM_TYPE.capacity.id:
+        equipments = this.capacities
+        break
+      default:
+        return
+    }
+    let hasHands = false
+    const compendiumHands = await fromUuid(uuid)
+    if (equipments && equipments.length > 0) {
+      const hands = equipments.find((item) => item.system.slug === compendiumHands.system.slug)
+      if (hands) {
+        hasHands = true
+      }
+    }
+
+    if (!hasHands) {
+      let itemData = compendiumHands.toObject()
+      itemData.system.equipped = true
+
+      // Création de l'objet
+      const newEquipment = await this.createEmbeddedDocuments("Item", [itemData])
+
+      // Mise à jour de la source de toutes les actions et modificateurs
+      if (newEquipment[0].actions.length > 0) {
+        const actions = newEquipment[0].toObject().system.actions
+        for (const action of actions) {
+          action.source = newEquipment[0].uuid
+          // Mise à jour de la source de tous les modificateurs s'il y en a
+          if (action.modifiers.length > 0) {
+            for (const modifier of action.modifiers) {
+              modifier.source = newEquipment[0].uuid
+            }
+          }
+        }
+        await newEquipment[0].update({ "system.actions": actions })
+        return newEquipment[0].uuid
+      }
+    }
+  }
+
+  getRollData() {
+    const rollData = { ...this.system }
+
+    if (!["character", "encounter"].includes(this.type)) {
+      return rollData
+    }
+
+    rollData.agi = this.system.abilities.agi.value
+    rollData.for = this.system.abilities.for.value
+    rollData.con = this.system.abilities.con.value
+    rollData.per = this.system.abilities.per.value
+    rollData.cha = this.system.abilities.cha.value
+    rollData.int = this.system.abilities.int.value
+    rollData.vol = this.system.abilities.vol.value
+    rollData.def = this.system.combat.def.value
+    rollData.ini = this.system.combat.init.value
+
+    if (this.type === "character") {
+      rollData.niv = this.system.attributes.level
+      rollData.atc = this.system.combat.melee.value
+      rollData.atd = this.system.combat.ranged.value
+      rollData.atm = this.system.combat.magic.value
+    }
+    if (this.type === "encounter") {
+      rollData.niv = this.system.attributes.nc
+      rollData.nc = this.system.attributes.nc
+      // @atc / @atd : score d'attaque au contact / à distance de la créature, comme pour un personnage.
+      // Même source que celle utilisée par rollAttack pour une rencontre (system.combat.melee/ranged.value).
+      rollData.atc = this.system.combat.melee.value
+      rollData.atd = this.system.combat.ranged.value
+      rollData.atm = this.system.magic
+    }
+
+    rollData.malusArmure = this.equippedArmors[0]?.system.overloadMalus ?? 0
+
+    return rollData
+  }
+
+  // #region Accesseurs
+
+  /**
+   * Retourne  les Items de type equipment
+   */
+  get equipments() {
+    return this.itemTypes.equipment
+  }
+
+  /**
+   * Retourne  les Items de type feature
+   */
+  get features() {
+    return this.itemTypes.feature
+  }
+
+  /**
+   * Retourne  les Items de type feature et sous type peuple
+   */
+  get people() {
+    return this.features.filter((i) => i.system.subtype === SYSTEM.FEATURE_SUBTYPE.people.id)
+  }
+
+  /**
+   * Retourne  les Items de type path
+   */
+  get paths() {
+    return this.itemTypes.path
+  }
+
+  /**
+   * Retourne  les Items de type capacity
+   */
+  get capacities() {
+    return this.itemTypes.capacity
+  }
+
+  /**
+   * Retourne  les Items de type profile
+   */
+  get profiles() {
+    return this.itemTypes.profile
+  }
+
+  get mainProfile() {
+    if (this.profiles.length > 0) return this.profiles[0]
+    return undefined
+  }
+
+  /**
+   * Retourne un tableau d'objets comprenant les voies et les capacités associées, triées par leur propriété sort
+   */
+  async getPathGroups() {
+    let pathGroups = []
+    const sortedPaths = [...this.paths].sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    for (const path of sortedPaths) {
+      const capacitesId = path.system.capacities
+        .map((uuid) => {
+          return uuid ? foundry.utils.parseUuid(uuid).id : null
+        })
+        .filter((id) => id !== null)
+
+      const capacities = capacitesId.map((id) => this.items.find((i) => i._id === id)).filter((item) => item !== null && item !== undefined)
+
+      // Cas des capacités liées
+      for (const capacity of capacities) {
+        if (capacity.system.allowLinkedCapacity) {
+          if (capacity.system.linkedCapacity) {
+            const linkedCapacity = await fromUuid(capacity.system.linkedCapacity)
+            if (linkedCapacity) {
+              capacity.linkedCapacityName = linkedCapacity.name
+              capacity.linkedCapacityImg = linkedCapacity.img
+              capacity.linkedCapacityItem = linkedCapacity
+            }
+          } else {
+            capacity.linkedCapacityName = ""
+            capacity.linkedCapacityImg = "systems/co2/ui/effects/question.webp"
+            capacity.linkedCapacityItem = null
+          }
+        }
+      }
+
+      pathGroups.push({
+        path: path,
+        items: capacities,
+        expanded: Utils.getExpandedState(`co-${this.id}-paths-${path.system.slug}`),
+      })
+    }
+    return pathGroups
+  }
+
+  /**
+   * Gets the inventory organized by equipment categories.
+   *
+   * Retrieves all equipment items grouped by their subtypes (weapon, armor, shield, consumable, misc),
+   * sorted by their sort property. For each category, it also retrieves the expanded state from
+   * localStorage to remember the user's UI preferences.
+   *
+   * @returns {Array<{category: string, nbItems: number, items: Array, expanded: boolean, showUsage: boolean}>} An array of inventory categories, where each object contains:
+   *   - category: The equipment subtype identifier
+   *   - nbItems: The number of items in this category
+   *   - items: Array of equipment items in this category, sorted by their sort value
+   *   - expanded: Boolean indicating whether the category should be displayed as expanded in the UI (retrieved from localStorage)
+   *   - showUsage: Boolean indicating whether the usage (hands) column should be displayed for this category
+   */
+  get inventory() {
+    let inventory = []
+    const categories = [
+      SYSTEM.EQUIPMENT_SUBTYPES.weapon.id,
+      SYSTEM.EQUIPMENT_SUBTYPES.armor.id,
+      SYSTEM.EQUIPMENT_SUBTYPES.shield.id,
+      SYSTEM.EQUIPMENT_SUBTYPES.consumable.id,
+      SYSTEM.EQUIPMENT_SUBTYPES.misc.id,
+    ]
+
+    // Les objets rangés dans un contenant ne sont affichés que dans le contenant : on les exclut
+    // des catégories de l'inventaire libre.
+    const contained = this.containedItemUuids
+
+    categories.forEach((category) => {
+      const expanded = Utils.getExpandedState(`co-${this.id}-${category}`)
+
+      // Trier selon la valeur de sort
+      const items = this.equipments.filter((item) => item.system.subtype === category && !contained.has(item.uuid)).sort((a, b) => a.sort - b.sort)
+
+      inventory.push({
+        category,
+        nbItems: items.length,
+        items,
+        expanded,
+        // Le nombre de mains n'a pas de sens pour une armure : la fiche d'objet ne propose
+        // pas non plus le champ usage pour ce sous-type (cf. templates/items/equipment.hbs)
+        showUsage: category !== SYSTEM.EQUIPMENT_SUBTYPES.armor.id,
+      })
+    })
+
+    return inventory
+  }
+
+  /**
+   * Retourne les Items de type container, triés par sort.
+   * @returns {Array}
+   */
+  get containers() {
+    return this.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.container.id).sort((a, b) => a.sort - b.sort)
+  }
+
+  /**
+   * Ensemble des UUID de tous les objets rangés dans un contenant de l'acteur (d'après les `contents`
+   * de chaque contenant). Sert à masquer ces objets des catégories de l'inventaire libre.
+   * @returns {Set<string>}
+   */
+  get containedItemUuids() {
+    const set = new Set()
+    for (const container of this.items) {
+      if (container.type !== SYSTEM.ITEM_TYPE.container.id) continue
+      for (const uuid of container.system.contents) set.add(uuid)
+    }
+    return set
+  }
+
+  /**
+   * Retourne toutes les capacités apprises de l'acteur.
+   * @returns {Array} Un tableau de capacités dont la propriété system.learned est à true
+   */
+  get learnedCapacities() {
+    return this.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.learned)
+  }
+
+  /**
+   * Retourne les capacités qui ne sont pas associées à une voie.
+   * Une capacité dont la voie n'existe plus sur l'acteur est également considérée hors voie : sans cela
+   * elle ne serait affichée nulle part sur la feuille et ne pourrait donc plus être supprimée.
+   *
+   * @returns {Array<Object>} Un tableau de capacités
+   */
+  get capacitiesOffPaths() {
+    return this.items.filter((item) => {
+      if (item.type !== SYSTEM.ITEM_TYPE.capacity.id) return false
+      if (!item.system.path) return true
+      return !this.getEmbeddedItemByUuid(item.system.path)
+    })
+  }
+
+  /**
+   * Retourne les Items de type equipment et de sous-type armor
+   */
+  get armors() {
+    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.armor.id)
+  }
+
+  /**
+   * Retourne les Items de type equipment et de sous-type shield
+   */
+  get shields() {
+    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.shield.id)
+  }
+
+  /**
+   * Retourne les Items de type equipment et de sous-type weapon
+   */
+  get weapons() {
+    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id)
+  }
+
+  get misc() {
+    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.misc.id)
+  }
+
+  /**
+   * Retourne les Items de type equipment et de sous-type consumable
+   */
+  get consumables() {
+    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.consumable.id)
+  }
+
+  get equippedEquipments() {
+    return this.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.equipment.id && item.system.equipped)
+  }
+
+  /**
+   * Retourne les Items équipés de type equipment et de sous-type weapon
+   */
+  get equippedWeapons() {
+    return this.weapons.filter((item) => item.system.equipped)
+  }
+
+  /**
+   * Retourne les Items équipés de type equipment et de sous-type armor
+   */
+  get equippedArmors() {
+    return this.armors.filter((item) => item.system.equipped)
+  }
+
+  get mainArmor() {
+    if (this.equippedArmors.length > 0) return this.equippedArmors[0]
+    return undefined
+  }
+
+  /**
+   * Retourne les Items équipés de type equipment et de sous-type shield
+   */
+  get equippedShields() {
+    return this.shields.filter((item) => item.system.equipped)
+  }
+
+  get mainShield() {
+    if (this.equippedShields.length > 0) return this.equippedShields[0]
+    return undefined
+  }
+
+  /**
+   * Renvoi true si l'acteur est en incapacité de faire quelque chose
+   */
+  get isIncapacitated() {
+    if (this.system.attributes.hp.value === 0) return true
+    if (this.hasEffect("immobilized") || this.hasEffect("paralysis") || this.hasEffect("stun") || this.hasEffect("unconscious") || this.hasEffect("dead")) return true
+    return false
+  }
+
+  /**
+   * Retourne Toutes les actions de tous les objets
+   */
+  get actions() {
+    let allActions = []
+    this.items.forEach((item) => {
+      if (item.actions.length > 0) allActions.push(...item.actions)
+    })
+    return allActions
+  }
+
+  /**
+   * Calcule la défense de l'armure et du bouclier équipés
+   * Retourne  {Int} la somme des DEF
+   */
+  get defenseFromArmorAndShield() {
+    return this.defenseFromArmor + this.defenseFromShield
+  }
+
+  /**
+   * Calcule la valeur totale de défense des armures équipées.
+   *
+   * @returns {number} La valeur totale de défense de la première armure équipée, ou 0 si aucune armure n'est équipée.
+   */
+  get defenseFromArmor() {
+    const armors = this.equippedArmors
+    if (armors.length > 0) {
+      const armor = armors[0]
+      return armor.system.totalDefense
+    }
+    return 0
+  }
+
+  /**
+   * Récupère la valeur totale de défense du premier bouclier équipé.
+   *
+   * @returns {number} La valeur totale de défense du premier bouclier équipé, ou 0 si aucun bouclier n'est équipé.
+   */
+  get defenseFromShield() {
+    const armors = this.equippedShields
+    if (armors.length > 0) {
+      const armor = armors[0]
+      return armor.system.totalDefense
+    }
+    return 0
+  }
+
+  /**
+   * Retrieves the overload malus from the first equipped armor.
+   *
+   * @returns {number} The overload malus value from the first equipped armor, or 0 if no armors are equipped.
+   */
+  get malusFromArmor() {
+    const armors = this.equippedArmors
+    if (armors.length === 0) return 0
+    const base = -1 * armors[0].system.overloadMalus
+    const modifiers = this.system.computeTotalModifiersByTarget(this.system.attributeModifiers, SYSTEM.MODIFIERS_TARGET.armorMalus.id)
+    return Math.min(0, base + modifiers.total)
+  }
+
+  get isUnlocked() {
+    if (this.getFlag(game.system.id, "SheetUnlocked")) return true
+    return false
+  }
+
+  /**
+   * Checks if the actor can use capacities based on their equipped armor and shields
+   *
+   * @returns {boolean} Returns true if the actor is trained with the equipped armor and/or shield
+   */
+  get canUseCapacities() {
+    let armorTrained = true
+    const armor = this.mainArmor
+    if (armor) armorTrained = this.isTrainedWithArmor(armor.id)
+    let shieldTrained = true
+    const shield = this.mainShield
+    if (shield) shieldTrained = this.isTrainedWithShield(shield.id)
+    return armorTrained && shieldTrained
+  }
+
+  /**
+   * Renvoi la liste des effets personnalisé actuellement sur l'acteur
+   * @returns {Array<CustomEffectData>} Tableau de customEffectData
+   */
+  get customEffects() {
+    return this.system.currentEffects
+  }
+
+  /**
+   * Checks if the actor has a specific effect.
+   *
+   * @param {string} effectid The ID of the effect to check.
+   * @returns {boolean} Returns true if the actor has the effect, otherwise false.
+   */
+  hasEffect(effectid) {
+    return this.statuses.has(effectid)
+  }
+
+  /**
+   * Applique les remplacements de statuts déclarés par le module de règles actif.
+   * Cette interception couvre aussi les appels directs à l'API Foundry et les anciennes capacités.
+   *
+   * @param {string} statusId Identifiant demandé.
+   * @param {object|boolean} [options] Options Foundry.
+   * @returns {Promise<ActiveEffect|boolean>}
+   * @override
+   */
+  async toggleStatusEffect(statusId, options) {
+    const replacements = game.system.CONST.statusRules?.replacements ?? {}
+    return super.toggleStatusEffect(resolveStatusId(statusId, replacements), options)
+  }
+
+  /**
+   * Vérifie qu'aucune autre posture défensive n'est déjà active avant d'en activer une.
+   * Les postures sont apportées par un module de contenu via game.system.CONST.defenseStances :
+   * si l'effet n'en est pas une, il n'y a rien à contrôler.
+   *
+   * @param {string} effectid Identifiant du statut que l'on cherche à activer
+   * @returns {boolean} false si une autre posture est déjà active, avec un avertissement à l'utilisateur
+   */
+  canActivateDefenseStance(effectid) {
+    const stances = game.system.CONST.defenseStances
+    if (!stances.some((stance) => stance.id === effectid)) return true
+
+    const active = stances.find((stance) => stance.id !== effectid && this.hasEffect(stance.id))
+    if (!active) return true
+
+    ui.notifications.warn(game.i18n.localize("CO.notif.cantUseAllDef"))
+    return false
+  }
+
+  get isWeakened() {
+    return this.hasEffect("weakened")
+  }
+
+  get isImmobilized() {
+    return this.hasEffect("immobilized")
+  }
+
+  // #endregion
+
+  // #region Méthodes publiques
+
+  /**
+   * Retourne Toutes les actions visibles des capacités et des équipements
+   * Pour les capacités, ne retourne pas les actions des capacités dont l'armure est trop élevée
+   * La liste est triée par nom d'item puis par nom d'action
+   */
+  async getVisibleActions() {
+    let allActions = []
+    for (const item of this.items) {
+      // Actions des équipements — sauf ceux rangés dans un contenant (non accessibles directement)
+      if (SYSTEM.ITEM_TYPE.equipment.id === item.type && !item.system.container) {
+        const itemActions = await item.getVisibleActions(this)
+        allActions.push(...itemActions)
+      }
+      // Action des capacités : une armure non maîtrisée empêche leur utilisation
+      if (SYSTEM.ITEM_TYPE.capacity.id === item.type && this.canUseCapacities) {
+        const itemActions = await item.getVisibleActions(this)
+        allActions.push(...itemActions)
+      }
+    }
+    // Tri par nom d'item puis par nom d'action pour garantir un ordre cohérent
+    return allActions.sort((a, b) => {
+      const itemCompare = a.itemName.localeCompare(b.itemName)
+      return itemCompare !== 0 ? itemCompare : a.label.localeCompare(b.label)
+    })
+  }
+
+  /**
+   * Retourne une Map des actions visibles groupées par type d'action
+   * @returns {Promise<Map<string, Array>>} Map avec les id des types d'actions comme clés et les tableaux d'actions comme valeurs
+   */
+  async getVisibleActivableActionsByActionType() {
+    const allActions = await this.getVisibleActivableActions()
+    const actionsByType = new Map()
+
+    // Initialiser la map avec tous les types d'actions possibles
+    for (const actionType of Object.values(SYSTEM.ACTION_TYPES)) {
+      actionsByType.set(actionType.id, [])
+    }
+
+    // Grouper les actions par type
+    for (const action of allActions) {
+      if (actionsByType.has(action.type)) {
+        actionsByType.get(action.type).push(action)
+      }
+    }
+
+    return actionsByType
+  }
+
+  /**
+   * Retourne une Map des actions visibles groupées par type d'action de la capacité (l, a, m, f)
+   * @returns {Promise<Map<string, Array>>} Map avec les id des types d'actions comme clés et les tableaux d'actions comme valeurs
+   */
+  async getVisibleActivableActionsByCapacityActionType() {
+    const allActions = await this.getVisibleActivableActions()
+    const actionsByCapacityType = new Map()
+
+    // Initialiser la map avec tous les types d'actions de capacité possibles
+    for (const type of Object.values(SYSTEM.CAPACITY_ACTION_TYPE)) {
+      actionsByCapacityType.set(type.id, [])
+    }
+
+    // Grouper les actions par type
+    for (const action of allActions) {
+      if (actionsByCapacityType.has(action.type)) {
+        actionsByCapacityType.get(action.type).push(action)
+      }
+    }
+
+    return actionsByCapacityType
+  }
+
+  /**
+   * Retourne Toutes les actions visibles et activables des capacités et des équipements
+   */
+  async getVisibleActivableActions() {
+    const actions = await this.getVisibleActions()
+    return actions.filter((a) => a.properties.activable) // .sort((a, b) => a.actionName.localeCompare(b.actionName))
+  }
+
+  /**
+   * Retourne Toutes les actions visibles, activables et temporaires des capacités et des équipements
+   */
+  async getVisibleActivableTemporaireActions() {
+    const actions = await this.getVisibleActions()
+    return actions.filter((a) => a.properties.activable && a.properties.temporary)
+  }
+
+  /**
+   * Retourne Toutes les actions visibles et non activables des capacités et des équipements
+   */
+  async getVisibleNonActivableActions() {
+    const actions = await this.getVisibleActions()
+    return actions.filter((a) => !a.properties.activable)
+  }
+
+  /**
+   * Retourne Toutes les actions visibles, non activables et non temporaires des capacités et des équipements
+   */
+  async getVisibleNonActivableNonTemporaireActions() {
+    const actions = await this.getVisibleActions()
+    return actions.filter((a) => !a.properties.activable && !a.properties.temporary)
+  }
+
+  /**
+   * Return all skill modifiers
+   * @param {string} ability str, dex ...
+   * Retourne {Object} Name, value, description
+   */
+  getSkillBonuses(ability) {
+    const modifiersByTarget = this.system.skillModifiers.filter((m) => m.target === ability)
+    // Ajout des modifiers qui affecte toutes les cibles
+    modifiersByTarget.push(...this.system.skillModifiers.filter((m) => m.target === SYSTEM.MODIFIERS_TARGET.all.id))
+
+    let bonuses = []
+    for (const modifier of modifiersByTarget) {
+      // Si le modifiera pour origine un customEffectData, il ne faut pas chercher sa source
+      if (!modifier.parent || modifier.parent instanceof CustomEffectData) {
+        const customeffect = this.system.currentEffects.find((e) => e.source === modifier.source)
+        if (customeffect) {
+          bonuses.push({
+            sourceType: "CustomEffectData",
+            name: customeffect.name,
+            description: customeffect.name,
+            pathName: game.i18n.localize("CO.label.long.effects"),
+            hasPathName: true,
+            value: modifier.evaluate(this),
+            additionalInfos: modifier.additionalInfos,
+          })
+        }
+      } else {
+        const sourceInfos = modifier.getSourceInfos(this)
+        bonuses.push({
+          sourceType: sourceInfos.sourceType,
+          name: sourceInfos.name,
+          description: sourceInfos.description,
+          pathName: sourceInfos.pathName,
+          hasPathName: sourceInfos.hasPathName,
+          value: modifier.evaluate(this),
+          additionalInfos: modifier.additionalInfos,
+        })
+      }
+    }
+    return bonuses
+  }
+
+  /**
+   * Retourne  l'objet correspondant à la clé
+   * @param {*} key
+   */
+  getEmbeddedItemByKey(key) {
+    return this.items.find((item) => item.system.key === key)
+  }
+
+  /**
+   * Retourne l'item embarqué sur l'acteur correspondant à un UUID.
+   * Contrairement à fromUuid, un UUID pointant vers le monde ou un compendium ne renvoie rien : seuls les
+   * items réellement portés par l'acteur peuvent être mis à jour ou supprimés, sans quoi Foundry lève une erreur.
+   *
+   * @param {string} uuid L'UUID de l'item recherché
+   * @returns {COItem|undefined} L'item embarqué, ou undefined si l'UUID ne désigne aucun item de l'acteur
+   */
+  getEmbeddedItemByUuid(uuid) {
+    const id = foundry.utils.parseUuid(uuid)?.id
+    if (!id) return undefined
+    return this.items.get(id)
+  }
+
+  /**
+   * Vérifie si le personnage est entraîné avec une arme
+   * @param {*} itemId
+   * @returns {boolean}
+   */
+  isTrainedWithWeapon(itemId) {
+    const item = this.weapons.find((item) => item.id === itemId)
+    if (!item) return null
+    const profile = this.system.profile
+    if (!profile) return null
+    const training = item.system.martialCategory
+    if (profile.system.martialTrainingsWeapons[training]) return true
+    return false
+  }
+
+  /**
+   * Vérifie si le personnage est entraîné avec une armure
+   * @param {*} itemId
+   * @returns {boolean}
+   */
+  isTrainedWithArmor(itemId) {
+    const item = this.armors.find((item) => item.id === itemId)
+    if (!item) return null
+    const profile = this.system.profile
+    if (!profile) return null
+    const training = item.system.martialCategory
+    if (profile.system.martialTrainingsArmors[training]) return true
+    return false
+  }
+
+  /**
+   * Vérifie si le personnage est entraîné avec un bouclier
+   * @param {*} itemId
+   * @returns {boolean}
+   */
+  isTrainedWithShield(itemId) {
+    const item = this.shields.find((item) => item.id === itemId)
+    if (!item) return null
+    const profile = this.system.profile
+    if (!profile) return null
+    const training = item.system.martialCategory
+    if (profile.system.martialTrainingsShields[training]) return true
+    return false
+  }
+
+  /**
+   * Vérifie si l'unité est immunisée contre un effet donné.
+   * @param {string} immunityTargetId L'ID de la cible d'immunité à vérifier (e.g., SYSTEM.MODIFIERS_TARGET.poisonImmunity.id).
+   * @param {string} immunityLabelKey La clé de localisation du message ("CO.label.long.poisonImmunity").
+   * @returns {boolean} True si l'effet peut être appliqué, False sinon.
+   */
+  checkImmunity(immunityTargetId, immunityLabelKey) {
+    // Les vérifications initiales
+    if (!this.system || !this.system.modifiers) {
+      return true // On ne peut pas vérifier, donc on laisse passer
+    }
+
+    // 1. Filtrer les modificateurs pour voir s'il y a une immunité
+    const states = this.system.modifiers.filter((m) => m.target === immunityTargetId)
+
+    if (states.length > 0) {
+      // 2. Logique d'immunité déclenchée
+      ui.notifications.info(`${this.name} ${game.i18n.localize(immunityLabelKey)}`)
+      return false // L'effet ne peut pas être appliqué
+    }
+
+    // 3. Pas d'immunité détectée
+    return true
+  }
+
+  /**
+   * Active ou désactive un effet de statut spécifique CO
+   * Assure que deux postures défensives ne peuvent pas être actives simultanément.
+   *
+   * @param {Object} [params={}] Les paramètres de la fonction.
+   * @param {boolean} params.state L'état à définir pour l'effet (true pour activer, false pour désactiver).
+   * @param {string} params.effectid L'ID de l'effet à basculer.
+   * @returns {Promise<boolean>} Renvoi true si ça a été appliqué et false sinon (immunisé ?)
+   *
+   */
+  async activateCOStatusEffect({ state, effectid } = {}) {
+    // FIXME Trouver pourquoi ça vaut ""
+    if (effectid === "") return false
+
+    effectid = resolveStatusId(effectid, game.system.CONST.statusRules?.replacements ?? {})
+
+    // On ne peut pas cumuler deux postures défensives
+    if (state && !this.canActivateDefenseStance(effectid)) return false
+
+    if (state) {
+      // Si on doit activer un effet, on vérifie les immunités
+      switch (effectid) {
+        case "poison":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.poisonImmunity.id, "CO.label.long.poisonImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+        case "bleeding":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.bleedingImmunity.id, "CO.label.long.bleedingImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+        case "stun":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.stunImmunity.id, "CO.label.long.stunImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.movementAlterationImmunity.id, "CO.label.long.movementAlterationImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+        case "immobilized":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.movementAlterationImmunity.id, "CO.label.long.movementAlterationImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+        case "paralysis":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.movementAlterationImmunity.id, "CO.label.long.movementAlterationImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+        case "weakened":
+          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.weakenedImmunity.id, "CO.label.long.weakenedImmunity")) {
+            return false // Bloqué par l'immunité
+          }
+          break
+      }
+    }
+
+    let hasEffect = this.statuses.has(effectid)
+    if (hasEffect && !state) return await this.toggleStatusEffect(effectid, state)
+    if (!hasEffect && state) return await this.toggleStatusEffect(effectid, state)
+    return true
+  }
+
+  /**
+   * Active ou désactive une action
+   * @param {*} state true to enable the action, false to disable the action
+   * @param {*} source uuid of the embedded item which is the source of the action
+   * @param {*} indice indice of the action in the array of actions
+   * @param {string("attack","damage")} type  define if it's an attack or just a damage
+   * @param {*} shiftKey true if the shift key is pressed
+   */
+  async activateAction({ state, source, indice, type, shiftKey = null } = {}) {
+    // Extraire l'ID de l'item depuis l'UUID source
+    // Fonctionne pour les tokens liés ET non-liés (syntheticActor)
+    const { id } = foundry.utils.parseUuid(source)
+    const item = this.items.get(id)
+    if (!item) return
+
+    // Point d'extension asynchrone : un module (ex. cof2-compagnon / Points d'Ego) peut enregistrer une promesse-garde
+    // via la fonction `guard`. Si l'une des gardes résout sur false, l'activation est annulée.
+    const coActivateGuards = []
+    Hooks.callAll("co2.preActivateAction", this, { item, indice, state, type, shiftKey, guard: (p) => coActivateGuards.push(Promise.resolve(p)) })
+    if (coActivateGuards.length > 0 && (await Promise.all(coActivateGuards)).some((v) => v === false)) return false
+
+    if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction`), state, source, indice, type, item)
+
+    // Si l'arme a la propriété "reloadable", on vérifie si l'arme a encore des munitions
+    if (state && item.type === SYSTEM.ITEM_TYPE.equipment.id && item.system.properties.reloadable && !item.system.hasCharges) {
+      return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoAmmo"))
+    }
+
+    // Si la capacité a une fréquence d'utilisation, on vérifie si la capacité a encore des charges
+    // Sauf si l'action spécifique ne consomme pas de charge (noChargesUsed)
+    if (state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.hasFrequency && !item.system.hasCharges) {
+      const actionToActivate = item.system.actions[indice]
+      if (!actionToActivate?.properties?.noChargesUsed) {
+        return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoCharge"))
+      }
+    }
+
+    // TODO Incantation
+    // Magie profane (famille des mages) : En revanche, il n’est pas possible d’utiliser un bouclier et une arme ou une arme dans chaque main tout en lançant des sorts de magie profane.
+    // Magie divine (famille des mystiques) : respecter les armes autorisées
+
+    // Profil hybride : gestion du lancement de sort avec une armure maitrisée mais trop lourde, ce qui implique un surcoût de mana
+    const manaCostFromArmor = item.type === SYSTEM.ITEM_TYPE.capacity.id ? item.system.getManaCostFromArmor(this) : 0
+
+    // Concentration accrue pour les sorts qui nécessitent une action d'attaque
+    let manaConcentration = false
+    if (item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell && item.system.actions[indice].isActionTypeAttack && shiftKey) {
+      manaConcentration = true
+    }
+
+    // Gestion de la brûlure de mana pour les sorts
+    let manaBurned = false
+    let manaBurnedCost = 0
+    // Si l'action consomme du mana, que la capacité est un sort et qu'on l'active, on vérifie que le nombre de PM restants est suffisant
+    if (!item.system.actions[indice].properties.noManaCost && state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell) {
+      const spellManaCost = item.system.actions[indice].manaCost + manaCostFromArmor - (manaConcentration ? 2 : 0)
+      if (spellManaCost > 0) {
+        if (this.system.resources.mana.value < spellManaCost) {
+          const needed = spellManaCost - this.system.resources.mana.value
+          const content = `Vous n'avez pas assez de mana : il vous manque ${needed} point(s) de mana. Voulez-vous tout de même lancer le sort en sacrifiant votre énergie vitale ?`
+          const proceed = await foundry.applications.api.DialogV2.confirm({
+            window: { title: "Brûlure de mana" },
+            content: content,
+            rejectClose: false,
+            modal: true,
+          })
+          if (!proceed) return
+          manaBurned = true
+          manaBurnedCost = needed
+        }
+      }
+    }
+
+    let results = []
+    let allResolversTrue
+
+    const action = foundry.utils.deepClone(item.system.actions[indice])
+    // Action avec une durée : changement de l'état de l'action
+    if (action.properties.temporary) {
+      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction - Action avec une durée`), state, source, indice, type, shiftKey, item)
+
+      // L'activation de l'action déclenche tous les resolvers
+      if (state) {
+        // Recherche des resolvers de l'action
+        let resolvers = Object.values(action.resolvers).map((r) => foundry.utils.deepClone(r))
+        // Résolution de tous les resolvers avant de continuer
+        results = await Promise.all(resolvers.map((resolver) => resolver.resolve(this, item, action, type)))
+        // Si tous les resolvers ont réussi
+        allResolversTrue = results.length > 0 && results.every((result) => result === true)
+      }
+      const newActions = item.system.toObject().actions
+      newActions[indice].properties.enabled = state
+      await item.update({ "system.actions": newActions })
+    }
+    // Action instantanée
+    else {
+      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction - Action instantanée`), state, source, indice, type, shiftKey, item)
+
+      // Recherche des resolvers de l'action
+      let resolvers = Object.values(action.resolvers).map((r) => foundry.utils.deepClone(r))
+      // Résolution de tous les resolvers avant de continuer
+      results = await Promise.all(resolvers.map((resolver) => resolver.resolve(this, item, action, type)))
+      // Si tous les resolvers ont réussi
+      allResolversTrue = results.length > 0 && results.every((result) => result === true)
+    }
+    // Pas de resolvers ou tous les resolvers ont été résolus avec succès
+    if (results.length === 0 || allResolversTrue) {
+      // Si c'est une capacité avec une fréquence d'utilisation qui est activée et que l'action en cours consomme des charges, il faut réduire le nombre de charges
+      if (action.chargesUsed > 0 && state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.hasFrequency && item.system.hasCharges) {
+        item.system.charges.current = Math.max(item.system.charges.current - action.chargesUsed, 0)
+        await item.update({ "system.charges.current": item.system.charges.current })
+      }
+      // Si c'est une capacité qui est un sort avec un coût en mana et qu'on l'active, il faut consommer les Points de Mana
+      if (state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell && !item.system.actions[indice].properties.noManaCost) {
+        const spellManaCost = item.system.getManaCost() + manaCostFromArmor - (manaConcentration ? 2 : 0)
+        if (spellManaCost > 0) {
+          const newMana = Math.max(this.system.resources.mana.value - spellManaCost, 0)
+          await this.update({ "system.resources.mana.value": newMana })
+
+          // Brûlure de mana
+          if (manaBurned) {
+            const recoveryDice = this.system.hd
+            if (recoveryDice) {
+              const burnRoll = new Roll(`${manaBurnedCost}${recoveryDice}`)
+              let result = await burnRoll.roll()
+              const message = game.i18n.format("CO.notif.manaBurn", { actorName: this.name, amount: result.total, capacityName: item.name })
+              new CoChat(this).withTemplate(SYSTEM.TEMPLATE.MESSAGE).withData({ message: message }).create()
+              const newHP = Math.max(this.system.attributes.hp.value - burnRoll.total, 0)
+              await this.update({ "system.attributes.hp.value": newHP })
+            }
+          }
+        }
+      }
+    }
+
+    // Hook d'extension : notifie un module (ex. cof2-compagnon / Points d'Ego) après une activation (success = resolvers OK)
+    Hooks.callAll("co2.postActivateAction", this, { item, indice, state, type, shiftKey, success: results.length === 0 || allResolversTrue })
+
+    return true
+  }
+
+  /**
+   * Bascule l'état appris d'une capacité pour un acteur.
+   * Si l'acteur apprend une capacité, le rang de la voie correspondante est augmenté.
+   * Si l'acteur désapprend une capacité, le rang de la voie correspondante est diminué et une éventuelle capacité liée doit aussi être désapprise.
+   *
+   * @param {string} capacityId L'ID de la capacité à basculer.
+   * @param {boolean} state L'état appris souhaité de la capacité.
+   * @returns {Promise<void>} Une promesse qui se résout lorsque l'opération est terminée.
+   */
+  async toggleCapacityLearned(capacityId, state) {
+    let capacity = this.items.get(capacityId)
+    if (!capacity) return
+
+    if (capacity.system.path === null) return
+    const { id } = foundry.utils.parseUuid(capacity.system?.path)
+    if (!id) return
+    let path = this.items.get(id)
+    if (!path) return
+    // Rang actuel de la voie
+    const currentRank = path.system.rank
+
+    // Apprentissage d'une capacité
+    if (state) {
+      if (!this.canLearnCapacity(capacity, path)) return
+    }
+
+    // Désapprentissage d'une capacité : pour les personnages uniquement, vérifier qu'on désapprend dans l'ordre
+    if (!state && this.type === "character" && currentRank !== capacity.system.rank) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningTargetCapacityRankLowerThanPathRank").replace("{capacityName}", capacity.name))
+      return
+    }
+    // Mise à jour de la capacité et de ses actions
+    await this._toggleItemFieldAndActions(capacity, "learned", state)
+
+    // Mise à jour du rang de la voie correspondante
+    // Cas particulier de la voie de prestige où le rang commence à 4
+    if (path.system.subtype === "prestige") {
+      await path.update({ "system.rank": 3 + path.system.numberLearnedCapacities })
+    } else {
+      await path.update({ "system.rank": path.system.numberLearnedCapacities })
+    }
+
+    // Gestion d'une éventuelle capacité liée
+    if (capacity.system.allowLinkedCapacity && capacity.system.linkedCapacity) {
+      const linkedCapacity = await fromUuid(capacity.system.linkedCapacity)
+      if (linkedCapacity && linkedCapacity.system.learned !== state) {
+        await this._toggleItemFieldAndActions(linkedCapacity, "learned", state)
+      }
+    }
+  }
+
+  /**
+   * Permet de déterminer si une capacité peut etre apprise en suivant les règles standard
+   * @param {CapacityData} capacity la capacité à apprendre
+   * @param {PathData} path la voie de la capacité
+   */
+  canLearnCapacity(capacity, path) {
+    // Pour les encounters : pas de validation, toutes les capacités peuvent être apprises librement
+    if (this.type === "encounter") {
+      return true
+    }
+
+    // RULE : Pour obtenir une capacité, il faut avoir un niveau minimal
+    // Les capacités de rang 6 à 8 sont réservées aux voies de prestige
+    const requiredLevel = SYSTEM.CAPACITY_MINIMUM_LEVEL[capacity.system.rank]
+
+    // Exception : Au niveau 1, un personnage avec un profil de la famille des mages peut apprendre une capacité de rang 2 parmi les 2 voies de profil choisies
+    if (this.type === "character" && this.system.profile && this.system.profile.system.family === "mage" && this.system.attributes.level === 1 && capacity.system.rank === 2) {
+      return true
+    }
+
+    if (this.system.attributes.level < requiredLevel) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningLevelTooLow"))
+      return false
+    }
+
+    // RULE : Pour apprendre une capacité, il faut avoir appris les précédentes
+    let pos = path.system.getCapacityRank(capacity.uuid)
+    for (let i = 0; i < pos; i++) {
+      let c = path.system.capacities[i]
+      const { id } = foundry.utils.parseUuid(c)
+      const current = this.items.get(id)
+      if (!current.system.learned) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningNeedLearnedCapacities"))
+        return false
+      }
+    }
+
+    return true
+  }
+
+  /**
+   * Equippe/Déséquippe un equipment du personnage
+   * Change le champ equipped de l'equipement
+   * @param {*} itemId
+   * @param {*} bypassChecks True to ignore the control of the hands
+   */
+  async toggleEquipmentEquipped(itemId, bypassChecks) {
+    // Contrôle usage des mains
+    let item = this.items.get(itemId)
+    if (item.system.usage.oneHand || item.system.usage.twoHand) {
+      if (!this.canEquipItem(item, bypassChecks)) return
+    }
+
+    // Mise à jour de l'item et de ses actions
+    const currentState = item.system.equipped
+    await this._toggleItemFieldAndActions(item, "equipped", !currentState)
+  }
+
+  /**
+   * Updates the size of the prototype token and active tokens based on the current size.
+   *
+   * @param {string} currentsize The current size identifier to update the token sizes.
+   * @returns {Promise<void>} A promise that resolves when the token sizes have been updated.
+   */
+  async updateSize(currentsize) {
+    const sizemodifier = SYSTEM.TOKEN_SIZE[currentsize]
+    // Prototype token size
+    if (sizemodifier.size !== this.prototypeToken.width || sizemodifier.scale !== this.prototypeToken.texture.scaleX) {
+      await this.update({ prototypeToken: { width: sizemodifier.size, height: sizemodifier.size, "texture.scaleX": sizemodifier.scale, "texture.scaleY": sizemodifier.scale } })
+    }
+    // Active token sizes
+    if (canvas.scene) {
+      // Only tokens that are linked to the actor
+      const tokens = this.getActiveTokens(true)
+      const updates = []
+      for (const token of tokens) {
+        if (token.width !== sizemodifier.size || sizemodifier.scale !== this.prototypeToken.texture.scaleX)
+          updates.push({ _id: token.id, width: sizemodifier.size, height: sizemodifier.size, "texture.scaleX": sizemodifier.scale, "texture.scaleY": sizemodifier.scale })
+      }
+      await canvas.scene.updateEmbeddedDocuments("Token", updates)
+    }
+  }
+
+  /**
+   * Consomme une unité de munitions pour l'objet donné s'il possède la propriété "reloadable".
+   * Met à jour les charges actuelles de l'objet pour refléter le changement.
+   *
+   * @async
+   * @param {Object} item L'objet représentant l'arme ou l'outil.
+   * @param {Object} item.system Les données système de l'objet.
+   * @param {Object} item.system.properties Les propriétés de l'objet.
+   * @param {boolean} item.system.properties.reloadable Indique si l'objet est rechargeable.
+   * @param {Object} item.system.charges Les données des charges de l'objet.
+   * @param {number} item.system.charges.current Le nombre actuel de charges disponibles.
+   * @returns {Promise<void>} Résout lorsque les charges de l'objet ont été mises à jour.
+   */
+  async consumeAmmunition(item) {
+    // Si l'arme a la propriété "reloadable", on consomme une munition
+    if (item.system.properties.reloadable) {
+      let newCharges = Math.max(0, item.system.charges.current - 1)
+      await item.update({ "system.charges.current": newCharges })
+    }
+  }
+
+  /**
+   * Acquire targets based on the specified target type and scope.
+   *
+   * - none: returns an empty array
+   * - self: returns the active tokens of the actor
+   * - single: returns a single target based on the scope and number
+   * - multiple: returns multiple targets based on the scope and number
+   *
+   * @param {string} targetType The type of target to acquire. Can be "none", "self", "single", or "multiple".
+   * @param {string} targetScope The scope of the target acquisition : allies, enemies, all.
+   * @param {integer} targetNumber The number maximum of targets.
+   * @param {string} actionName The name of the action to be performed on the targets.
+   * @param {Object} [options={}] Additional options for target acquisition.
+   * @returns {Array} An array of acquired targets.
+   * @throws {Error} Throws an error if any target has an error.
+   */
+  acquireTargets(targetType, targetScope, targetNumber, actionName, options = {}) {
+    if (!canvas.ready) return []
+    let targets = []
+
+    switch (targetType) {
+      case "none":
+      case "self":
+        break
+      case "single":
+        targets = this._getTargets(actionName, targetScope, 1, true)
+        break
+      case "multiple":
+        targets = this._getTargets(actionName, targetScope, targetNumber, false)
+        break
+    }
+    return targets
+  }
+
+  // #endregion
+
+  /**
+   * Update this Document using a provided JSON string.
+   * @param {string} json                 Raw JSON data to import
+   * Only world Documents may be imported.
+   * @this {ClientDocument}
+   * @returns {Promise<ClientDocument>}   The updated Document instance
+   */
+  /* override */
+  async importFromJSON(json) {
+    const actor = await super.importFromJSON(json)
+    await actor.system.updateAllActionsUuid()
+    return actor
+  }
+
+  // #region méthodes privées
+
+  /**
+   * Toggles the state of a specified field and updates the actions of an item.
+   *
+   * @param {Object} item The item to update.
+   * @param {string} fieldName The name of the field to toggle.
+   * @param {boolean} state The new state to set for the field.
+   * @returns {Promise<void>} A promise that resolves when the item has been updated.
+   *
+   * @private
+   */
+  async _toggleItemFieldAndActions(item, fieldName, state) {
+    let updateData = { [`system.${fieldName}`]: state }
+    const nbActions = item.actions.length
+    if (nbActions > 0) {
+      let actions = item.system.toObject().actions
+      for (let index = 0; index < nbActions; index++) {
+        const action = actions[index]
+        // Si c'est une action non activable, l'activer automatiquement
+        if (!action.properties.activable) {
+          action.properties.enabled = state
+        } else {
+          // Si c'est une action activable mais sans conditions, la rendre visible
+          if (!action.hasConditions) {
+            action.properties.visible = state
+          }
+        }
+      }
+
+      foundry.utils.mergeObject(updateData, { "system.actions": actions })
+    }
+    await item.update(updateData)
+  }
+
+  /**
+   * Determines if the actor can equip the given item.
+   * Check if an item can be equiped, if one Hand or two Hands property is true
+   *
+   * @param {Object} item The item to be equipped.
+   * @param {boolean} bypassChecks Whether to bypass the usual checks.
+   * @returns {boolean} Returns true if the item can be equipped, otherwise false.
+   */
+  canEquipItem(item, bypassChecks) {
+    if (!this._hasEnoughFreeHands(item, bypassChecks)) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.NotEnoughFreeHands"))
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Checks if the actor has enough free hands to equip an item.
+   *
+   * @param {Object} item The item to be equipped.
+   * @param {boolean} bypassChecks Whether to bypass the free hands check.
+   * @returns {boolean} Returns true if the actor has enough free hands to equip the item, otherwise false.
+   */
+  _hasEnoughFreeHands(item, bypassChecks) {
+    // Si le contrôle de mains libres n'est pas demandé, renvoi true
+    let checkFreehands = game.settings.get("co2", "checkFreeHandsBeforeEquip")
+    if (!checkFreehands || checkFreehands === "none") return true
+
+    // Si le contrôle est ignoré ponctuellement avec la touche MAJ, on renvoi Vrai
+    if (bypassChecks && (checkFreehands === "all" || (checkFreehands === "gm" && game.user.isGM))) return true
+
+    // Si l'objet est équipé, on tente de le déséquiper donc on ne fait pas de contrôle et on renvoi Vrai
+    if (item.system.equipped) return true
+
+    // Nombre de mains nécessaire pour l'objet que l'on veux équipper
+    let neededHands = item.system.usage.twoHand ? 2 : 1
+
+    // Calcul du nombre de mains déjà utilisées : on récupère les armes, les boucliers et les objets divers qui utilisent des mains et sont équipés
+    let itemsInHands = this.items.filter(
+      (item) =>
+        (item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id ||
+          item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.shield.id ||
+          item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.misc.id) &&
+        item.system.useHands &&
+        item.system.equipped,
+    )
+    let usedHands = itemsInHands.reduce((total, item) => total + (item.system.usage.twoHand ? 2 : 1), 0)
+
+    return usedHands + neededHands <= 2
+  }
+
+  /**
+   * Checks if there is an item with the specified key in the items array.
+   *
+   * @param {string} slug The key to search for in the items array.
+   * @returns {boolean} Returns true if an item with the specified key exists, otherwise false.
+   */
+  hasItemWithKey(slug) {
+    return this.items.some((item) => item.system.slug === slug)
+  }
+
+  /**
+   * Retrieves an item from the items array that matches the given slug.
+   *
+   * @param {string} slug The slug to match against the item's system slug.
+   * @returns {Object|undefined} The item with the matching slug, or undefined if no match is found.
+   */
+  getItemWithKey(slug) {
+    return this.items.find((item) => item.system.slug === slug)
+  }
+
+  /**
+   * L'acteur dispose-t-il d'un point de chance utilisable ?
+   * Faux si aucun module de contenu n'active la règle : les points de chance sont propres à COF2 et
+   * sont conditionnés par game.system.CONST.rules.luckPoints.
+   *
+   * @returns {boolean}
+   */
+  get hasLuckyPoints() {
+    if (!game.system.CONST.rules.luckPoints) return false
+    return (this.system.resources?.fortune?.value ?? 0) > 0
+  }
+
+  /**
+   * Spends a specified amount of lucky points from the actor's fortune resources.
+   * Reduces the current lucky points by the given amount, ensuring the value doesn't go below zero.
+   *
+   * @param {number} amount The amount of lucky points to spend
+   * @returns {Promise} A promise that resolves when the actor's fortune value has been updated
+   */
+  spendLuckyPoints(amount) {
+    const currentLuckyPoints = this.system.resources.fortune.value
+    const newLuckyPoints = Math.max(0, currentLuckyPoints - amount)
+    return this.update({ "system.resources.fortune.value": newLuckyPoints })
+  }
+  // #endregion
+
+  // #region Méthode d'ajout et suppression des différents types d'item
+
+  /**
+   * Create a feature, and the linked modifiers, paths and capacities if they exist
+   * @param {*} feature
+   */
+  async addFeature(feature) {
+    let itemData = feature.toObject()
+    if (itemData.system.subtype === SYSTEM.FEATURE_SUBTYPE.people.id) {
+      if (!foundry.utils.isEmpty(this.people)) {
+        return
+      }
+    }
+
+    const hasChoiceGroups = itemData.system.modifiers.some((m) => m.choiceGroup > 0)
+    if (hasChoiceGroups) {
+      const selectedIndices = await CoFeatureModifierChoiceDialog.choose(itemData.system.modifiers)
+      if (!selectedIndices) return
+      itemData.system.modifiers = selectedIndices.map((i) => itemData.system.modifiers[i])
+      itemData.system.modifiers.forEach((m) => (m.choiceGroup = 0))
+    }
+
+    itemData = itemData instanceof Array ? itemData : [itemData]
+    const newFeature = await this.createEmbeddedDocuments("Item", itemData)
+
+    // Update the source of all modifiers with the uuid of the new embedded feature created
+    // Seule la source est réécrite : les autres champs du modifier (apply, additionalInfos, ...) sont conservés
+    if (newFeature[0].system.modifiers.length > 0) {
+      const newModifiers = newFeature[0].system.toObject().modifiers
+
+      for (const modifier of newModifiers) {
+        modifier.source = newFeature[0].uuid
+      }
+
+      await newFeature[0].update({ "system.modifiers": newModifiers })
+    }
+
+    // Create all Paths
+    let updatedPathsUuids = []
+    for (const path of feature.system.paths) {
+      let originalPath = await fromUuid(path)
+
+      // Item is null if the item has been deleted in the compendium or in the world
+      // TODO Add a warning message and think about a global rollback
+      if (originalPath !== null) {
+        // La méthode addPath peut renvoyer undefined si la voie a été refusée : on ne garde que les voies réellement créées
+        const newPathUuid = await this.addPath(originalPath)
+        if (newPathUuid) updatedPathsUuids.push(newPathUuid)
+      }
+    }
+
+    // Update the paths of the feature with ids of created paths
+    const updatePaths = { _id: newFeature[0].id, "system.paths": updatedPathsUuids }
+    await this.updateEmbeddedDocuments("Item", [updatePaths])
+
+    // Create all Capacities which are linked to the feature
+    let updatedCapacitiesUuids = []
+    for (const capacity of feature.system.capacities) {
+      let capa = await fromUuid(capacity)
+
+      // Item is null if the item has been deleted in the compendium or in the world
+      // TODO Add a warning message and think about a global rollback
+      if (capa !== null) {
+        const newCapacityUuid = await this.addCapacity(capa, null)
+        if (newCapacityUuid) updatedCapacitiesUuids.push(newCapacityUuid)
+      }
+    }
+
+    // Update the capacities of the feature with ids of created capacities
+    const updateCapacities = { _id: newFeature[0].id, "system.capacities": updatedCapacitiesUuids }
+    await this.updateEmbeddedDocuments("Item", [updateCapacities])
+  }
+
+  /**
+   * Create a profile, and the linked modifiers and paths if they exist
+   * Check the profile does not already exist
+   * Allow only two profiles : main and secondary
+   * @param {COItem} profile
+   * @returns {Promise<string>} A promise that resolves to the UUID of the newly created profile.
+   */
+  async addProfile(profile) {
+    if (this.profiles.length > 0) {
+      // On ne peut pas avoir deux fois le même profil
+      const existingProfile = this.profiles.find((p) => p.system.slug === profile.system.slug)
+      if (existingProfile) {
+        return ui.notifications.warn(game.i18n.localize("CO.notif.profileAlreadyExist"))
+      }
+      if (this.profiles.length >= 2) {
+        return ui.notifications.warn(game.i18n.localize("CO.notif.profileAlreadyTwo"))
+      }
+    }
+
+    let itemData = profile.toObject()
+
+    const hasChoiceGroups = itemData.system.modifiers.some((m) => m.choiceGroup > 0)
+    if (hasChoiceGroups) {
+      const selectedIndices = await CoFeatureModifierChoiceDialog.choose(itemData.system.modifiers)
+      if (!selectedIndices) return
+      itemData.system.modifiers = selectedIndices.map((i) => itemData.system.modifiers[i])
+      itemData.system.modifiers.forEach((m) => (m.choiceGroup = 0))
+    }
+
+    // C'est le profil principal
+    if (this.profiles.length === 0) {
+      itemData.system.mainProfile = true
+    }
+    itemData = itemData instanceof Array ? itemData : [itemData]
+    const newProfile = await this.createEmbeddedDocuments("Item", itemData)
+    if (newProfile[0].system.modifiers.length > 0) {
+      // Update the source of all modifiers with the uuid of the new embedded profile created
+      const newModifiers = newProfile[0].system.toObject().modifiers
+
+      for (const modifier of newModifiers) {
+        modifier.source = newProfile[0].uuid
+      }
+
+      await newProfile[0].update({ "system.modifiers": newModifiers })
+    }
+
+    // Create all Paths
+    let updatedPathsUuids = []
+    for (const path of profile.system.paths) {
+      let originalPath = await fromUuid(path)
+
+      // Item is null if the item has been deleted in the compendium or in the world
+      // TODO Add a warning message and think about a global rollback
+      if (originalPath !== null) {
+        // La méthode addPath peut renvoyer undefined si la voie a été refusée : on ne garde que les voies réellement créées
+        const newPathUuid = await this.addPath(originalPath, newProfile[0])
+        if (newPathUuid) updatedPathsUuids.push(newPathUuid)
+      }
+    }
+
+    // Update the paths of the profile with ids of created paths
+    await newProfile[0].update({ "system.paths": updatedPathsUuids })
+
+    // Ajoute l'équipement de départ du profil à l'inventaire (non équipé)
+    // addEquipment recopie l'item et réécrit le source des actions/modifiers sur la nouvelle instance
+    let updatedEquipmentUuids = []
+    for (const uuid of profile.system.equipment) {
+      const originalEquipment = await fromUuid(uuid)
+      // Item is null if the item has been deleted in the compendium or in the world
+      if (originalEquipment !== null) {
+        let newEquipmentUuid
+        // Un contenant est créé avec son contenu (addContainer) ; sinon équipement simple
+        if (originalEquipment.type === SYSTEM.ITEM_TYPE.container.id) {
+          const newContainer = await this.addContainer(originalEquipment)
+          newEquipmentUuid = newContainer?.uuid
+        } else {
+          newEquipmentUuid = await this.addEquipment(originalEquipment)
+        }
+        if (newEquipmentUuid) updatedEquipmentUuids.push(newEquipmentUuid)
+      }
+    }
+    // Update the equipment of the profile with the uuids of the created inventory items (for cascade delete)
+    await newProfile[0].update({ "system.equipment": updatedEquipmentUuids })
+
+    ui.notifications.warn(game.i18n.localize("CO.notif.warningProfileCreated"))
+    return newProfile[0].uuid
+  }
+
+  /**
+   * Adds a new path and its associated capacities to the system.
+   *
+   * @param {Object} path The path object to be added.
+   * @param {Object|null} [profile=null] The profile object related to the path creation, if any.
+   * @returns {Promise<string>} The UUID of the newly created path.
+   *
+   */
+  async addPath(path, profile = null) {
+    let itemData = path.toObject()
+
+    // Vérification du type de voie pour les encounters
+    if (this.type === "encounter" && itemData.system.subtype !== SYSTEM.PATH_TYPES.encounter.id) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningEncounterPathOnly"))
+      return
+    }
+
+    // If path creation is related to a profile creation
+    // Update maxDefenseArmor
+    if (profile !== null) {
+      itemData.system.maxDefenseArmor = profile.system.maxDefenseArmor
+    }
+    // S'il s'agit d'une voie de prestige on vérifie si on a pas déjà une voie de prestige, si oui on annule
+    if (itemData.system.subtype === SYSTEM.PATH_TYPES.prestige.id) {
+      let currentprestige = this.paths.find((item) => item.system.subtype === SYSTEM.PATH_TYPES.prestige.id)
+      if (currentprestige) {
+        ui.notifications.warn(game.i18n.localize("CO.notif.warningPrestigeAlreadyExist"))
+        return
+      }
+    }
+
+    // Create the path
+    const newPath = await this.createEmbeddedDocuments("Item", [itemData])
+    let updatedCapacitiesUuids = []
+    // Create all capacities
+    for (const capacity of path.system.capacities) {
+      let capa = await fromUuid(capacity)
+      // Item is null if the item has been deleted in the compendium or in the world
+      // TODO Add a warning message and think about a global rollback
+      if (capa !== null) {
+        const newCapacityUuid = await this.addCapacity(capa, newPath[0].uuid)
+        updatedCapacitiesUuids.push(newCapacityUuid)
+      }
+    }
+    // Update the array of capacities of the path with ids of created path
+    await newPath[0].update({ "system.capacities": updatedCapacitiesUuids })
+
+    return newPath[0].uuid
+  }
+
+  /**
+   * Add a capacity as an embedded item
+   * @param {COItem} capacity
+   * @param {UUID} pathUuid Uuid of the Path if the capacity is linked to a path
+   * @returns {Promise<string>} A promise that resolves to the UUID of the newly created capacity.
+   */
+  async addCapacity(capacity, pathUuid) {
+    let capacityData = capacity.toObject()
+    if (pathUuid !== null) capacityData.system.path = pathUuid
+    // Sinon le path n'est plus null mais vaut "", il faut donc le mettre à null
+    else capacityData.system.path = null
+
+    // Learned the capacity if the capacity is not linked to a path
+    if (pathUuid === null) capacityData.system.learned = true
+    const newCapacity = await this.createEmbeddedDocuments("Item", [capacityData])
+    // Update the source of all actions and all modifiers of the actions
+    if (newCapacity[0].actions.length > 0) {
+      const actions = newCapacity[0].toObject().system.actions
+      for (const action of actions) {
+        action.source = newCapacity[0].uuid
+        // Si la capacité est hors voies, on l'active par défaut
+        if (pathUuid === null) action.properties.enabled = true
+        // Update the source of all modifiers if there are some
+        if (action.modifiers.length > 0) {
+          for (const modifier of action.modifiers) {
+            modifier.source = newCapacity[0].uuid
+          }
+        }
+      }
+
+      await newCapacity[0].update({ "system.actions": actions })
+    }
+
+    return newCapacity[0].uuid
+  }
+
+  /**
+   * Ajoute une capacité obtenue à partir d'une capacité
+   * @param {*} capacity la capacité à ajouter
+   * @param {*} parentUuid Le uuid de la capacité parente
+   * @returns {string} renvoie l'uuid de la nouvelle capacité
+   */
+  async addLinkedCapacity(capacity, parentUuid) {
+    let capacityData = capacity.toObject()
+    capacityData.system.path = null
+    capacityData.system.learned = true
+    capacityData.system.cost = 0 // On passe par une capacité qui en donne une autre donc c'est gratuit
+    capacityData.system.parentCapacity = parentUuid // Référence à la capacité parente
+    const newCapacity = await this.createEmbeddedDocuments("Item", [capacityData])
+    // Update the source of all actions and all modifiers of the actions
+    if (newCapacity[0].actions.length > 0) {
+      const actions = newCapacity[0].toObject().system.actions
+      for (const action of actions) {
+        action.source = newCapacity[0].uuid
+        // La capacité est activée par défaut
+        action.properties.enabled = true
+        // Update the source of all modifiers if there are some
+        if (action.modifiers.length > 0) {
+          for (const modifier of action.modifiers) {
+            modifier.source = newCapacity[0].uuid
+          }
+        }
+      }
+
+      await newCapacity[0].update({ "system.actions": actions })
+    }
+
+    const parent = await fromUuid(parentUuid)
+    parent.system.linkedCapacity = newCapacity[0].uuid
+    await parent.update({ "system.linkedCapacity": newCapacity[0].uuid })
+
+    return newCapacity[0].uuid
+  }
+
+  /**
+   * Add an equipment as an embedded item
+   * @param {COItem} equipment
+   * @param {string|null} [container=null] UUID du contenant dans lequel ranger l'objet (ou null s'il est libre)
+   * Retourne {number} id of the created path
+   */
+  async addEquipment(equipment, container = null) {
+    let equipmentData = equipment.toObject()
+    // Appartenance à un contenant (UUID) ou objet libre (null)
+    equipmentData.system.container = container
+
+    // Fusion des empilables : uniquement avec un objet de même clé situé dans le MÊME contexte
+    // (même contenant, ou tous deux hors contenant). Un container pointant vers un contenant
+    // inexistant est traité comme null pour ne pas bloquer l'empilement d'objets orphelins.
+    const targetContainer = container || null
+    const existing = this.items.find((i) => {
+      if (i.type !== SYSTEM.ITEM_TYPE.equipment.id || i.system.slug !== equipmentData.system.slug) return false
+      let itemContainer = i.system.container || null
+      if (itemContainer && !this.items.get(foundry.utils.parseUuid(itemContainer).id)) itemContainer = null
+      return itemContainer === targetContainer
+    })
+    if (existing?.system?.properties?.stackable) {
+      let quantity = existing.system.quantity.current + equipmentData.system.quantity.current
+      if (existing.system.quantity.max) {
+        quantity = Math.min(quantity, existing.system.quantity.max)
+      }
+      await existing.update({ "system.quantity.current": quantity })
+      return existing.uuid
+    }
+
+    // Création de l'objet
+    const newEquipment = await this.createEmbeddedDocuments("Item", [equipmentData])
+
+    // Update the source of all actions and all modifiers of the actions
+    if (newEquipment[0].actions.length > 0) {
+      const actions = newEquipment[0].toObject().system.actions
+      for (const action of actions) {
+        action.source = newEquipment[0].uuid
+        // Update the source of all modifiers if there are some
+        if (action.modifiers.length > 0) {
+          for (const modifier of action.modifiers) {
+            modifier.source = newEquipment[0].uuid
+          }
+        }
+
+        await newEquipment[0].update({ "system.actions": actions })
+      }
+    }
+    return newEquipment[0].uuid
+  }
+
+  /**
+   * Ajoute un contenant comme item embarqué, en copiant aussi les objets qu'il contient sur
+   * l'acteur et en re-ciblant les liens (system.contents) du contenant vers ces nouvelles copies.
+   * @param {COItem} container Le contenant déposé
+   * @returns {Promise<COItem>} Le contenant créé sur l'acteur
+   */
+  async addContainer(container) {
+    // On crée d'abord le contenant afin de connaître son UUID
+    const containerData = container.toObject()
+    containerData.system.contents = []
+    const created = await this.createEmbeddedDocuments("Item", [containerData])
+    const newContainer = created[0]
+
+    // Mettre à jour la source des actions et de leurs modifiers
+    if (newContainer.actions.length > 0) {
+      const actions = newContainer.toObject().system.actions
+      for (const action of actions) {
+        action.source = newContainer.uuid
+        if (action.modifiers.length > 0) {
+          for (const modifier of action.modifiers) {
+            modifier.source = newContainer.uuid
+          }
+        }
+      }
+      await newContainer.update({ "system.actions": actions })
+    }
+
+    // Copier les objets contenus sur l'acteur en les rattachant au nouveau contenant.
+    // On passe l'UUID du contenant à addEquipment : la fusion des empilables reste cantonnée à ce
+    // contenant, ce qui évite tout mélange avec les objets d'un autre contenant.
+    const newUuids = []
+    for (const uuid of container.system.contents ?? []) {
+      const source = await fromUuid(uuid)
+      if (!source || source.type !== SYSTEM.ITEM_TYPE.equipment.id) continue
+      const newUuid = await this.addEquipment(source, newContainer.uuid)
+      if (newUuid && !newUuids.includes(newUuid)) newUuids.push(newUuid)
+    }
+
+    // Renseigner la liste contents du contenant (autorité d'affichage)
+    await newContainer.update({ "system.contents": newUuids })
+
+    return newContainer
+  }
+
+  /**
+   * Supprime un item de type Capacity ou Feature
+   * @param {*} itemId
+   */
+  async deleteItem(itemId) {
+    const item = this.items.find((item) => item.id === itemId)
+    switch (item.type) {
+      case SYSTEM.ITEM_TYPE.capacity.id:
+      case SYSTEM.ITEM_TYPE.feature.id:
+        return await this.deleteEmbeddedDocuments("Item", [itemId])
+      default:
+        break
+    }
+  }
+
+  /**
+   * Deletes a feature and its linked paths and capacities.
+   *
+   * @param {string} featureUuId The UUID of the feature to delete.
+   * @returns {Promise<void>} A promise that resolves when the feature and its linked paths and capacities are deleted.
+   */
+  async deleteFeature(featureUuId) {
+    const feature = this.getEmbeddedItemByUuid(featureUuId)
+    if (!feature) return
+
+    // Delete linked paths
+    for (const pathUuid of feature.system.paths) {
+      await this.deletePath(pathUuid)
+    }
+
+    // Delete linked capacities
+    for (const capacityUuid of feature.system.capacities) {
+      await this.deleteCapacity(capacityUuid)
+    }
+
+    await this.deleteEmbeddedDocuments("Item", [feature.id])
+  }
+
+  /**
+   * Deletes a profile and its linked paths.
+   *
+   * @param {string} profileUuid The ID of the profile to delete.
+   */
+  async deleteProfile(profileUuid) {
+    const profile = this.getEmbeddedItemByUuid(profileUuid)
+    if (!profile) return
+
+    // Delete linked paths
+    const pathsUuids = profile.system.paths
+    for (const pathUuid of pathsUuids) {
+      await this.deletePath(pathUuid)
+    }
+    // Suppression de l'équipement de départ créé sur le personnage
+    for (const equipmentUuid of profile.system.equipment) {
+      const equipment = this.getEmbeddedItemByUuid(equipmentUuid)
+      if (!equipment) continue
+      // Un contenant est supprimé avec son contenu
+      if (equipment.type === SYSTEM.ITEM_TYPE.container.id) await this.deleteContainer(equipment.uuid)
+      else await this.deleteEmbeddedDocuments("Item", [equipment.id])
+    }
+    await this.deleteEmbeddedDocuments("Item", [profile.id])
+  }
+
+  /**
+   * Deletes a path and its linked capacities based on the provided UUID.
+   *
+   * @param {string} pathUuid The UUID of the path to be deleted.
+   * @returns {Promise<void>}  A promise that resolves when the deletion is complete.
+   */
+  async deletePath(pathUuid) {
+    const path = this.getEmbeddedItemByUuid(pathUuid)
+    if (!path) return
+
+    // Delete linked capacities
+    const capacitiesUuId = path.system.capacities
+    // Pour chaque uuid, on appelle la méthode deleteCapacity
+    for (const capacityUuid of capacitiesUuId) {
+      await this.deleteCapacity(capacityUuid)
+    }
+
+    // Filet de sécurité : les capacités qui désignent la voie sans être listées par celle-ci
+    // seraient laissées orphelines, donc invisibles et non supprimables depuis la feuille
+    for (const capacity of this.capacities) {
+      if (capacity.system.path && foundry.utils.parseUuid(capacity.system.path)?.id === path.id) {
+        await this.deleteCapacity(capacity.uuid)
+      }
+    }
+
+    // Suppression de la voie
+    await this.deleteEmbeddedDocuments("Item", [path.id])
+
+    // Suppression de la voie du local storage
+    Utils.removeExpandedState(`co-${this.id}-paths-${path.system.slug}`)
+  }
+
+  /**
+   * Supprime une capacité des Embedded items par son UUID.
+   *
+   * @async
+   * @param {string} capacityUuid L'UUID de la capacité à supprimer.
+   * @returns {Promise<void>}  Une promesse qui se résout lorsque la capacité est supprimée.
+   */
+  async deleteCapacity(capacityUuid) {
+    const capacity = this.getEmbeddedItemByUuid(capacityUuid)
+    if (!capacity) return
+
+    // Si la capacité a une capacité liée, on la supprime aussi
+    if (capacity.system.allowLinkedCapacity && capacity.system.linkedCapacity) {
+      const linkedCapacity = this.getEmbeddedItemByUuid(capacity.system.linkedCapacity)
+      if (linkedCapacity) {
+        await this.deleteEmbeddedDocuments("Item", [linkedCapacity.id])
+      }
+    }
+
+    // On vérifie que cette capacité n'est pas liée à une autre
+    // Si c'est le cas, on enlève le lien
+    for (const c of this.capacities) {
+      if (c.system.linkedCapacity === capacityUuid) {
+        await c.update({ "system.linkedCapacity": null })
+      }
+    }
+
+    // Suppression de la capacité
+    await this.deleteEmbeddedDocuments("Item", [capacity.id])
+  }
+
+  /**
+   * Supprime un contenant et les objets qu'il contient.
+   *
+   * @param {string} containerUuid L'UUID du contenant à supprimer.
+   * @returns {Promise<void>} Une promesse qui se résout lorsque le contenant et son contenu sont supprimés.
+   */
+  async deleteContainer(containerUuid) {
+    const container = this.getEmbeddedItemByUuid(containerUuid)
+    if (!container) return
+
+    // Suppression des objets contenus
+    for (const uuid of container.system.contents) {
+      const content = this.getEmbeddedItemByUuid(uuid)
+      if (content) await this.deleteEmbeddedDocuments("Item", [content.id])
+    }
+
+    // Suppression du contenant
+    await this.deleteEmbeddedDocuments("Item", [container.id])
+  }
+  // #endregion
+
+  // #region Rolls
+
+  /**
+   * Lance un test de compétence pour l'acteur.
+   * Note de Caloup mise à jour 19-11-2025 : Pour l'usage de rollSkill ou on veux juste récupérer les resultat et pa les afficher je modifie la fonction
+   * je retourne le resultat et je met un argument showResult = true par defaut que je peux mettre à false pour récupérer uniquement le resultat dans d'autre circonstance (ex : save, opposite)
+   *
+   * @param {string} skillId L'ID de la compétence à lancer.
+   * @param {Object} [options] Options pour le test de compétence.
+   * @param {string} [options.rollMode] Le mode de lancer de dés à utiliser.
+   * @param {string} [options.chatFlavor] Le message de chat.
+   * @param {number} [options.bonus=0] Le bonus à ajouter au test.
+   * @param {number} [options.malus=0] Le malus à soustraire du test.
+   * @param {number} [options.critical=20] Le seuil critique pour le test.
+   * @param {number} [options.bonusDice] Le nombre de dés bonus à ajouter au jet.
+   * @param {number} [options.malusDice] Le nombre de dés malus à soustraire du jet.
+   * @param {number} [options.difficulty] La difficulté du test.
+   * @param {boolean} [options.oppositeRoll=false] Si le test est un jet opposé.
+   * @param {boolean} [options.useDifficulty] Si la difficulté doit être utilisée : dépend de l'option du système displayDifficulty
+   * @param {boolean} [options.showDifficulty] Si la difficulté doit être affichée : dépend de displayDifficulty et du user
+   * @param {boolean} [options.withDialog=true] Si une boîte de dialogue doit être affichée ou non.
+   * @param {Array} [options.targets] Les cibles du test.
+   * @param {boolean} [options.showResult=true] Whether to show the result in chat or just return it.
+   * @param options.skills
+   * @param options.showOppositeRoll
+   * @param {string[]} [options.skillContexts] Contextes autorisant la présélection de bonus contextuels.
+   * @returns {Roll, { diceResult, total, isCritical, isFumble, difficulty, isSuccess, isFailure }} Le jet et le résultat du jet de compétence
+   */
+  async rollSkill(
+    skillId,
+    {
+      rollMode = undefined,
+      chatFlavor = undefined,
+      bonus = 0,
+      malus = 0,
+      critical = 20,
+      bonusDice = undefined,
+      malusDice = undefined,
+      difficulty = undefined,
+      oppositeRoll = false,
+      useDifficulty = undefined,
+      showDifficulty = undefined,
+      withDialog = true,
+      targets = undefined,
+      showResult = true,
+      skills = undefined,
+      showOppositeRoll = true,
+      skillContexts = [],
+    } = {},
+  ) {
+    const options = {
+      rollMode,
+      chatFlavor,
+      bonus,
+      malus,
+      critical,
+      bonusDice,
+      malusDice,
+      difficulty,
+      oppositeRoll,
+      useDifficulty,
+      showDifficulty,
+      withDialog,
+      targets,
+      skillUsed: [],
+      showResult,
+      skillContexts,
+    }
+    /**
+     * A hook event that fires before the roll is made.
+     * @function co.preRollSkill
+     * @memberof hookEvents
+     * @param {string} skillId          skillId for the roll.
+     * @param {Object} options          Options for the roll.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.preRollSkill", skillId, options) === false) return
+
+    // Gestion de la visibilité du jet
+    if (rollMode === undefined) {
+      rollMode = game.settings.get("core", "messageMode")
+    }
+
+    // Gestion de la difficulté
+    const difficultyTooltip = difficulty
+    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    if (useDifficulty === undefined) useDifficulty = true
+    if (showDifficulty === undefined) {
+      showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
+    }
+
+    // Si la difficulté dépend de la cible unique
+    if (oppositeRoll && useDifficulty && targets === undefined) {
+      if (difficulty && difficulty.includes("@cible")) {
+        targets = this.acquireTargets("multiple", "all", 10, actionName)
+        if (targets.length === 0) {
+          difficulty = null
+        }
+        if (targets.length > 0) {
+          // Enlève le target. de la difficulté
+          difficulty = difficulty.replace(/@.*\./, "@")
+          difficulty = CORoll.replaceFormulaData(difficulty, targets[0].actor.getRollData())
+        }
+      }
+
+      // Si l'attaque demande un jet opposé contre la cible
+      else if (difficulty && difficulty.includes("@oppose")) {
+        targets = this.acquireTargets("multiple", "all", 10, actionName)
+        if (targets.length === 0) {
+          difficulty = null
+        }
+      }
+    }
+
+    // Encombrement de l'armure pour les jets d'agilité
+    if (skillId === "agi") {
+      malus = this.malusFromArmor
+    }
+
+    // Gestion des dés bonus et malus
+    let bonusDices = 0
+    let malusDices = 0
+
+    // Prise en compte des caractéristiques supérieures
+    const isSuperior = this.system.abilities[skillId].superior
+    if (isSuperior) bonusDices += 1
+
+    // Prise en compte de l'état affaibli
+    if (this.isWeakened) malusDices += 1
+
+    // Gestion des dés bonus et malus
+    if (bonusDice) bonusDices += bonusDice
+    if (malusDice) malusDices += malusDice
+
+    // Prise en compte d'un modifier qui donne un dé bonus
+    if (this.system.bonusDiceModifiers) {
+      let modifierBonusDice = this.system.bonusDiceModifiers.find((m) => m.target === skillId)
+      if (modifierBonusDice) bonusDices += 1
+    }
+    if (this.system.malusDiceModifiers) {
+      let modifierMalusDice = this.system.malusDiceModifiers.find((m) => m.target === skillId)
+      if (modifierMalusDice) malusDices += 1
+    }
+
+    const totalDices = bonusDices - malusDices
+
+    let formula = "1d20"
+    let dice = "standard"
+    if (totalDices > 0) {
+      formula = "2d20kh"
+      dice = "bonus"
+    } else if (totalDices < 0) {
+      formula = "2d20kl"
+      dice = "malus"
+    }
+
+    const skillValue = foundry.utils.getProperty(this, `system.abilities.${skillId}`).value
+    if (skillValue > 0) formula += `+${Math.abs(skillValue)}`
+    if (skillValue < 0) formula += `-${Math.abs(skillValue)}`
+
+    // Construction du message de chat
+    if (!chatFlavor) chatFlavor = `${game.i18n.localize(`CO.abilities.long.${skillId}`)}`
+
+    const skillBonuses = this.getSkillBonuses(skillId, { rollType: "skill", skillContexts: options.skillContexts }) // Récupère un tableau d'objets avec {name, description, value}
+    const hasSkillBonuses = skillBonuses.length > 0
+    const selectedSkillBonuses = summarizeSelectedSkillBonuses(skillBonuses)
+
+    // Gestion des points de chance
+    const hasLuckyPoints = this.hasLuckyPoints
+
+    // Construction du titre avec le format "FORce", "AGIlité", etc.
+    const shortAbility = game.i18n.localize(`CO.abilities.short.${skillId}`)
+    const longAbility = game.i18n.localize(`CO.abilities.long.${skillId}`)
+    const emphasizedAbility = shortAbility + longAbility.slice(shortAbility.length)
+    const vowels = "aeiouyàâéèêëïîôùûüAEIOUYÀÂÉÈÊËÏÎÔÙÛÜ"
+    const preposition = vowels.includes(longAbility.charAt(0)) ? "d'" : "de "
+    const title = `Test ${preposition}${emphasizedAbility}`
+
+    const dialogContext = {
+      rollMode,
+      rollModes: CONFIG.ChatMessage.modes,
+      dice,
+      formula,
+      skillValue,
+      actor: this,
+      skillId,
+      title,
+      flavor: chatFlavor,
+      bonus,
+      malus,
+      critical,
+      difficulty,
+      difficultyTooltip,
+      useDifficulty,
+      showDifficulty,
+      skillBonuses,
+      hasSkillBonuses,
+      totalSkillBonuses: selectedSkillBonuses.total,
+      targets,
+      hasTargets: targets?.length > 0,
+      hasLuckyPoints,
+      abilities: SYSTEM.ABILITIES,
+      skills,
+      skillUsed: selectedSkillBonuses.skillUsed, // Tableau de clef valeur pour stocker les noms des skill activés et leur bonus
+      showOppositeRoll,
+    }
+
+    let roll = await COSkillRoll.prompt(dialogContext, { withDialog: withDialog })
+    if (!roll) return null
+
+    // Si le jet opposé a été activé depuis le dialogue, on acquiert les cibles maintenant
+    if (roll.options.oppositeRoll && !targets?.length) {
+      targets = this.acquireTargets("multiple", "all", 10, chatFlavor)
+      if (targets.length > 0) {
+        roll.options.oppositeTarget = targets[0].uuid
+        roll.options.targetInfos = targets.map((t) => ({ name: t.name, img: t.token?.document?.texture?.src || t.actor?.img }))
+      }
+    }
+
+    /**
+     * A hook event that fires after the roll is made.
+     * @function co.postRollSkill
+     * @memberof hookEvents
+     * @param {string} skillId         skillId for the roll.
+     * @param {Object} options         Options for the roll.
+     * @param {Roll} roll              The roll made.
+     * @returns {boolean}              Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.postRollSkill", skillId, options, roll) === false) return
+
+    let result = CORoll.analyseRollResult(roll)
+
+    /**
+     * A hook event that fires before the results of the roll.
+     * @function co.resultRollSkill
+     * @memberof hookEvents
+     * @param {string} skillId          skillId for the roll.
+     * @param {Object} options          Options for the roll.
+     * @param {Object} result           The analysed result of the roll.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.resultRollSkill", skillId, options, roll, result) === false) return
+
+    if (showResult) {
+      // Prépare le message de résultat
+      const speaker = ChatMessage.getSpeaker({ actor: this, scene: canvas.scene })
+      let targetsUuid = targets?.map((target) => target.uuid)
+
+      await roll.toMessage(
+        {
+          speaker,
+          style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+          type: "skill",
+          system: {
+            result: result,
+            targets: targetsUuid,
+          },
+        },
+        { messageMode: roll.options.rollMode },
+      )
+    } else {
+      return { roll, result }
+    }
+  }
+
+  /**
+   * Lance un jet d'attaque
+   * @param {COItem} item : la source de l'action
+   * @param {*} options : Ensemble d'elements permettant les calculs
+   * @returns {*} Renvoi un tableau de résultat de jet de dé
+   */
+  async rollAttack(
+    item,
+    {
+      rollMode = undefined,
+      auto = false,
+      type = "attack",
+      useComboRolls = game.settings.get("co2", "useComboRolls"),
+      actionName = "",
+      actionType = SYSTEM.ACTION_TYPES.melee.id,
+      chatFlavor = "",
+      skillBonus = 0,
+      skillMalus = 0,
+      damageBonus = 0,
+      damageMalus = 0,
+      critical = undefined,
+      criticalTooltip = "",
+      bonusDice = undefined,
+      malusDice = undefined,
+      difficulty = undefined,
+      useDifficulty = undefined,
+      showDifficulty = undefined,
+      withDialog = true,
+      skillFormula = undefined,
+      skillFormulaSource = undefined,
+      skillFormulaTooltip = "",
+      damageFormula = undefined,
+      damageFormulaTooltip = "",
+      targetType = SYSTEM.RESOLVER_TARGET.none.id,
+      targetScope = SYSTEM.RESOLVER_SCOPE.all.id,
+      targets = undefined,
+      customEffect,
+      additionalEffect,
+      tactical = undefined, // Values : confident, precise, violent
+      hasAttackSuccessThreshold = false,
+      attackSuccessThreshold = undefined,
+    } = {},
+  ) {
+    const options = {
+      rollMode,
+      auto,
+      type,
+      useComboRolls,
+      actionName,
+      actionType,
+      chatFlavor,
+      skillBonus,
+      skillMalus,
+      damageBonus,
+      damageMalus,
+      critical,
+      criticalTooltip,
+      bonusDice,
+      malusDice,
+      difficulty,
+      useDifficulty,
+      showDifficulty,
+      withDialog,
+      skillFormula,
+      skillFormulaSource,
+      skillFormulaTooltip,
+      damageFormula,
+      damageFormulaTooltip,
+      targetType,
+      targets,
+      customEffect,
+      additionalEffect,
+      tactical,
+      hasAttackSuccessThreshold,
+      attackSuccessThreshold,
+    }
+    /**
+     * A hook event that fires before the roll is made.
+     * @function co.preRollAttack
+     * @memberof hookEvents
+     * @param {Object} item             Item used for the roll.
+     * @param {Object} options          Options for the roll.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.preRollAttack", item, options) === false) return
+
+    // Si l'arme a la propriété "reloadable", on vérifie si l'arme assez de munitions
+    if (item.system.properties.reloadable && item.system.charges.current <= 0) {
+      return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoAmmo"))
+    }
+
+    // Gestion des dommages temporaires : règle propre à COF2, pilotée par les tags de l'arme.
+    // Les tags sont déclarés par le module de contenu qui les porte (cf. cof2-base), le système ne
+    // connaît que leurs identifiants et n'y réagit que si la règle est activée.
+    let tempDamage = false
+    let canBeTempDamage = false
+
+    if (game.system.CONST.rules.tempDamage && item.type === "equipment") {
+      // Le tag DM temporaires impose les dommages temporaires
+      if (item.tags.has("dmtemporaires")) {
+        tempDamage = true
+        canBeTempDamage = true
+      }
+      // Le tag DM temporaires possibles les propose (exemple : arme contondante)
+      if (item.tags.has("dmtemporairespossibles")) {
+        canBeTempDamage = true
+      }
+    }
+
+    // Gestion de l'option tactique : contrôle des valeurs
+    if (tactical) {
+      if (tactical !== "confident" && tactical !== "precise" && tactical !== "violent") {
+        tactical = "none"
+      }
+    } else tactical = "none"
+
+    // Gestion de la visibilité du jet
+    if (rollMode === undefined) {
+      rollMode = game.settings.get("core", "messageMode")
+    }
+
+    // Gestion de la difficulté
+    const difficultyTooltip = difficulty
+    let oppositeRoll = false
+    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    if (!auto && useDifficulty === undefined) useDifficulty = true
+    if (!auto && showDifficulty === undefined) {
+      showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
+    }
+    // Si la difficulté dépend de la cible unique
+    if (!auto && useDifficulty) {
+      const optionalTargetCount = canvas.tokens?.placeables?.length ?? 999
+      if (difficulty && difficulty?.includes("@cible")) {
+        if (targets === undefined || targets.length === 0) {
+          if (targetType === SYSTEM.RESOLVER_TARGET.none.id) {
+            targets = this.acquireTargets(SYSTEM.RESOLVER_TARGET.multiple.id, SYSTEM.RESOLVER_SCOPE.all.id, optionalTargetCount, actionName)
+          } else {
+            targets = this.acquireTargets("single", "all", 1, actionName)
+          }
+        }
+        if (targets.length === 0) {
+          difficulty = null
+        } else {
+          // Enlève le cible. de la difficulté (résolu contre la première cible pour le résultat global)
+          difficulty = difficulty.replace(/@.*\./, "@")
+          difficulty = CORoll.replaceFormulaData(difficulty, targets[0].actor.getRollData())
+        }
+      }
+
+      // Si l'attaque demande un jet opposé contre la cible
+      else if (difficulty && difficulty.includes("@oppose")) {
+        oppositeRoll = true
+        if (targets === undefined || targets.length === 0) {
+          if (targetType === SYSTEM.RESOLVER_TARGET.none.id) {
+            targets = this.acquireTargets(SYSTEM.RESOLVER_TARGET.multiple.id, SYSTEM.RESOLVER_SCOPE.all.id, optionalTargetCount, actionName)
+          } else {
+            targets = this.acquireTargets("single", "all", 1, actionName)
+          }
+        }
+        if (targets.length === 0) {
+          difficulty = null
+        }
+      }
+    }
+
+    // Gestion du critique de l'attaque
+    // Si l'attaque n'est pas défini (champ vide dans l'item) on prend la valeur par défaut de l'acteur
+    if (critical === undefined || critical === "") {
+      critical = this.system.combat.crit.value
+    } else {
+      // Sinon on prend la valeur définie dans l'attaque et on applique le bonus éventuel de l'acteur
+      critical = Math.max(16, parseInt(critical) - (SYSTEM.BASE_CRITICAL - this.system.combat.crit.value))
+    }
+
+    // Récupération du tooltip du critique
+    criticalTooltip = this.system.combat.crit.tooltipValue
+
+    // Sauvegarde de la formule originale avant écrasement par le tooltip
+    const originalSkillFormula = skillFormulaTooltip
+
+    // Enrichissement du tooltip d'attaque avec les modificateurs de combat
+    if (this.type === "character") {
+      const attackType = Utils.getAttackTypeFromFormula(originalSkillFormula, actionType)
+      if (attackType) {
+        const attackSkillKey = actionType === SYSTEM.ACTION_TYPES.spell.id || actionType === SYSTEM.ACTION_TYPES.magical.id ? "magic" : actionType
+        const attackSkill = this.system.combat[attackSkillKey]
+        if (attackSkill?.tooltipValue) skillFormulaTooltip = attackSkill.tooltipValue
+      } else {
+        let tooltip = ""
+        for (const [key, ability] of Object.entries(this.system.abilities)) {
+          if (originalSkillFormula.includes(`@${key}`)) {
+            tooltip += ability.tooltipValue
+          }
+        }
+        if (tooltip) skillFormulaTooltip = tooltip
+      }
+    }
+
+    // Gestion des dés bonus et malus
+    let bonusDices = 0
+    let malusDices = 0
+
+    if (this.type === "character") {
+      // Gestion du dé bonus : en fonction de la formule originale, on déduit le type d'attaque et on cherche dans les modifiers
+      if (this.system.hasBonusDiceForAttack(Utils.getAttackTypeFromFormula(originalSkillFormula, actionType))) bonusDices += 1
+      // Gestion du dé malus : en fonction de la formule originale, on déduit le type d'attaque et on cherche dans les modifiers
+      if (this.system.hasMalusDiceForAttack(Utils.getAttackTypeFromFormula(originalSkillFormula, actionType))) malusDices += 1
+    } else if (this.type === "encounter") {
+      // Gestion du dé bonus : en fonction de la formule, on déduit le type d'attaque et on cherche dans les modifiers
+      if (this.system.hasBonusDiceForAttack(actionType)) bonusDices += 1
+      // Gestion du dé malus : en fonction de la formule, on déduit le type d'attaque et on cherche dans les modifiers
+      if (this.system.hasMalusDiceForAttack(actionType)) malusDices += 1
+    }
+
+    // Maitrise de l'arme : Si le personnage utilise une arme qu'il ne maîtrise pas, il subit un dé malus au test d'attaque.
+    if (item.type === SYSTEM.ITEM_TYPE.equipment.id && item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id) {
+      if (!this.isTrainedWithWeapon(item.id)) malusDices += 1
+    }
+
+    // Immobilisé : dé malus aux tests d'attaque
+    if (this.isImmobilized) malusDices += 1
+
+    // Affaibli : dé malus à tous les tests (y compris attaque)
+    if (this.isWeakened) malusDices += 1
+
+    if (bonusDice) bonusDices += bonusDice
+    if (malusDice) malusDices += malusDice
+
+    const totalDices = bonusDices - malusDices
+    let formula = "1d20"
+    let dice = "standard"
+    if (totalDices > 0) {
+      formula = "2d20kh"
+      dice = "bonus"
+    } else if (totalDices < 0) {
+      formula = "2d20kl"
+      dice = "malus"
+    }
+
+    // Gestion des modificateurs de dommages selon le type d'attaque
+    let modifierTarget
+    switch (actionType) {
+      case SYSTEM.ACTION_TYPES.melee.id:
+        modifierTarget = SYSTEM.MODIFIERS_TARGET.damMelee.id
+        break
+      case SYSTEM.ACTION_TYPES.ranged.id:
+        modifierTarget = SYSTEM.MODIFIERS_TARGET.damRanged.id
+        break
+      case SYSTEM.ACTION_TYPES.spell.id:
+        modifierTarget = SYSTEM.MODIFIERS_TARGET.damMagic.id
+        break
+    }
+    if (modifierTarget) {
+      let withDice = this.system.combatModifiers.some((m) => m.target === modifierTarget && m.value.match("[dD]\\d"))
+      const damModifiers = this.system.computeTotalModifiersByTarget(this.system.combatModifiers, modifierTarget, withDice)
+      if (damModifiers) {
+        if (damModifiers.total !== 0) damageFormula = `${damageFormula} + ${damModifiers.total}`
+        if (damModifiers.total !== 0) damageFormulaTooltip = damageFormulaTooltip.concat(" +", damModifiers.tooltip)
+      }
+    }
+
+    // Gestion des points de chance
+    const hasLuckyPoints = this.hasLuckyPoints
+
+    // Construction du message de chat
+    if (chatFlavor === "") chatFlavor = `${item.name} ${actionName}`
+
+    // Intégrer le score automatique à la formule, une seule fois. Les champs
+    // bonus/malus restent disponibles pour les ajustements ponctuels du jet.
+    if (this.type === "encounter" && item.type === "attack") {
+      const attack = Utils.prepareEncounterAttack(this, item, {
+        formula: originalSkillFormula || skillFormula || "0",
+        expandedFormula: skillFormulaSource,
+        resolvedFormula: skillFormula,
+      })
+      skillFormula = attack.formula
+      skillFormulaTooltip = attack.tooltip
+    }
+
+    let opposeResult = ""
+    let opposeTooltip = ""
+
+    let dialogTargets = targets ? [...targets] : []
+    if (type === "attack" && targets?.length > 0 && useDifficulty && showDifficulty) {
+      const targetDifficultyPreview = Utils.computeTargetResults(targets, difficultyTooltip, 0, {})
+      dialogTargets = targets.map((target, index) => ({
+        ...target,
+        previewDifficulty: targetDifficultyPreview[index]?.difficulty ?? null,
+      }))
+    }
+
+    if (targetScope && targetScope !== SYSTEM.RESOLVER_SCOPE.all.id && canvas.ready) {
+      const scopeDisposition = targetScope === SYSTEM.RESOLVER_SCOPE.allies.id ? CONST.TOKEN_DISPOSITIONS.FRIENDLY : CONST.TOKEN_DISPOSITIONS.HOSTILE
+      dialogTargets = dialogTargets.map((target) => {
+        const d = target.token?.document?.disposition
+        const isNeutralOrSecret = d === CONST.TOKEN_DISPOSITIONS.NEUTRAL || d === CONST.TOKEN_DISPOSITIONS.SECRET
+        if (!isNeutralOrSecret && d !== scopeDisposition) {
+          return { ...target, invalidScope: true }
+        }
+        return target
+      })
+      const existingUuids = new Set(dialogTargets.map((t) => t.uuid))
+      for (const token of game.user.targets) {
+        if (token.actor && !existingUuids.has(token.actor.uuid)) {
+          dialogTargets.push({ ...this._getTargetFromToken(token), invalidScope: true })
+        }
+      }
+    }
+
+    // Gestion des skillBonuses pour les attaques basées sur une caractéristique
+    let skillBonuses = []
+    let hasSkillBonuses = false
+    if (this.type === "character") {
+      const isCharacteristicAttack = !Utils.getAttackTypeFromFormula(originalSkillFormula, actionType)
+      if (isCharacteristicAttack) {
+        for (const [key] of Object.entries(this.system.abilities)) {
+          if (originalSkillFormula.includes(`@${key}`)) {
+            skillBonuses = this.getSkillBonuses(key)
+            break
+          }
+        }
+        hasSkillBonuses = skillBonuses.length > 0
+      }
+    }
+
+    // Préparation des statuts disponibles pour l'effet additionnel
+    let availableStatuses = []
+    let hasAvailableStatuses = false
+    if (additionalEffect?.active && additionalEffect?.statuses?.size > 0) {
+      availableStatuses = Array.from(additionalEffect.statuses).map((statusId) => ({
+        id: statusId,
+        label: SYSTEM.RESOLVER_ADDITIONAL_EFFECT_STATUS[statusId]?.label || statusId,
+      }))
+      hasAvailableStatuses = availableStatuses.length > 0
+    }
+
+    const dialogContext = {
+      rollMode,
+      rollModes: CONFIG.ChatMessage.modes,
+      actor: this,
+      auto,
+      type,
+      dice,
+      useComboRolls,
+      itemName: item.name,
+      itemImg: item.img,
+      itemUuid: item.uuid,
+      itemId: item.id,
+      actionName: actionName,
+      title: `${item.name} ${actionName}`,
+      flavor: chatFlavor,
+      skillBonus,
+      skillMalus,
+      damageBonus,
+      damageMalus,
+      critical,
+      criticalTooltip,
+      difficulty,
+      difficultyTooltip,
+      useDifficulty,
+      showDifficulty,
+      oppositeRoll,
+      initialSkillFormula: skillFormula,
+      formulaAttack: `${formula} + ${skillFormula}`,
+      formulaAttackTooltip: skillFormulaTooltip,
+      formulaDamage: damageFormula,
+      formulaDamageTooltip: damageFormulaTooltip,
+      targets: dialogTargets,
+      hasTargets: dialogTargets?.length > 0,
+      tempDamage,
+      canBeTempDamage,
+      tactical,
+      hasLuckyPoints,
+      opposeResult: opposeResult,
+      opposeTooltip: opposeTooltip,
+      hasAttackSuccessThreshold: hasAttackSuccessThreshold,
+      attackSuccessThreshold: attackSuccessThreshold,
+      availableStatuses,
+      hasAvailableStatuses,
+      skillBonuses,
+      hasSkillBonuses,
+      totalSkillBonuses: 0,
+    }
+
+    // Rolls contient le jet d'attaque et le jet de dommages si le type est "attack"
+    let rolls = await COAttackRoll.prompt(dialogContext, { withDialog: withDialog })
+    if (!rolls) return null
+
+    /**
+     * A hook event that fires after the roll is made.
+     * @function co.postRollAttack
+     * @memberof hookEvents
+     * @param {Object} item             Item used for the roll.
+     * @param {Object} options          Options for the roll.
+     * @param {Array<Roll>} rolls       The rolls made during the attack.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.postRollAttack", item, options, rolls) === false) return
+
+    let results = rolls.map((roll) => CORoll.analyseRollResult(roll, hasAttackSuccessThreshold, attackSuccessThreshold))
+    /**
+     * A hook event that fires before the results of the roll.
+     * @function co.resultRollAttack
+     * @memberof hookEvents
+     * @param {Object} item             Item used for the roll.
+     * @param {Object} options          Options for the roll.
+     * @param {Object} results          The analysed results of the rolls.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.resultRollAttack", item, options, rolls, results) === false) return
+
+    // Calcul des résultats par cible (une ligne par cible sur la carte de chat)
+    let targetResults = []
+    if (targets && targets.length > 0) {
+      if (type === "attack") {
+        targetResults = Utils.computeTargetResults(targets, difficultyTooltip, rolls[0].total, results[0], { actionType })
+        rolls[0].options.targetResults = targetResults
+        if (rolls[1]) rolls[1].options.targetResults = targetResults
+      } else if (type === "damage") {
+        targetResults = targets.map((target) => ({
+          uuid: target.uuid,
+          name: target.name,
+          img: target.token?.document?.texture?.src ?? target.actor?.img ?? null,
+          difficulty: null,
+          isSuccess: false,
+          isFailure: false,
+          isCritical: false,
+          isFumble: false,
+          needsOppositeRoll: false,
+        }))
+        rolls[0].options.targetResults = targetResults
+      }
+    }
+
+    // Prépare le message de résultat
+    const speaker = ChatMessage.getSpeaker({ actor: this, scene: canvas.scene })
+
+    let targetsUuid = targets?.map((target) => target.uuid)
+
+    // Jet de dommages
+    const linkedRoll = rolls.length > 1 ? rolls[1].toJSON() : null
+
+    // Récupérer les statuts sélectionnés depuis le roll et mettre à jour le customEffect
+    const selectedStatuses = rolls[0]?.options?.selectedStatuses
+    let effectiveCustomEffect = customEffect
+    if (customEffect && selectedStatuses && selectedStatuses.length > 0) {
+      // Créer une copie du customEffect avec les statuts sélectionnés
+      effectiveCustomEffect = { ...customEffect, statuses: new Set(selectedStatuses) }
+    }
+
+    // Jet d'attaque
+    if (type === "attack") {
+      // Affichage du jet d'attaque
+      await rolls[0].toMessage(
+        {
+          speaker,
+          style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+          type: "action",
+          system: {
+            subtype: "attack",
+            targets: targetsUuid,
+            targetResults,
+            result: results[0],
+            linkedRoll,
+            customEffect: effectiveCustomEffect,
+            additionalEffect,
+            selectedStatuses,
+            oppositeValue: oppositeRoll ? difficultyTooltip : null,
+          },
+        },
+        { messageMode: rolls[0].options.rollMode },
+      )
+
+      // Affichage du jet de dommages dans le cas d'un jet combiné, si ce n'est pas un jet opposé
+      // Si la difficulté n'est visible que par le MJ, on affiche systématiquement les dommages pour ne pas révéler le résultat au joueur
+      if (game.settings.get("co2", "useComboRolls")) {
+        const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+        const anyTargetHit = results[0].isSuccess || targetResults.some((tr) => tr.isSuccess)
+        if (!rolls[0].options.oppositeRoll && (displayDifficulty === "gm" || anyTargetHit)) {
+          if (rolls[1]) {
+            await rolls[1].toMessage(
+              { style: CONST.CHAT_MESSAGE_STYLES.OTHER, type: "action", system: { subtype: "damage", targets: targetsUuid, targetResults }, speaker },
+              { messageMode: rolls[1].options.rollMode },
+            )
+          }
+        }
+      }
+    }
+
+    // Jet de dommages
+    else if (type === "damage") {
+      await rolls[0].toMessage(
+        { style: CONST.CHAT_MESSAGE_STYLES.OTHER, type: "action", system: { subtype: "damage", targets: targetsUuid, targetResults }, speaker },
+        { messageMode: rolls[0].options.rollMode },
+      )
+    }
+
+    // Si l'attaque a lieu avec une arme qui a la propriété "reloadable", on consomme une munition
+    if (item.system.properties.reloadable) {
+      await this.consumeAmmunition(item)
+    }
+
+    return { results, selectedStatuses, targetResults }
+  }
+
+  /**
+   * Fonction assurant le jet de dé pour le soin
+   * @param {COItem} item Item à l'origine du soin (ex : Restauration mineure de prêtre)
+   * @param {object} options Elements permettant le calcul du soin
+   * @param {string} options.actionName  action déclencheur
+   * @param {string} options.healFormula formule utilisée pour le soin
+   * @param {string}  options.targetType : indique si on se cible soit-même, ou d'autres personnes etc.
+   * @param {Array<COActor>} options.targets : une liste d'acteurs ciblés
+   */
+  async rollHeal(item, { actionName = "", healFormula = undefined, targetType = SYSTEM.RESOLVER_TARGET.none.id, targets = [] } = {}) {
+    const options = { actionName, healFormula, targetType, targets }
+    // A hook event that fires before the roll is made.
+    if (Hooks.call("co.preRollHeal", item, options) === false) return
+
+    const roll = new COHealRoll(healFormula)
+    await roll.evaluate()
+    const healAmount = roll.total
+
+    const baseLabel = item?.name ?? ""
+    let flavor = baseLabel
+    if (actionName && actionName !== "") {
+      flavor = baseLabel ? `${baseLabel} - ${actionName}` : actionName
+    }
+    if (!flavor) {
+      flavor = game.i18n.localize("CO.ui.heal")
+    }
+
+    // Prépare le message
+    const speaker = ChatMessage.getSpeaker({ actor: this, scene: canvas.scene })
+
+    // Si le type de cible est none ou self, on ajoute l'uuid de l'acteur soigneur
+    // Sinon on ajoute les uuid des cibles
+    const targetUuids =
+      targetType === SYSTEM.RESOLVER_TARGET.none.id || targetType === SYSTEM.RESOLVER_TARGET.self.id
+        ? [this.uuid]
+        : targets.map((obj) => obj.actor?.uuid ?? obj.uuid).filter((uuid) => typeof uuid === "string")
+
+    // Si le type de cible est unique alors que plusieurs cibles sont sélectionnées, on affiche un avertissement et on retourne false
+    if (targetType === SYSTEM.RESOLVER_TARGET.single.id && targets.length > 1) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningOnlyOneTarget"))
+      return false
+    }
+
+    const rollMode = roll.options.rollMode ?? game.settings.get("core", "messageMode")
+
+    await roll.toMessage(
+      {
+        speaker,
+        style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+        type: "heal",
+        system: {
+          healer: this.uuid,
+          item: item?.uuid ?? null,
+          formula: roll.formula,
+          total: healAmount,
+          label: flavor,
+          targetType,
+          targets: targetUuids,
+        },
+      },
+      { messageMode: rollMode },
+    )
+
+    // Si le soin est pour soi-même ou sans cible, on applique directement le soin
+    if (targetType === SYSTEM.RESOLVER_TARGET.none.id || targetType === SYSTEM.RESOLVER_TARGET.self.id) {
+      this.applyHeal({ heal: healAmount, source: flavor })
+    }
+    // Si le soin est pour une cible et que celle-ci est l'acteur joueur, on applique le soin
+    else if (targetType === SYSTEM.RESOLVER_TARGET.single.id && targets.length === 1 && targets[0] === this.uuid) {
+      this.applyHeal({ heal: healAmount, source: flavor })
+    }
+    // Sinon on applique si c'est le MJ, sinon on demande au MJ de l'appliquer
+    else if (targetType === SYSTEM.RESOLVER_TARGET.single.id || targetType === SYSTEM.RESOLVER_TARGET.multiple.id) {
+      if (game.user.isGM) {
+        for (const target of targets) {
+          target.actor.applyHeal({ heal: healAmount, source: flavor })
+        }
+      } else {
+        if (game.settings.get("co2", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("co2.actorHeal", { fromSource: actionName, fromActor: this.name, targets: targetUuids, healAmount: healAmount })
+      }
+    }
+
+    return true
+  }
+
+  async rollAskSave(
+    item,
+    {
+      actionName = "",
+      ability = undefined,
+      difficulty = undefined,
+      difficultyFormula = undefined,
+      showDifficulty = false,
+      targetType = SYSTEM.RESOLVER_TARGET.none.id,
+      targets = [],
+      customEffect = undefined,
+      additionalEffect = undefined,
+      dmgRoll = null,
+      dmgTotal = null,
+      dmgFormula = null,
+      dmgTooltip = null,
+      halfDmgOnSave = true,
+    } = {},
+  ) {
+    const options = {
+      actionName,
+      ability,
+      difficulty,
+      difficultyFormula,
+      showDifficulty,
+      targetType,
+      targets,
+      customEffect,
+      additionalEffect,
+      dmgRoll,
+      dmgTotal,
+      dmgFormula,
+      dmgTooltip,
+      halfDmgOnSave,
+    }
+
+    /**
+     * A hook event that fires before the roll is made.
+     * @function co.preRollAskSave
+     * @memberof hookEvents
+     * @param {Object} item             Item used for the roll.
+     * @param {Object} options          Options for the roll.
+     * @returns {boolean}               Explicitly return `false` to prevent roll to be made.
+     */
+    if (Hooks.call("co.preRollAskSave", item, options) === false) return
+
+    const baseLabel = item?.name ?? ""
+    let flavor = baseLabel
+    if (actionName && actionName !== "") {
+      flavor = baseLabel ? `${baseLabel} - ${actionName}` : actionName
+    }
+    if (!flavor) {
+      flavor = game.i18n.localize("CO.ui.save")
+    }
+
+    // Prépare le message
+    const speaker = ChatMessage.getSpeaker({ actor: this, scene: canvas.scene })
+
+    // Si le type de cible est none ou self, on ajoute l'uuid de l'acteur lanceur
+    // Sinon on ajoute les uuid des cibles
+    const targetUuids =
+      targetType === SYSTEM.RESOLVER_TARGET.none.id || targetType === SYSTEM.RESOLVER_TARGET.self.id
+        ? [this.uuid]
+        : targets.map((obj) => obj.actor?.uuid ?? obj.uuid).filter((uuid) => typeof uuid === "string")
+
+    // Si le type de cible est unique alors que plusieurs cibles sont sélectionnées, on affiche un avertissement et on retourne false
+    if (targetType === SYSTEM.RESOLVER_TARGET.single.id && targets.length > 1) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningOnlyOneTarget"))
+      return false
+    }
+
+    // Construction des targetResults
+    const targetResults = []
+    if (targetType === SYSTEM.RESOLVER_TARGET.none.id || targetType === SYSTEM.RESOLVER_TARGET.self.id) {
+      targetResults.push({
+        uuid: this.uuid,
+        name: this.name,
+        img: this.img ?? null,
+        needsSaveRoll: true,
+        total: null,
+        isSuccess: false,
+        isFailure: false,
+        isCritical: false,
+        isFumble: false,
+        saveActorId: null,
+        saveHasLuckyPoints: false,
+        rollFormula: null,
+        rollTooltip: null,
+      })
+    } else {
+      targets.forEach((target) => {
+        targetResults.push({
+          uuid: target.actor?.uuid ?? target.uuid,
+          name: target.name ?? target.actor?.name,
+          img: target.token?.document?.texture?.src ?? target.actor?.img ?? null,
+          needsSaveRoll: true,
+          total: null,
+          isSuccess: false,
+          isFailure: false,
+          isCritical: false,
+          isFumble: false,
+          saveActorId: null,
+          saveHasLuckyPoints: false,
+          rollFormula: null,
+          rollTooltip: null,
+        })
+      })
+    }
+
+    const hasDmg = dmgTotal !== null && dmgTotal !== undefined
+
+    const contentData = {
+      ability: ability,
+      difficulty: difficulty,
+      difficultyFormula: difficultyFormula ?? null,
+      showDifficulty,
+      targetResults,
+      flavor: flavor,
+      itemImg: item?.img ?? null,
+      itemName: item?.name ?? "",
+      itemUuid: item?.uuid ?? null,
+      itemId: item?.id ?? null,
+      actionName: actionName ?? "",
+      hasDmg,
+      dmgTotal,
+      dmgFormula,
+      dmgTooltip,
+      halfDmgOnSave,
+    }
+
+    const messageSystem = {
+      ability: ability,
+      difficulty: difficulty,
+      difficultyFormula: difficultyFormula ?? null,
+      targetType,
+      targets: targetUuids,
+      targetResults,
+      customEffect,
+      additionalEffect,
+      dmgTotal: hasDmg ? dmgTotal : null,
+      dmgFormula: hasDmg ? dmgFormula : null,
+      dmgTooltip: hasDmg ? dmgTooltip : null,
+      halfDmgOnSave,
+    }
+
+    const chatBuilder = new CoChat(this)
+      .withTemplate("systems/co2/templates/chat/save-card.hbs")
+      .withData(contentData)
+      .withMessageType("save")
+      .withSystem(messageSystem)
+      .withOptions({ speaker: speaker, style: CONST.CHAT_MESSAGE_STYLES.OTHER })
+
+    if (dmgRoll) chatBuilder.withRolls([dmgRoll])
+
+    chatBuilder.create()
+
+    return true
+  }
+
+  /**
+   * Applique des dégâts à l'acteur, réduisant ses points de vie (PV) en conséquence.
+   * Si les dégâts dépassent la résistance aux dégâts (DR) de l'acteur, les dégâts restants sont soustraits des PV.
+   * Met à jour les PV de l'acteur et envoie un message de notification dans le chat.
+   *
+   * @async
+   * @param {string|null} [source=null] La source des dégâts (optionnel).
+   * @param {number} damage La quantité de domamges à appliquer à l'acteur.
+   * @param {boolean} [isTemporaryDamage=false] Indique si les dégâts sont temporaires.
+   * @param {boolean} [ignoreDR=false] Indique si la résistance aux dégâts (DR) doit être ignorée.
+   * @returns {Promise<void>} Résout lorsque la mise à jour des PV et la création du message de chat sont terminées.
+   */
+  async applyDamage({ source = null, damage, isTemporaryDamage = false, ignoreDR = false } = {}) {
+    if (!Number.isFinite(damage) || damage === 0) return
+    const finalDamage = Math.max(1, ignoreDR ? damage : damage - this.system.combat.dr.value)
+    // Gestion des dommages temporaires
+    if (isTemporaryDamage) {
+      const currentMaxHp = this.system.attributes.hp.max
+      const currentTempDamage = this.system.attributes.tempDm
+      const targetFor = this.system.abilities.for.value
+      const amountTempDamage = Math.max(0, finalDamage - targetFor)
+      const newTempDamage = Math.min(currentTempDamage + amountTempDamage, currentMaxHp)
+      await this.update({ "system.attributes.tempDm": newTempDamage })
+    }
+    // Gestion des dommages normaux
+    else {
+      const hp = this.system.attributes.hp
+      const newValue = Math.max(0, hp.value - finalDamage)
+      if (newValue === 0 && this.type !== "character") {
+        await this.toggleStatusEffect("dead", { active: true })
+      }
+      await this.update({ "system.attributes.hp.value": newValue })
+    }
+
+    let message
+    if (!source) {
+      if (isTemporaryDamage) message = game.i18n.format("CO.notif.tmpDamaged", { actorName: this.name, amount: damage })
+      else message = game.i18n.format("CO.notif.damaged", { actorName: this.name, amount: damage })
+    } else {
+      if (isTemporaryDamage) message = game.i18n.format("CO.notif.tmpDamagedBy", { actorName: this.name, amount: damage, source: source })
+      else message = game.i18n.format("CO.notif.damagedBy", { actorName: this.name, amount: damage, source: source })
+    }
+    new CoChat(this)
+      .withTemplate(SYSTEM.TEMPLATE.MESSAGE)
+      .withData({ message: message })
+      .withWhisper(ChatMessage.getWhisperRecipients("GM").map((u) => u.id))
+      .create()
+  }
+
+  /**
+   * Applique un effet de soin à l'acteur en augmentant ses points de vie (PV) actuels.
+   * S'assure que la valeur des PV ne dépasse pas les PV maximum.
+   * Met à jour les PV de l'acteur et envoie un message de notification dans le chat.
+   *
+   * @async
+   * @param {string|null} [source=null] La source du soin (optionnel).
+   * @param {number} heal La quantité de soin à appliquer aux PV de l'acteur.
+   * @param {boolean} [isTemporaryHeal=false] Indique si le soin est temporaire.
+   * @param {boolean} [ignoreDR=true] Indique si la résistance aux dégâts (DR) doit être ignorée.
+   * @returns {Promise<void>} Résolue lorsque les PV de l'acteur ont été mis à jour.
+   */
+  async applyHeal({ source = null, heal = 0, isTemporaryHeal = false, ignoreDR = true } = {}) {
+    if (!Number.isFinite(heal) || heal === 0) return
+    // Soigne des dommages temporaires
+    if (isTemporaryHeal) {
+      let tempDm = this.system.attributes.tempDm
+      const healAmount = ignoreDR ? heal : heal + this.system.combat.dr.value
+      tempDm = Math.max(0, tempDm - healAmount)
+      await this.update({ "system.attributes.tempDm": tempDm })
+    }
+    // Soigne des dommages normaux
+    else {
+      let hpValue = this.system.attributes.hp.value
+      const healAmount = ignoreDR ? heal : heal + this.system.combat.dr.value
+      hpValue = Math.min(this.system.attributes.hp.max, hpValue + healAmount)
+      await this.update({ "system.attributes.hp.value": hpValue })
+    }
+    let message
+    if (!source) message = game.i18n.format("CO.notif.healed", { actorName: this.name, amount: heal })
+    else message = game.i18n.format("CO.notif.healedBy", { actorName: this.name, amount: heal, source: source })
+    new CoChat(this)
+      .withTemplate(SYSTEM.TEMPLATE.MESSAGE)
+      .withData({ message: message })
+      .withWhisper(ChatMessage.getWhisperRecipients("GM").map((u) => u.id))
+      .create()
+  }
+  // #endregion
+
+  // #region Méthodes internes
+  /**
+   * Extracts target information from a given token.
+   *
+   * @param {Object} token The token object containing actor and name information.
+   * @param {Object} token.actor The actor associated with the token.
+   * @param {string} token.actor.uuid The unique identifier of the actor.
+   * @param {string} token.name The name of the token.
+   * @returns {Object} An object containing the token, actor, actor's UUID, and token's name.
+   * @private
+   */
+  _getTargetFromToken(token) {
+    return { token, actor: token.actor, uuid: token.actor.uuid, name: token.name }
+  }
+
+  // ...existing code...
+
+  /**
+   * Récupère et valide les cibles sélectionnées selon les critères spécifiés.
+   *
+   * @param {string} actionName Nom de l'action (pour les messages d'erreur)
+   * @param {string} scope Portée des cibles : "allies", "enemies", ou "all"
+   * @param {number} number Nombre maximum de cibles autorisées
+   * @param {boolean} single Si true, une seule cible est attendue
+   * @returns {Array} Tableau des cibles validées
+   * @private
+   */
+  _getTargets(actionName, scope, number, single) {
+    const tokens = game.user.targets
+    const targets = []
+
+    // Pas de cibles sélectionnées
+    if (tokens.size < 1) {
+      return []
+    }
+
+    // Filtrage des cibles selon la portée
+    for (const token of tokens) {
+      const disposition = token.document.disposition
+      const isNeutralOrSecret = disposition === CONST.TOKEN_DISPOSITIONS.NEUTRAL || disposition === CONST.TOKEN_DISPOSITIONS.SECRET
+      const isValidTarget =
+        scope === "all" ||
+        isNeutralOrSecret ||
+        (scope === "allies" && disposition === CONST.TOKEN_DISPOSITIONS.FRIENDLY) ||
+        (scope === "enemies" && disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE)
+
+      if (isValidTarget) {
+        targets.push(this._getTargetFromToken(token))
+      }
+    }
+
+    // Validation du nombre de cibles après filtrage scope (number=0 pour multiple = illimité)
+    const expectedNumber = single ? 1 : number
+    if (expectedNumber > 0 && targets.length > expectedNumber) {
+      const error = game.i18n.format("CO.notif.warningIncorrectTargets", {
+        number: expectedNumber,
+        action: actionName,
+      })
+      ui.notifications.warn(error)
+      return []
+    }
+
+    return targets
+  }
+
+  // ...existing code...
+  // #endregion
+
+  // #region Gestion des Custom Effects
+  /**
+   * Supprime un customEffet de l'acteur
+   * @param {CustomEffectData} customEffect
+   */
+  async deleteCustomEffect(customEffect) {
+    // Si l'y a des effets de statut, on les supprime
+    if (customEffect.statuses.length > 0) {
+      // On les supprime un par un
+      for (const status of customEffect.statuses) {
+        await this.activateCOStatusEffect({ state: false, effectid: status })
+      }
+    }
+    const remaining = this.toObject().system.currentEffects.filter((ce) => ce.slug !== customEffect.slug)
+    await this.update({ "system.currentEffects": remaining })
+
+    // Si il n'y a plus d'effet custom, on enlève l'icône
+    if (remaining.length === 0) {
+      await this.activateCOStatusEffect({ state: false, effectid: "customEffect" })
+    }
+  }
+
+  /**
+   * On applique les effets supplémentaires
+   * @param {CustomEffectData} effect : Custom effect appliqué sur l'acteur
+   */
+  async applyCustomEffect(effect) {
+    // Appliquer les éventuels statuts
+    if (effect.statuses.length > 0) {
+      for (const status of effect.statuses) {
+        let result = await this.activateCOStatusEffect({ state: true, effectid: status })
+        if (result === false) return false // On applique pas l'effet s'il y a une immunité (cas d'un result === false)
+      }
+    }
+    // Soit on applique l'effet tout de suite soit on l'ajoute aux effets à appliquer pendant le combat
+    if (effect.unit === SYSTEM.COMBAT_UNITE.instant.id) {
+      await this.applyEffect(effect)
+    } else {
+      let existingEffectIndex = this.system.currentEffects.findIndex((e) => e.slug === effect.slug)
+      const newCurrentEffects = this.system.toObject().currentEffects
+
+      // CustomEffect déjà présent : on modifie startedAt et remainingTurn
+      if (existingEffectIndex !== -1) {
+        newCurrentEffects[existingEffectIndex].startedAt = effect.startedAt
+        newCurrentEffects[existingEffectIndex].remainingTurn = effect.remainingTurn
+      } else newCurrentEffects.push(effect)
+
+      // Affichage de l'icône
+      await this.activateCOStatusEffect({ state: true, effectid: "customEffect" })
+
+      await this.update({ "system.currentEffects": newCurrentEffects })
+    }
+
+    return true
+  }
+
+  /**
+   * On applique les effets au moment où ils se déclenchent (instant = 1 seule fois et durée = au passage dans la boucle applyEffectOverTime)
+   * @param {CustomEffectData} effect : Custom effect appliqué sur l'acteur
+   */
+  async applyEffect(effect) {
+    // TODO Ici on devrait tenir compte du type d'energie (feu/glace etc) et d'eventuelle resistance/vulnerabilite à voir plus tard
+    // Dé ou valeur fixe ou valeur vide (cas de l'action soutenir)
+    if (effect.formula !== "") {
+      const diceInclude = effect.formula.match("d[0-9]{1,}") || effect.formula.match("D[0-9]{1,}")
+      let formulaResult
+      if (diceInclude) {
+        const roll = new Roll(effect.formula)
+        await roll.evaluate()
+        formulaResult = roll.total
+      } else {
+        const roll = new Roll(effect.formula)
+        formulaResult = roll.evaluateSync().total
+      }
+      if (effect.formulaType === "damage") await this.applyDamage({ damage: formulaResult })
+      if (effect.formulaType === "heal") await this.applyHeal({ heal: formulaResult })
+    }
+  }
+
+  /**
+   * Applies effects over time to the current object based on its active effects.
+   * This method processes each effect in the `currentEffects` array, evaluating
+   * its formula and applying the corresponding action (damage or healing).
+   *
+   * - If the formula includes dice notation (e.g., "d20"), it rolls the dice and
+   *   uses the result.
+   * - The method supports two formula types: "damage" and "heal".
+   *
+   */
+  async applyEffectOverTime() {
+    for (const effect of this.system.currentEffects) {
+      await this.applyEffect(effect)
+    }
+  }
+
+  /**
+   * Asynchronously expires effects from the current system's effects list.
+   * Iterates through all current effects and deletes any custom effect
+   * whose `remainingTurn` matches the current combat round.
+   * @async
+   * @returns {Promise<void>} Resolves when all applicable effects have been processed.
+   */
+  async expireEffects() {
+    const toDelete = this.system.currentEffects.filter(
+      (effect) => effect.remainingTurn <= 0 && effect.unit !== SYSTEM.COMBAT_UNITE.combat.id && effect.unit !== SYSTEM.COMBAT_UNITE.unlimited.id,
+    )
+    for (const effect of toDelete) {
+      await this.deleteCustomEffect(effect)
+    }
+  }
+
+  /**
+   * Diminue la durée des effets de manière asynchrone pour chaqu eeffets dans la liste.   *
+   *
+   * @async
+   * @returns {Promise<void>} Se termine lorsque tous le seffets ont été traité
+   */
+  async decreaseEffectsDuration() {
+    const updatedEffects = this.system.currentEffects.map((effet) => {
+      const newEffet = foundry.utils.duplicate(effet)
+      if ("remainingTurn" in newEffet) {
+        newEffet.remainingTurn = Math.max(0, newEffet.remainingTurn - 1)
+      }
+      return newEffet
+    })
+
+    await this.update({ "system.currentEffects": updatedEffects })
+  }
+
+  /**
+   * Asynchronously deletes all current effects associated with this actor.
+   * Iterates over each effect in `this.system.currentEffects` and removes it
+   * using the `deleteCustomEffect` method.
+   *
+   * @returns {Promise<void>} A promise that resolves when all effects have been deleted.
+   */
+  async deleteEffects() {
+    const toDelete = [...this.system.currentEffects]
+    for (const effect of toDelete) {
+      await this.deleteCustomEffect(effect)
+    }
+  }
+
+  async sendItemToChat({ chatType, itemId, indice = null, isPublic = false }) {
+    const item = this.items.get(itemId)
+    if (!item) return
+
+    let itemChatData = item.getChatData(item, this, chatType, indice)
+    const chat = new CoChat(this)
+      .withTemplate("systems/co2/templates/chat/item-card.hbs")
+      .withData({
+        actorId: this.id,
+        actorUuid: this.uuid,
+        id: itemChatData.id,
+        uuid: itemChatData.uuid,
+        name: itemChatData.name,
+        img: itemChatData.img,
+        description: itemChatData.description,
+        actions: itemChatData.actions,
+      })
+      .withMessageType("item")
+
+    // En mode privé (par défaut), envoyer uniquement aux MJ
+    if (!isPublic) {
+      chat.withWhisper(ChatMessage.getWhisperRecipients("GM").map((u) => u.id))
+    }
+
+    chat.create()
+  }
+
+  // #endregion
+
+  // #region Queries handlers
+
+  /**
+   * Handles healing query for multiple targets.
+   * Validates the targets array and applies healing amount to each target actor.
+   *
+   * @param {Object} options The options object
+   * @param {string} options.fromActor Name of the source actor dealing the damage
+   * @param {string} options.fromSource Name of the source dealing the damage
+   * @param {string[]} options.targets Array of UUIDs for target actors receiving damage
+   * @param {number} [options.healAmount] The amount of healing to apply
+   * @param {boolean} [options.isTemporaryHeal=false] Indicates if the healing is temporary
+   * @param {boolean} [options.ignoreDR=true] Indicates if damage resistance should be ignored
+   * @returns {Promise<void>}
+   */
+  static async _handleQueryHeal({ fromActor = "", fromSource = "", targets, healAmount, isTemporaryHeal = false, ignoreDR = true } = {}) {
+    const source = `${fromSource} (${fromActor})`
+    for (const target of targets) {
+      const targetActor = fromUuidSync(target)
+      await targetActor.applyHeal({ source, heal: healAmount, isTemporaryHeal, ignoreDR })
+    }
+  }
+
+  /**
+   * Handles healing a single target actor.
+   *
+   * @static
+   * @async
+   * @param {Object} options The healing options.
+   * @param {string} options.fromActor Name of the source actor dealing the damage
+   * @param {string} options.fromSource Name of the source dealing the damage
+   * @param {string} options.targetUuid UUID of the target actor receiving damage
+   * @param {number} options.healAmount Amount of healing to apply to each target
+   * @param {boolean} options.isTemporaryHeal Indicates if the healing is temporary
+   * @param {boolean} [options.ignoreDR=false] Indicates if damage resistance should be ignored
+   * @returns {Promise<void>}
+   * @private
+   */
+  static async _handleQueryHealSingleTarget({ fromActor = "", fromSource = "", targetUuid, healAmount, isTemporaryHeal = false, ignoreDR = true } = {}) {
+    const source = `${fromSource} (${fromActor})`
+    const targetActor = fromUuidSync(targetUuid)
+    await targetActor.applyHeal({ source, heal: healAmount, isTemporaryHeal, ignoreDR })
+  }
+
+  /**
+   * Handles damage query by applying damage from a source actor to multiple target actors.
+   *
+   * @private
+   * @static
+   * @async
+   * @param {Object} options The damage query options
+   * @param {string} options.fromActor Name of the source actor dealing the damage
+   * @param {string[]} options.targets Array of UUIDs for target actors receiving damage
+   * @param {number} options.damageAmount Amount of damage to apply to each target
+   * @param {boolean} options.isTemporaryDamage Indicates if the damage is temporary
+   * @param {boolean} [options.ignoreDR=false] Indicates if damage resistance should be ignored
+   * @returns {Promise<void>}
+   */
+  static async _handleQueryDamage({ fromActor, targets, damageAmount, isTemporaryDamage = false, ignoreDR = false } = {}) {
+    const sourceActor = fromUuidSync(fromActor)
+    const source = sourceActor ? sourceActor.name : null
+    for (const target of targets) {
+      const targetActor = fromUuidSync(target)
+      await targetActor.applyDamage({ source, damage: damageAmount, isTemporaryDamage, ignoreDR })
+    }
+  }
+
+  /**
+   * Handles damage query by applying damage from a source actor to multiple target actors.
+   *
+   * @private
+   * @static
+   * @async
+   * @param {Object} options The damage query options
+   * @param {string} options.fromActor Name of the source actor dealing the damage
+   * @param {string} options.fromSource Name of the source dealing the damage
+   * @param {string} options.targetUuid UUID of the target actor receiving damage
+   * @param {number} options.damageAmount Amount of damage to apply to each target
+   * @param {boolean} options.isTemporaryDamage Indicates if the damage is temporary
+   * @param {boolean} [options.ignoreDR=false] Indicates if damage resistance should be ignored
+   * @returns {Promise<void>}
+   */
+  static async _handleQueryDamageSingleTarget({ fromActor, fromSource, targetUuid, damageAmount, isTemporaryDamage, ignoreDR = false } = {}) {
+    const source = `${fromSource} (${fromActor})`
+    const targetActor = fromUuidSync(targetUuid)
+    await targetActor.applyDamage({ source, damage: damageAmount, isTemporaryDamage, ignoreDR })
+  }
+
+  // #endregion
+}

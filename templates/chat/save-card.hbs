@@ -1,0 +1,65 @@
+{{!log "Chroniques Oubliées | save card" this}}
+<div class="co chat-card roll-card save-card" data-actor-id="{{actorId}}" {{#if hasDmg}}data-dmg-total="{{dmgTotal}}"{{/if}} {{#if itemUuid}}data-item-uuid="{{itemUuid}}" data-item-id="{{itemId}}"{{/if}}>
+  <header class="card-header flexcol">
+    <div class="card-item-card">
+      {{#if itemImg}}
+        <img class="card-item-image" src="{{itemImg}}" alt="{{itemName}}" />
+      {{else}}
+        <div class="type-card"><label><i class="fa-solid fa-shield-exclamation" data-tooltip="{{localize 'CO.ui.saves'}}" data-tooltip-direction="LEFT"></i></label></div>
+      {{/if}}
+      <div class="card-item-text">
+        <div class="card-item-name">{{#if itemName}}{{itemName}}{{else}}{{flavor}}{{/if}}</div>
+        {{#if actionName}}
+          <div class="card-item-subtitle">{{actionName}}</div>
+        {{/if}}
+      </div>
+    </div>
+  </header>
+
+  <div class="card-content">
+    <section class="bloc-result has-target-results">
+      <section class="result">
+        <div class="difficulty-group">
+          <div class="difficulty-icon" data-tooltip="{{localize 'CO.ui.saves'}} : {{getAbilityLabel ability}}" data-tooltip-direction="UP"><i class="fas fa-shield-exclamation"></i></div>
+          <div class="difficulty-value display-difficulty" data-tooltip="{{localize 'CO.label.long.difficulty'}}{{#if difficultyFormula}} ({{difficultyFormula}}){{/if}}" data-tooltip-direction="UP">{{difficulty}}</div>
+        </div>
+      </section>
+    </section>
+
+    {{#if hasDmg}}
+      <section class="save-dmg-section">
+        <details class="save-dmg-details">
+          <summary>
+            <div class="save-dmg-total-group">
+              <div class="form-group total-result">
+                <div>{{dmgTotal}}</div><div class="dm-text"> DM</div>
+              </div>
+            </div>
+          </summary>
+          <div class="save-dmg-details-content">
+            <div class="dice-roll">
+              <div class="dice-result">
+                <div class="dice-formula">{{localize "CO.ui.formula"}} : {{dmgFormula}}</div>
+                {{{dmgTooltip}}}
+              </div>
+            </div>
+          </div>
+        </details>
+        <div class="save-dmg-options">
+          <div class="temp-dm">
+            <label for="saveTempDm" class="temp-dm-checkbox" data-tooltip="{{localize 'CO.ui.tempText'}}" data-tooltip-direction="UP">{{localize "CO.ui.temp"}}</label>
+            <input type="checkbox" id="saveTempDm" name="saveTempDm" class="temp-dm-checkbox" />
+          </div>
+        </div>
+      </section>
+    {{/if}}
+
+    <section class="targets"></section>
+
+    {{#if hasDmg}}
+      <section class="save-apply-section">
+        <button type="button" class="apply-btn save-apply-btn">{{localize "CO.ui.apply"}}</button>
+      </section>
+    {{/if}}
+  </div>
+</div>

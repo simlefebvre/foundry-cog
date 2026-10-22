@@ -1,0 +1,73 @@
+{{!log "Edit Abilities" this}}
+<section class="abilities-table">
+  <h3 class="first-title">{{localize "CO.dialogs.editYourAbilities.title"}}</h3>
+
+  <label><span class="title">{{localize "CO.label.long.superior"}}</span></label>
+  <label><span class="title">{{localize "CO.label.long.base"}}</span></label>
+  <label><span class="title">{{localize "CO.label.long.traits"}}&nbsp;&amp;&nbsp;{{localize "CO.label.long.effects"}}</span></label>
+  <label><span class="title">{{localize "CO.label.long.bonus"}}</span></label>
+  <label><span class="title total-bonus">{{localize "CO.ui.totalBonus"}}</span></label>
+
+  {{#each abilities as |ability id|}}
+    <h3>{{localize (concat "CO.abilities.short." id)}}</h3>
+    <h4>{{localize (concat "CO.abilities.long." id)}}</h4>
+
+    <div class="cell" data-ability="{{id}}">
+      <button type="button" data-action="toggleSuperior" data-ability="{{id}}" data-value="{{not ability.superior}}" class="tooltip superior-button superior {{#if ability.superior}}selected{{/if}}">
+        {{localize "CO.label.long.superior"}}
+      </button>
+    </div>
+
+    {{#if (eq ../mode "libre")}}
+      <div class="cell" data-ability="{{id}}">
+        <input class="ability-base" type="number" data-ability="{{id}}" name="system.abilities.{{id}}.base" {{#if (eq ability.base null)}} value="" {{else}} value="{{ability.base}}" {{/if}} data-dtype="Number" placeholder="—">
+      </div>
+    {{else}}
+      <div class="cell dropzone" data-ability="{{id}}">
+        {{#if (eq ability.base null)}}—{{else}}{{ability.base}}{{/if}}
+      </div>
+    {{/if}}
+
+    <div class="cell" data-ability="{{id}}">
+      {{numberFormat ability.modifiers decimals=0 sign=true}}
+    </div>
+
+    <div class="cell" data-ability="{{id}}">
+      <input class="ability-bonus" type="number" data-ability="{{id}}" data-value="bonus.sheet" name="system.abilities.{{id}}.bonuses.sheet" value="{{ability.bonuses.sheet}}" data-dtype="Number" placeholder="0">
+    </div>
+    <div class="cell" data-ability="{{id}}">
+      <div class="value" data-tooltip="{{ability.tooltipValue}}">{{ability.value}}</div>
+    </div>
+  {{/each}}
+</section>
+
+<section class="abilities-type">
+  <div class="select-abilities-type">
+    <label for="distribution-mode">{{localize "CO.dialogs.editYourAbilities.title"}}</label>
+    <select id="distribution-mode" name="distribution-mode">
+      <option value="libre" {{#if (eq mode "libre")}}selected{{/if}}>{{localize "CO.dialogs.editYourAbilities.libre"}}</option>
+      <option value="polyvalent" {{#if (eq mode "polyvalent")}}selected{{/if}}>{{localize "CO.dialogs.editYourAbilities.polyvalent"}}</option>
+      <option value="expert" {{#if (eq mode "expert")}}selected{{/if}}>{{localize "CO.dialogs.editYourAbilities.expert"}}</option>
+      <option value="specialist" {{#if (eq mode "specialist")}}selected{{/if}}>{{localize "CO.dialogs.editYourAbilities.specialist"}}</option>
+    </select>
+  </div>
+<div class="abilities-values">
+  <div class="value-pool">
+    {{#each values as |val|}}
+      <div class="draggable-value {{#if val.used}}used{{/if}}"
+          draggable="true"
+          data-id="{{val.id}}"
+          data-value="{{val.value}}">
+        {{val.value}}
+      </div>
+    {{/each}}
+  </div>
+  <div class="values-informations">
+      {{#if (eq mode "libre")}}
+          <label>{{localize "CO.dialogs.editYourAbilities.infoLibre"}}</label>
+      {{else}}
+          <label>{{localize "CO.dialogs.editYourAbilities.infoAutres"}}</label>
+      {{/if}}
+  </div>
+</div>
+</section>

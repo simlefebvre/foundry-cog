@@ -1,0 +1,71 @@
+{{!log "Chroniques Oubliées | Encounter header" this}}
+<header class="sheet-header">
+  <div class="image-container">
+    <img class="actor-img {{#if unlocked}}resetImage{{/if}}"src="{{actor.img}}" {{#if unlocked}}data-action="editImage" data-edit="img"{{/if}} data-tooltip="{{actor.name}}" />
+    <a class="hover-icon" data-action="shareImage" data-tooltip="{{localize 'CO.ui.shareImage'}}"><i class="fas fa-image fa-fw"></i></a>
+  </div>
+  {{#if unlocked}}
+    <input class="name" name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'CO.label.long.name'}}" spellcheck="false" />
+  {{else}}
+    <span class="name">{{actor.name}}</span>
+  {{/if}}
+  <div class="level">
+    <label class="level-label">{{localize 'CO.label.short.nc'}}</label>
+    {{#if unlocked}}
+      <input class="adjustable" type="text" name="system.attributes.nc" value="{{attributes.nc}}" data-dtype="Number" />
+    {{else}}
+      {{#if viewLimited}}
+        <span>??</span>
+      {{else}}
+        <span>{{attributes.nc}}</span>
+      {{/if}}
+    {{/if}}
+  </div>
+  {{#unless viewLimited}} 
+  <div class="traits">
+    {{#if unlocked}}
+      <select class="trait category traits-list-item" name="system.details.category" data-type="String">
+        {{selectOptions choiceCategories selected=system.details.category localize=true}}
+      </select>
+      
+      <select data-action="sizeChange" class="trait size traits-list-item" name="system.details.size" data-type="String">
+        {{selectOptions choiceSizes selected=system.details.size localize=true }}
+      </select> 
+    {{else}}
+      <span class="trait category">{{localize (concat 'CO.encounter.category.' system.details.category)}}</span>
+      <span class="trait size">{{localize (concat 'CO.size.' system.details.size)}}</span>
+    {{/if}}
+  </div>
+  {{/unless}}
+  <ol class="abilities">
+    {{#each abilities as |ability id|}}
+      <li class="ability" data-ability="{{id}}">
+        <div class="ability-id draggable" data-roll-target="{{id}}" data-tooltip="{{localize (concat 'CO.abilities.long.' id)}}" data-tooltip-direction="UP">
+          {{localize (concat "CO.abilities.short." id)}}
+          {{#if ../unlocked}}
+            <input type="checkbox" name="system.abilities.{{id}}.superior" {{checked ability.superior}} data-tooltip="{{localize 'CO.ui.checkForSuperiorAbility'}}" >
+          {{else}}
+            {{#unless ../viewLimited}} 
+              {{#if ability.superior}}<i class="fas fa-asterisk"></i>{{/if}}
+            {{/unless}}
+          {{/if}}
+        </div>
+        {{#if ../unlocked}}
+          <input class="ability-mod" type="text" name="system.abilities.{{id}}.base" value="{{numberFormat ability.base sign=true}}" data-dtype="Number" placeholder="+0">
+        {{else}}
+          {{#if ../viewLimited}}
+            <div class="ability-mod">??</div>
+          {{else}}
+            {{#if ../editable}}
+              <a class="ability-mod" data-action="roll" data-roll-type="skillcheck" data-roll-target="{{id}}" data-tooltip="{{ability.tooltipValue}}">
+                {{numberFormat ability.value decimals=0 sign=true}}
+              </a>              
+            {{else}}
+              <div class="ability-mod">{{numberFormat ability.value decimals=0 sign=true}}</div>
+            {{/if}}
+          {{/if}}  
+        {{/if}}
+      </li>
+    {{/each}}
+  </ol>
+</header>

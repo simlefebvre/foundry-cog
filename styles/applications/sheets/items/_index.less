@@ -1,0 +1,53 @@
+/*
+ * Chaque type d'objet reporte sa couleur propre sur la paire générique --co-item-dark / --co-item-light,
+ * que common.less et les feuilles de type consomment. Les valeurs par type sont dans styles/palette.less.
+ */
+&.item {
+  gap: 0; // remove top space
+  @import "./common.less";
+
+  &.capacity {
+    --co-item-dark: var(--co-item-capacity-dark);
+    --co-item-light: var(--co-item-capacity-light);
+    @import (multiple) "./full-sheet.less";
+    @import "./capacity.less";
+  }
+
+  &.equipment {
+    --co-item-dark: var(--co-item-equipment-dark);
+    --co-item-light: var(--co-item-equipment-light);
+    @import (multiple) "./full-sheet.less";
+    @import "./equipment.less";
+  }
+
+  &.container {
+    --co-item-dark: var(--co-item-container-dark);
+    --co-item-light: var(--co-item-container-light);
+    @import (multiple) "./full-sheet.less";
+    @import "./container.less";
+  }
+
+  &.feature {
+    --co-item-dark: var(--co-item-feature-dark);
+    --co-item-light: var(--co-item-feature-light);
+    @import "./feature.less";
+  }
+
+  &.path {
+    --co-item-dark: var(--co-item-path-dark);
+    --co-item-light: var(--co-item-path-light);
+    @import "./path.less";
+  }
+
+  &.profile {
+    --co-item-dark: var(--co-item-profile-dark);
+    --co-item-light: var(--co-item-profile-light);
+    @import "./profile.less";
+  }
+
+  &.attack {
+    --co-item-dark: var(--co-item-attack-dark);
+    --co-item-light: var(--co-item-attack-light);
+    @import (multiple) "./full-sheet.less";
+  }
+}

@@ -1,0 +1,306 @@
+.co.chat-card.roll-card.save-card {
+  .card-header {
+    border-top: none;
+    color: inherit;
+    padding: 2px 0 4px;
+    label {
+      color: var(--co-chat-save);
+      text-shadow: 0 0px 2px var(--co-chat-shadow);
+    }
+  }
+  .card-content {
+    .bloc-result.has-target-results {
+      display: flex;
+      justify-content: center;
+    }
+    section.result {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+    .difficulty-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      .difficulty-icon {
+        font-size: var(--font-size-20);
+        color: var(--co-chat-save);
+        opacity: 0.8;
+      }
+      .difficulty-value {
+        font-size: var(--font-size-28);
+        font-weight: bold;
+      }
+    }
+    .save-roll {
+      display: flex;
+      flex-direction: column;
+      height: 40px;
+      font-size: 18px;
+      color: var(--co-chat-save);
+      background: #5d142b3d;
+      border: 2px solid var(--co-chat-save);
+      border-radius: 5px;
+      box-shadow: 1px 1px 0px 1px var(--co-chat-save);
+      padding: 0px 5px;
+      margin: 0 0 5px 0;
+      .save-title,
+      .save-skill {
+        color: inherit;
+        padding: 0;
+      }
+      .save-skill {
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+    }
+    .target-row {
+      flex-direction: column;
+      align-items: stretch;
+
+      button.save-roll {
+        margin-left: auto;
+        font-size: var(--font-size-13);
+        height: 26px;
+        --button-size: 1rem;
+        flex-direction: row;
+        gap: 4px;
+        padding: 0 8px;
+        box-shadow: none;
+        margin: 0;
+      }
+      .target-total {
+        font-size: var(--font-size-16);
+        font-weight: bold;
+        min-width: 28px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        i {
+          opacity: 0.7;
+        }
+      }
+    }
+
+    // --- Section DM de la sauvegarde ---
+    .save-dmg-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 4px 0;
+
+      .save-dmg-details {
+        summary {
+          list-style: none;
+          cursor: pointer;
+          &::-webkit-details-marker { display: none; }
+        }
+      }
+
+      .save-dmg-total-group {
+        .total-result {
+          margin: 0;
+          display: flex;
+          gap: 8px;
+          align-items: baseline;
+        }
+        .dm-text {
+          font-size: var(--font-size-18);
+        }
+      }
+
+      .save-dmg-details-content {
+        border-top: 1px solid color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
+        margin-top: 4px;
+        padding-top: 4px;
+      }
+
+      .save-dmg-options {
+        .temp-dm {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+
+          label {
+            font-size: var(--font-size-12);
+            font-weight: bold;
+          }
+
+          input[type="checkbox"] {
+            margin: 0;
+          }
+        }
+      }
+    }
+
+    // --- Ligne 1 : infos cible (résultat, nom, sauvegarde, DM, chance) ---
+    .target-row-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .target-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .target-damage {
+        font-weight: bold;
+        font-size: var(--font-size-20);
+        min-width: 32px;
+        text-align: right;
+        color: var(--co-chat-damages);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+
+      // --- Forçage manuel de la valeur (MJ) ---
+      .force-damage-btn {
+        flex: 0 0 auto;
+        --button-size: 1rem;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--font-size-11);
+        border: 1px solid transparent;
+        border-radius: 3px;
+        background: transparent;
+        color: inherit;
+        opacity: 0.5;
+        cursor: pointer;
+        transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+        &:hover {
+          opacity: 1;
+          background: color-mix(in srgb, var(--co-chat-damages) 12%, transparent);
+        }
+
+        &.active {
+          opacity: 1;
+          color: white;
+          background: var(--co-chat-damages);
+          border-color: var(--co-chat-damages);
+        }
+      }
+
+      .target-damage-input {
+        width: 48px;
+        min-width: 48px;
+        height: 24px;
+        padding: 0 4px;
+        font-weight: bold;
+        font-size: var(--font-size-20);
+        text-align: right;
+        color: var(--co-chat-damages);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+        border: 1px solid var(--co-chat-damages);
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--co-chat-damages) 8%, transparent);
+      }
+    }
+
+    // En mode manuel, la valeur affichée est cliquable pour rééditer
+    .target-row.manual .target-damage {
+      cursor: pointer;
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
+    }
+
+    // --- Ligne 2 : RD + multiplicateurs ---
+    .save-target-dmg-row {
+      padding: 2px 0 4px;
+
+      .target-dr-label {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: var(--font-size-11);
+        font-weight: bold;
+        white-space: nowrap;
+        cursor: pointer;
+        margin-right: 15px;
+
+        input[type="checkbox"] {
+          margin: 0;
+        }
+      }
+
+      .damage-multipliers {
+        display: flex;
+        flex: 1;
+        gap: 2px;
+
+        .multiplier-btn {
+          flex: 1;
+          --button-size: 1rem;
+          height: 20px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: var(--font-size-14);
+          font-weight: bold;
+          border: 1px solid var(--color-border-light-2);
+          border-radius: 3px;
+          background: #88888857;
+          color: inherit;
+          cursor: pointer;
+          transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+          &:hover {
+            background: color-mix(in srgb, var(--co-chat-damages) 12%, transparent);
+            border-color: var(--co-chat-damages);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+          }
+
+          &.active {
+            background: var(--co-chat-damages);
+            border-color: var(--co-chat-damages);
+            color: white;
+            box-shadow: 0 1px 3px color-mix(in srgb, var(--co-chat-damages) 40%, transparent);
+          }
+
+          // Inerte en mode manuel (valeur forcée par le MJ)
+          &.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+            box-shadow: none;
+          }
+        }
+        .btn-heal.active {
+          background: var(--co-chat-heal);
+          border-color: var(--co-chat-heal);
+          color: white;
+          box-shadow: 0 1px 3px color-mix(in srgb, var(--co-chat-heal) 40%, transparent);
+        }
+      }
+    }
+
+    // --- Bouton Appliquer ---
+    .save-apply-section {
+      padding: 4px 0;
+
+      .save-apply-effects-btn {
+        color: var(--co-chat-save);
+      }
+
+      .save-apply-btn {
+        color: var(--co-chat-damages);
+      }
+    }
+  }
+}

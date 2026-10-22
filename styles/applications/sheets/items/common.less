@@ -1,0 +1,164 @@
+&:not(.minimized) {
+  min-height: 480px;
+  min-width: 540px;
+}
+
+.window-content {
+  padding: 0;
+  margin-top: -36px;
+  padding-top: 36px;
+
+  .half-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .tab {
+    gap: 0;
+  }
+  .sheet-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 100px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "img name adjustment"
+      "img tags tags";
+    min-height: 100px;
+    max-height: 100px;
+    overflow: hidden;
+
+    img {
+      grid-area: img;
+      align-self: center;
+      width: 100%;
+    }
+
+    > .name,
+    > .adjustment-select,
+    > .tags {
+      margin: 0 8px;
+    }
+
+    .name {
+      font-size: 2.5rem;
+      grid-area: name;
+      align-content: center;
+
+      input[type="text"] {
+        font-size: inherit;
+        height: 52px;
+        padding: 0 8px;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+      }
+    }
+
+    input[type="checkbox"]:disabled {
+      color: var(--color-warm-1);
+    }
+
+    .adjustment-select {
+      align-items: flex-start;
+      display: flex;
+      gap: 8px;
+      grid-area: adjustment;
+      justify-content: flex-end;
+    }
+
+    > .tags {
+      grid-area: tags;
+    }
+
+    .trait {
+      .theme-dark & {
+        background-color: var(--color-dark-3);
+      }
+
+      .theme-light & {
+        background-color: var(--color-light-3);
+      }
+      text-align: center;
+      border: 1px solid var(--color-cool-3);
+      margin: 8px 0;
+      padding: 4px 8px;
+    }
+  }
+  input {
+    height: auto;
+  }
+  input[type="number"] {
+    text-align: center;
+    font-size: 18px;
+  }
+  //input[disabled] {
+  //
+  //}
+  input[type="checkbox"] {
+    --checkbox-size: var(--font-size-18);
+    background: none;
+  }
+  /*input[type="checkbox"]:checked::after {
+    line-height: 0;
+  }*/
+  > .sheet-tabs {
+    padding-left: calc(100px + 8px); // img width + tabs original padding left
+    margin-top: -38px;
+  }
+  .border-right {
+    input {
+      border-right: none;
+    }
+  }
+
+  .tab[data-tab].actions {
+    margin-left: -10px;
+    padding-top: 4px;
+    padding-bottom: 0;
+    position: relative;
+    overflow: hidden;
+    scrollbar-gutter: unset;
+    mask: none;
+
+    .action-button {
+      height: 32px;
+      position: absolute;
+      right: 0;
+      top: 10px;
+      width: 80px;
+    }
+
+    .actions {
+      max-height: 100%;
+
+      .sheet-tabs {
+        height: 42px;
+        justify-content: center;
+        padding-right: 80px;
+
+        [data-tab] {
+          border: 0;
+          flex: 0 1 auto;
+
+          &.active {
+            background: linear-gradient(transparent, var(--color-primary));
+            border: 0;
+          }
+        }
+
+        img {
+          height: 40px;
+        }
+      }
+
+      .action-body {
+        display: flex;
+        flex-flow: column nowrap;
+        flex: 1;
+        max-height: calc(100% - 42px);
+      }
+    }
+  }
+}

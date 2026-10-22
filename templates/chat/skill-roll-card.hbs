@@ -1,0 +1,154 @@
+{{!log "Chroniques Oubliées | hbs | skill-card" this}}
+<div class="co chat-card roll-card skill-card" data-actor-id="{{speaker.actor}}">
+  <header class="card-header flexcol">
+    <div class="type-card"><label><i class="fa-solid fa-dice-d6" data-tooltip="{{localize 'CO.dialogs.skillCheck'}}" data-tooltip-direction="LEFT"></i></label></div>
+    <div class="action-name" data-tooltip="{{flavor}}" data-tooltip-direction="LEFT">{{flavor}}</div>
+    {{#if skills}}
+      <div class="action-skills">{{skills}}</div>
+    {{/if}}
+    {{#if targetInfos.length}}
+      <div class="card-targets">
+        {{#each targetInfos as |target|}}
+          <div class="card-target">
+            <img src="{{target.img}}" alt="{{target.name}}" />
+            <span>{{target.name}}</span>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+  </header>
+
+  <div class="card-content">
+    <section class="bloc-result">
+      <section class="result">
+        <div class="form-group total-result">
+          <div data-tooltip="{{localize 'CO.ui.total'}}" data-tooltip-direction="UP">{{total}}</div>
+        </div>
+        {{#if canUseLuckyPoints}}
+          <div class="lucky-points">
+            <a class="lp-button-skill">
+              <i class="fa-regular fa-clover" data-tooltip="{{localize 'CO.dialogs.spendLuckyPoint'}}" data-tooltip-direction="UP"></i>
+            </a>
+            {{#if hasPendingConsequences}}
+              <a class="accept-result-button">
+                <i class="fa-solid fa-check" data-tooltip="{{localize 'CO.dialogs.acceptResult'}}" data-tooltip-direction="UP"></i>
+              </a>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{#if showDifficulty}}
+          {{#if (eq difficulty "")}}{{else}}
+            <div class="vs"><label>VS</label></div>
+            <div class="form-group diff-result">
+              {{#if oppositeRoll}}
+                <i class="fa-solid fa-square-question"></i>
+              {{else}}
+                <div data-tooltip="{{localize 'CO.label.long.difficulty'}}" data-tooltip-direction="UP">{{difficulty}}</div>
+              {{/if}}
+            </div>
+          {{/if}}
+        {{/if}}
+      </section>
+      <section class="result-sentence">
+        {{#if oppositeRoll}}
+          <button class="opposite-roll" data-opposite-value="{{difficulty}}" data-opposite-target="{{oppositeTarget}}">{{localize "CO.ui.oppositeRoll"}}{{#if oppositeAbilityLabel}}<br /><span class="opposite-ability-label">{{oppositeAbilityLabel}}</span>{{/if}}</button>
+        {{else}}
+          {{#if showDifficulty}}
+            {{#if isFumble}}
+              <div class="show-result failure fumble"><i class="fas fa-skull-crossbones"></i><br /><strong>{{localize "CO.roll.fumble"}}</strong></div>
+            {{else}}
+              {{#if isSuccess}}
+                {{#if isCritical}}
+                  <div class="show-result success critical"><i class="fas fa-check-double"></i><br /><strong>{{localize "CO.roll.critical"}}</strong></div>
+                {{else}}
+                  <div class="show-result success"><i class="fas fa-check"></i><br /><strong>{{localize "CO.roll.success"}}</strong></div>
+                {{/if}}
+              {{/if}}
+              {{#if isFailure}}
+                <div class="show-result failure"><i class="fas fa-times"></i><br /><strong>{{localize "CO.roll.failure"}}</strong></div>
+              {{/if}}
+            {{/if}}
+          {{else}}
+            {{#if isCritical}}
+              <div class="show-result standard critical"><i class="fas fa-check-double"></i><br /><strong>{{localize "CO.roll.critical"}}</strong></div>
+            {{/if}}
+            {{#if isFumble}}
+              <div class="show-result failure fumble"><i class="fas fa-skull-crossbones"></i><br /><strong>{{localize "CO.roll.fumble"}}</strong></div>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      </section>
+    </section>
+    {{#if opposeActorName}}
+      {{! Bloc J1 }}
+      <div class="player-block">
+        <div class="player-block-name">{{actorName}}</div>
+        <div class="player-block-ability">{{flavor}}</div>
+        {{#if skillUsed}}
+          <div class="skill-used">
+            {{#each skillUsed as |skill id|}}
+              <span class="skill-used-bonus" {{#if skill.description}}data-tooltip="{{skill.description}}"{{/if}}>{{numberFormat skill.value decimals=0 sign=true}}</span><span {{#if skill.description}}data-tooltip="{{skill.description}}"{{/if}}> : {{skill.name}}</span><br />
+            {{/each}}
+          </div>
+        {{/if}}
+        <div class="dice-roll" data-action="expandRoll">
+          <div class="dice-result">
+            <div class="dice-formula">{{localize "CO.ui.formula"}} : {{formula}}</div>
+            {{{tooltip}}}
+          </div>
+        </div>
+      </div>
+      {{! Bloc J2 }}
+      <div class="player-block">
+        <div class="player-block-name">
+          {{opposeActorName}}
+          {{#if opposeCanUseLuckyPoints}}
+            <a class="lp-button-oppose">
+              <i class="fa-regular fa-clover" data-tooltip="{{localize 'CO.dialogs.spendLuckyPoint'}}" data-tooltip-direction="UP"></i>
+            </a>
+          {{/if}}
+        </div>
+        {{#if opposeFlavor}}
+          <div class="player-block-ability">{{opposeFlavor}}</div>
+        {{/if}}
+        {{#if opposeSkillUsed}}
+          <div class="skill-used">
+            {{#each opposeSkillUsed as |skill id|}}
+              <span class="skill-used-bonus" {{#if skill.description}}data-tooltip="{{skill.description}}"{{/if}}>{{numberFormat skill.value decimals=0 sign=true}}</span><span {{#if skill.description}}data-tooltip="{{skill.description}}"{{/if}}> : {{skill.name}}</span><br />
+            {{/each}}
+          </div>
+        {{/if}}
+        {{#if opposeResult}}
+          <div class="dice-roll" data-action="expandRoll">
+            <div class="dice-result">
+              <div class="dice-formula">{{localize "CO.ui.formula"}} : {{opposeResult}}</div>
+              {{{opposeTooltip}}}
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    {{else}}
+      {{#if skillUsed}}
+        <div class="skill-used">
+          <div class="skill-used-title">{{localize "CO.ui.skillUsed"}} :</div>
+          {{#each skillUsed as |skill id|}}
+            <span class="skill-used-bonus">{{numberFormat skill.value decimals=0 sign=true}}</span><span {{#if skill.name}}data-tooltip="{{skill.name}}"{{/if}}> : {{skill.name}}</span><br />
+          {{/each}}
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
+
+  {{! Footer classique si pas de jet opposé résolu }}
+  {{#unless opposeActorName}}
+    <footer class="card-footer">
+      <div class="dice-roll" data-action="expandRoll">
+        <div class="dice-result">
+          <div class="dice-formula" style>{{localize "CO.ui.formula"}} : {{formula}}</div>
+          {{{tooltip}}}
+        </div>
+      </div>
+    </footer>
+  {{/unless}}
+</div>

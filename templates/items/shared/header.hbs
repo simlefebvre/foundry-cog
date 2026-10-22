@@ -1,0 +1,9 @@
+<header class="sheet-header">
+  <img src="{{item.img}}" {{#if unlocked}}data-action="editImage" data-edit="img"{{/if}} data-tooltip="{{item.name}}" />
+  <div class="name">
+    <input class="flex1" name="name" type="text" value="{{item.name}}" placeholder="{{localize 'CO.ui.itemName'}}" spellcheck="false" data-dtype="String" {{#if locked}}readonly{{/if}} />
+  </div>
+  <div class="adjustment-select">
+    <span class="adjustment elite trait">{{localize (concat "CO.itemTypes." item.type)}}</span>
+  </div>
+</header>

@@ -1,0 +1,40 @@
+.section-container {
+  display: flex;
+  border: 1px solid var(--co-sheet-accent-alt);
+  border-radius: 0 0 3px 3px;
+  flex-direction: column;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+
+  &.no-header {
+    border-radius: 3px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    /*background-color: var(--color-primary);
+    color: #fff;*/
+    flex-direction: row;
+    color: var(--co-surface);
+    background-color: var(--co-sheet-accent-alt);
+
+    h4 {
+      flex: 1;
+      font-size: 18px;
+      line-height: 1.2;
+      margin: 0;
+      padding: 2px 8px;
+      text-transform: uppercase;
+      color: var(--co-surface);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      margin: 0 8px;
+      align-items: center;
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{{!log 'item-card' this}}
+{{! Pas de data-item-uuid ici : ces attributs ne sont lus par personne dans le système, mais les modules d'animation
+    y voient une utilisation d'objet et déclenchent l'animation à la publication de la carte plutôt qu'au jet. }}
+<div class="co chat-card roll-card item-card" data-actor-id="{{actorId}}">
+  <!--<div class="item-card" data-actor-id="{{actorId}}" data-item-id="{{id}}" data-item-uuid="{{uuid}}">-->
+
+  <div class="itemTitle">
+    <img class="inline-img" src="{{img}}" data-tooltip="{{name}}" />
+    <span>{{name}}</span>
+  </div>
+
+  <div>{{{description}}}</div>
+  <div class="button-row">
+    {{#each actions as |action|}}
+      <button
+        class="toggle-action"
+        data-actor-id="{{@root.actorId}}"
+        data-actor-uuid="{{@root.actorUuid}}"
+        data-action="{{action.action}}"
+        data-type="{{action.type}}"
+        data-source="{{@root.uuid}}"
+        data-indice="{{action.indice}}"
+      >{{action.label}}</button>
+    {{/each}}
+  </div>
+  <!--</div>-->
+</div>

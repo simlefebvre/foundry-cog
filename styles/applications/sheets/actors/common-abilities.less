@@ -1,0 +1,61 @@
+.abilities {
+  box-sizing: border-box;
+  border: 2px solid var(--co-sheet-accent-alt);
+  display: grid;
+  font-size: 20px;
+  grid-template-columns: repeat(7, minmax(80px, 1fr)) auto;
+
+  .ability {
+    text-align: center;
+
+    .ability-id {
+      background-color: var(--co-sheet-accent-alt);
+      line-height: 1.8;
+      color: var(--co-surface);
+      font-weight: bold;
+
+      i.fas.fa-asterisk {
+        font-size: 11px;
+        vertical-align: super;
+      }
+
+      input[type="checkbox"] {
+        &::after,
+        &::before {
+          top: 8px;
+        }
+      }
+      input[type="checkbox"] {
+        &::before {
+          color: var(--color-fieldset-border);
+        }
+      }
+      input[type="checkbox"]:checked::before {
+        color: var(--checkbox-checkmark-color);
+      }
+    }
+
+    .ability-mod {
+      border: 2px solid var(--co-sheet-accent-alt);
+      border-radius: 0;
+      display: block;
+      //height: 50%;
+      line-height: 1.3;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--co-sheet-accent-alt);
+      background-color: var(--co-surface);
+    }
+  }
+
+  .abilities-controls {
+    background-color: var(--co-sheet-accent-alt);
+    line-height: 2.8;
+  }
+  .abilities-edit {
+    font-size: 23px;
+    padding: 0px 6px;
+    color: var(--co-surface);
+  }
+}

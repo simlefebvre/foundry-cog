@@ -1,0 +1,105 @@
+{{!-- Encounter Main Tab Template --}}
+{{!log "Chroniques Oubliées | Encounter main" this}}
+<section class="tab standard-form main{{#if tabs.main.active}} active{{/if}}" data-group="primary" data-tab="main">
+    <!-- ATTACKS -->
+    <div class="section-container attacks">
+        <div class="section-header">
+            <h4>{{localize "CO.label.long.attacks"}}</h4>
+            <div class="actions-controls controls" style="margin-right:5px">
+                  {{!-- Postures défensives : apportées par un module de contenu, aucun bouton si le registre est vide --}}
+                  {{#each defenseStances as |stance|}}
+                    <a class="item-control"
+                        data-tooltip-direction="UP"
+                        data-tooltip="{{#if stance.active}}{{localize stance.deactivateLabel}}{{else}}{{localize stance.activateLabel}}{{/if}}"
+                        data-action="{{#if stance.active}}deactivateDef{{else}}activateDef{{/if}}"
+                        data-effect="{{stance.id}}">
+                        <i class="{{stance.icon}} {{#if stance.active}}enabled{{else}}disabled{{/if}} toggle-effect"></i>
+                    </a>
+                  {{/each}}
+            </div>
+            {{#if unlocked}}
+                <div class="attacks-controls controls">
+                    <a class="item-control" data-action="createItem" data-type="attack" data-tooltip="{{localize 'CO.label.long.add'}}"><i class="fas fa-plus"></i></a>
+                </div>
+            {{/if}}
+        </div>
+        <div class="section-body">
+            <ol class="attacks-list strikes-list item-list">
+                {{#each attacks as |attack id|}}
+                    {{!log "Chroniques Oubliées | attack" attack id}}
+                    <li class="item attack flexrow draggable" data-item-type="attack" data-item-uuid="{{attack.uuid}}" data-item-id="{{attack.id}}">
+                        <div class="attack-header">
+                            <h4 class="attack-name tags">
+                                <a class="{{attack.system.subtypeIcon}}" data-action="editItem"></a>
+                                <span>
+                                    <strong>{{attack.name}}</strong>
+                                </span>
+                                {{#if (and attack.system.isReloadable attack.system.hasCharges)}}<span data-tooltip="{{localize "CO.ui.remainingQuantity"}}" data-tooltip-direction="UP">({{attack.system.charges.current}})</span>{{/if}}
+                                {{#if attack.system.hasRange}} ({{attack.system.range.value}} {{attack.system.range.unit}}){{/if}}
+                                <span data-tooltip="{{attack.system.displayValues.attackTooltip}}" data-tooltip-class="co2-encounter-attack-tooltip">{{attack.system.displayValues.attack}}</span> <strong>  DM </strong>{{attack.system.displayValues.damage}}
+                            </h4>
+                            <div class="attack-controls controls">
+                                <a class="chat" data-action="sendToChat" data-chat-type="item" data-tooltip="{{localize 'CO.label.long.sendToChat'}}"
+                                    ><i class="fas fa-fw fa-comment-alt"></i></a>
+                                {{#if ../unlocked}}
+                                <a class="edit" data-action="editItem" data-tooltip="{{localize 'CO.label.long.edit'}}"><i class="fas fa-fw fa-edit"></i></a>
+                                <a class="delete" data-action="deleteItem" data-tooltip="{{localize 'CO.label.long.delete'}}"><i class="fas fa-fw fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </div>
+                        <div class="attack-body">
+                            <div class="flexrow">
+                                <div class="attacks sub-section">
+                                    <button type="button" class="btn attack-button toggle-action"
+                                        data-action="toggleAction" data-action-type="activate" data-type="attack" data-source="{{attack.uuid}}"
+                                        data-indice="0" data-tooltip="{{attack.system.displayValues.attackTooltip}}" data-tooltip-class="co2-encounter-attack-tooltip">{{localize "CO.label.long.attack"}}
+                                        {{attack.system.displayValues.attack}}</button>
+                                </div>
+                                <div class="damage sub-section">
+                                    <button type="button" class="damage-button tooltipstered toggle-action"
+                                        data-action="toggleAction" data-action-type="activate" data-type="damage" data-source="{{attack.uuid}}"
+                                        data-indice="0">{{localize "CO.label.long.damage"}}
+                                        {{attack.system.displayValues.damage}}</button>
+                                </div>
+                            </div>
+                            <div class="attack-detail sub-section expandable expanded">
+                                <div class="attack-description">{{{attack.system.description}}}</span></div>
+                            </div>
+                        </div>
+                    </li>
+                {{/each}}
+            </ol>
+        </div>
+    </div>
+    <!-- ACTIONS -->
+    <div class="actions section-container">
+        <div class="section-header">
+            <h4>{{localize "CO.ui.actions"}}</h4>
+            <div class="actions-controls controls">
+                <!--            <a class="action-add item-create" data-tooltip="Add Action" data-type="action" data-action-type="action"><i class="fas fa-plus"></i></a>-->
+            </div>
+        </div>        
+        {{> "systems/co2/templates/actors/shared/actions.hbs" this}}
+    </div>
+    <!-- PROPERTIES -->
+    {{#if (or unlocked system.details.properties)}}
+    <div class="section-container properties">
+        <div class="section-header">
+            <h4>{{localize "CO.label.long.properties"}}</h4>
+        </div>
+        <div class="notes foldable">
+            {{#if unlocked}}
+            <prose-mirror name="system.details.properties" value="{{system.details.properties}}"
+                document-uuid="{{actor.uuid}}" compact>
+            </prose-mirror>
+            {{else}}
+            <div class="editor">
+                <div class="editor-content">
+                    {{{system.details.properties}}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
+</section>

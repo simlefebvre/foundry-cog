@@ -1,0 +1,28 @@
+// Spécificités de la fiche de capacité, en complément du tronc commun full-sheet.less
+.window-content {
+  .miniField > input {
+    flex-grow: 0.5;
+  }
+  .labelModifier {
+    display: grid;
+    grid-template-columns: 0.3fr 0.4fr 0.4fr;
+    column-gap: 10px;
+    label {
+      font-weight: bold;
+      padding-left: 15px;
+    }
+  }
+
+  .resolvers-container {
+    .resolver {
+      .tags {
+        .form-group {
+          display: grid;
+          grid-template-columns: 0px auto;
+          margin: 0;
+          gap: 0;
+        }
+      }
+    }
+  }
+}

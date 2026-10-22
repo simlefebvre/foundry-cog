@@ -1,0 +1,113 @@
+{{!-- Character and Encounter Paths Tab Template --}}
+{{!log "Chroniques Oubliées | shared paths" this}}
+<section class="tab standard-form paths{{#if tabs.paths.active}} active{{/if}}" data-group="primary" data-tab="paths">
+
+    {{!-- Notifications XP : uniquement pour les personnages --}}
+    {{#if (eq actor.type "character")}}
+        {{#if (lt xpLeft 0)}}
+            <div class="notification error permanent">
+                {{localize "CO.notif.TooMuchSpentXP" xpSpent=xpSpent xpMax=xpMax xpLeft=xpLeft}}
+            </div>
+        {{else}}
+            {{#if (gt xpLeft 0)}}
+                <div class="notification info permanent">
+                    {{localize "CO.notif.XPLeftToSpend" xpLeft=xpLeft xpMax=xpMax}}
+                </div>
+            {{/if}}
+        {{/if}}
+    {{/if}}
+
+    <div class="{{#if pathGroups.length}}path-grid{{/if}}">
+        {{#each pathGroups as |pg id|}}
+            {{!log 'pathGroup' this}}
+            {{#if (or @root.unlocked (eq @root.actor.type "encounter") pg.path.system.displayPath)}}
+                <ol class="paths items-container" data-tab="features">
+                    <li class="items-container-header item flexrow draggable" data-item-uuid="{{pg.path.uuid}}" data-item-id="{{pg.path.id}}" data-item-type="path">
+                        <h4 class="item-name flexrow">
+                            <a data-action="toggleSection" data-toggle-type="paths" data-slug="{{pg.path.system.slug}}">
+                                {{pg.path.name}} ({{pg.path.system.rank}})
+                            </a>
+                        </h4>
+                        <div class="item-controls-3">
+                            {{#if ../unlocked}}
+                                <a class="edit" data-action="editItem" data-tooltip="{{localize 'CO.label.long.edit'}}"><i class="fas fa-fw fa-edit"></i></a>
+                                <a class="item-control" data-action="deleteItem" data-tooltip="{{localize 'CO.ui.remove'}}"><i class="fas fa-trash"></i></a>
+                            {{/if}}
+                        </div>
+                    </li>
+                    <ol class="item-list foldable {{#if pg.expanded}}expanded{{else}}folded{{/if}}">
+                        {{#each pg.items as |capacity id|}}
+                            {{!log "Chroniques Oubliées | capacity" capacity}}
+                            {{#if capacity.system.learned}}
+                                {{!log "Chroniques Oubliées | capacity learned" capacity}}
+                                <li class="item flexrow draggable" data-item-uuid="{{capacity.uuid}}" data-item-id="{{capacity._id}}" data-item-type="capacity">
+                                    <div class="item-detail rank">{{capacity.system.rank}}</div>
+                                    <div class="item-name flexrow">
+                                        <a class="item-img" data-action="editItem" style="background-image: url('{{capacity.img}}')" data-tooltip="{{capacity.enrichedTooltip}}"></a>
+                                        <h4>{{capacity.name}}{{#if capacity.system.isSpell}} * {{/if}}</h4>
+                                    </div>
+                                    <div class="item-controls-3">
+                                        <a class="chat" data-action="sendToChat" data-chat-type="item" data-tooltip="{{localize 'CO.label.long.sendToChat'}}"><i class="fas fa-fw fa-comment-alt"></i></a>
+                                        {{#if @root.unlocked}}
+                                            <a class="edit" data-action="editItem" data-tooltip="{{localize 'CO.label.long.edit'}}"><i class="fas fa-fw fa-edit"></i></a>
+                                            <a class="item-control" data-action="unlearnCapacity" data-tooltip="{{localize 'CO.ui.unbuy'}}"><i class="fa-solid green fa-check"></i></a>
+                                        {{/if}}
+                                    </div>                            
+                                </li>
+                                {{#if capacity.system.allowLinkedCapacity}}
+                                    <div class="dropzone">
+                                        <ol class="item-list foldable" data-item-uuid="{{capacity.uuid}}" data-item-id="{{capacity._id}}" data-item-type="capacity">
+                                            <li class="item flexrow" {{#if (isNotNull capacity.system.linkedCapacity)}} data-item-uuid="{{capacity.system.linkedCapacity}}" data-item-id="{{capacity.linkedCapacityItem._id}}" data-item-type="capacity" {{/if}}>
+                                                {{#if (and (isNotNull capacity.system.linkedCapacity) (isNotNull capacity.linkedCapacityItem))}}
+                                                    <div class="item-name flexrow">                                            
+                                                            <a class="item-img" data-action="editItem" style="background-image: url('{{capacity.linkedCapacityImg}}')" data-tooltip="{{capacity.enrichedLinkedTooltip}}"></a>
+                                                            <h4>{{capacity.linkedCapacityItem.name}}{{#if capacity.linkedCapacityItem.system.isSpell}} * {{/if}}{{#if capacity.linkedCapacityItem.system.hasActionType}} ({{capacity.linkedCapacityItem.system.actionTypeShortLabel}}){{/if}}</h4>
+                                                    </div>
+                                                    <div class="item-controls-3">
+                                                        <a class="chat" data-action="sendToChat" data-tooltip="{{localize 'CO.label.long.sendToChat'}}" data-chat-type="item"><i class="fas fa-fw fa-comment-alt"></i></a>
+                                                        {{#if @root.unlocked}}
+                                                            <a class="item-control" data-action="deleteItem" data-tooltip="{{localize 'CO.ui.remove'}}"><i class="fas fa-trash"></i></a>
+                                                        {{/if}}
+                                                    </div>
+                                                {{else}}
+                                                    <div class="item-name flexrow">                                            
+                                                            <a class="item-img" data-action="editItem" style="background-image: url('{{capacity.linkedCapacityImg}}')"></a>
+                                                            <h4>{{localize 'CO.ui.addCapacityMsg'}}</h4>
+                                                    </div>
+                                                {{/if}}
+                                            </li>
+                                        </ol>
+                                    </div>
+                                {{/if}}
+                            {{else}}
+                                {{#if @root.unlocked}}
+                                    <li class="item flexrow" data-item-uuid="{{capacity.uuid}}" data-item-id="{{capacity._id}}" data-item-type="capacity" style="opacity: 40% ; font-style: Italic">
+                                        <div class="item-detail rank">{{capacity.system.rank}}</div>
+                                        <div class="item-name flexrow">
+                                            <a class="item-img" data-action="editItem" style="background-image: url('{{capacity.img}}')" data-tooltip="{{capacity.enrichedTooltip}}"></a>
+                                            <h4 data-tooltip="{{localize 'CO.notif.unknownCapacity'}}">{{capacity.name}}{{#if capacity.system.isSpell}} * {{/if}}{{#if capacity.system.hasActionType}} ({{capacity.system.actionTypeShortLabel}}){{/if}}</h4>
+                                        </div>
+                                        <div class="item-controls-2">
+                                            <a class="edit" data-action="editItem" data-tooltip="{{localize 'CO.label.long.edit'}}"><i class="fas fa-fw fa-edit"></i></a>
+                                            <a class="item-control" data-action="learnCapacity" data-tooltip="{{localize 'CO.ui.buy'}}"><i class="fa-solid gray fa-check"></i></a>
+                                        </div>
+                                    </li>
+                                {{/if}}
+                            {{/if}}
+                        {{/each}}
+                    </ol>
+                </ol>
+                
+            {{/if}}
+        {{/each}}
+
+        <!-- Capacités hors voies -->
+        {{> "systems/co2/templates/actors/shared/capacities-nopath.hbs"}}
+
+        {{!-- Compteur de points de capacité : uniquement pour les personnages --}}
+        {{#if (eq actor.type "character")}}
+            {{formGroup systemFields.otherCapacitiesPointsSpent value=system.otherCapacitiesPointsSpent disabled=locked}}
+        {{/if}}
+    </div>
+    
+</section>

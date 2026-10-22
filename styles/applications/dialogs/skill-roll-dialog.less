@@ -1,0 +1,213 @@
+&.skill-roll {
+  .window-header {
+    border-radius: 5px 5px 0 0;
+    background-color: var(--co-dialog-skill-bg);
+    border-bottom: 2px solid var(--co-dialog-skill-accent);
+    .window-title {
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+      color: var(--co-dialog-skill-accent);
+      .theme-dark & {
+        color: var(--co-dialog-muted);
+      }
+    }
+    /*.theme-dark & {
+      background: none;
+      background-color: rgba(0, 0, 0, 0.8);
+    }*/
+  }
+
+  .icone {
+    text-align: center;
+    font-size: 30px;
+    align-content: center;
+  }
+  #totalSkillBonuses {
+    color: var(--co-dialog-skill-accent);
+    font-weight: bolder;
+    font-size: 30px;
+    .theme-dark & {
+      color: var(--co-dialog-skill-highlight);
+    }
+  }
+
+  .window-content {
+    background-color: var(--co-dialog-skill-bg);
+    padding: 10px;
+    .skill-roll-1 {
+      display: grid;
+      grid-template-columns: 0.5fr 1.3fr 0.3fr 1.4fr 0.3fr 2.2fr;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--co-dialog-skill-accent);
+    }
+    .skill-roll-2 {
+      display: grid;
+      grid-template-columns: 0.6fr 3fr 0.8fr 0.8fr 1.2fr 1fr;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--co-dialog-skill-accent);
+    }
+    .skill-roll-3 {
+      padding-bottom: 0px;
+      border-bottom: 2px solid var(--co-dialog-skill-accent);
+      margin-bottom: 3px;
+      .skill-roll-skills {
+        text-align: center;
+        font-size: 16px;
+        font-style: italic;
+        color: var(--co-dialog-skill-accent);
+        padding: 4px 0;
+        .theme-dark & {
+          color: var(--co-dialog-skill-highlight);
+        }
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+      align-items: start;
+      justify-content: flex-end;
+      padding-left: 8px;
+      label.near {
+        margin-bottom: -18px;
+      }
+      .form-fields {
+        border: none;
+      }
+      label {
+        margin-bottom: -8px;
+        font-weight: bold;
+      }
+    }
+    .textCenter {
+      text-align: center;
+      align-self: center;
+    }
+  }
+  .diffGroup {
+    padding-right: 30px;
+    .opposite-check {
+      label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 2px;
+        cursor: pointer;
+        input[type="checkbox"] {
+          margin: 0;
+        }
+      }
+    }
+    .opposite-ability {
+      select {
+        width: 100%;
+      }
+    }
+    .standard-difficulty {
+      display: flex;
+      align-items: center;
+      justify-items: center;
+      gap: 4px;
+      label {
+        margin: 0;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .form-group.rollMode {
+    padding: 0px 0px 0px 10px;
+    .form-fields,
+    select {
+      width: 100%;
+    }
+  }
+  .form-fields-radio {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0;
+    margin: 0px;
+    align-items: start;
+    justify-content: start;
+    .radio {
+      margin: 0;
+    }
+  }
+  input {
+    margin: 0px;
+    text-align: left;
+  }
+  .field-value,
+  select {
+    text-align: left;
+    font-size: var(--font-size-16);
+    font-weight: bolder;
+    background-color: var(--co-dialog-overlay);
+
+    .theme-dark & {
+      color: var(--co-text-light);
+    }
+  }
+  .standard-form {
+    gap: 0;
+  }
+  .flex1.skill-bonuses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 3px;
+  }
+  .fas.fa-fw.fa-shield-alt {
+    color: #0e507c;
+  }
+  .fa-solid.fa-dice {
+    color: #2f4f4f;
+  }
+  .fa-solid.fa-dice-d20 {
+    color: #393939;
+  }
+  .bonus-description {
+    display: flex;
+    flex-direction: column;
+  }
+  .bonus-value.flex0 {
+    font-size: 25px;
+    font-weight: bolder;
+    padding-right: 10px;
+    padding-left: 0px;
+  }
+  .bonus-name.flex1 {
+    font-size: 15px;
+    font-weight: bold;
+    padding-right: 5px;
+  }
+  .bonus-name.flex2 {
+    font-style: italic;
+    padding-right: 5px;
+    margin-left: 10px;
+  }
+  .bonus-item.flexrow {
+    border: 2px solid grey;
+    padding: 5px;
+    margin: 5px;
+    background-color: var(--co-dialog-overlay);
+  }
+  .bonus-item.flexrow.checked {
+    color: var(--co-dialog-muted);
+    padding: 5px;
+    margin: 5px;
+    border: 2px solid var(--co-dialog-muted);
+    background-color: var(--co-dialog-skill-accent);
+  }
+  .theme-dark & {
+    // background: none;
+    // background-color: rgba(0, 0, 0, 0.8);
+    color: var(--co-text-light);
+
+    input {
+      color: var(--co-dialog-muted);
+      text-align: left;
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{{!log "Chroniques Oubliées | capacity" this}}
+<section class="tab standard-form capacity{{#if tabs.details.active}} active{{/if}}" data-group="primary" data-tab="details">
+
+    <section class="half-panel">
+        <section class="panel-left">
+            <!-- Mode Debug Détails -->
+            {{#if debugMode}}
+                <fieldset class="debug">
+                    <legend>{{localize "CO.ui.debug"}}</legend>
+                    {{formGroup fields._id value=item.id disabled=true localize=true label="CO.ui.id"}}
+                    {{formGroup systemFields.slug value=system.slug disabled=true localize=true}}
+                    {{formGroup systemFields.path value=system.path disabled=true localize=true}}
+                </fieldset>
+            {{/if}}
+
+            <fieldset class="rankCost">
+                <legend>{{localize "CO.ui.rankCost"}}</legend>
+                {{formGroup systemFields.rank value=systemSource.rank localize=true disabled=locked}}
+                {{formGroup systemFields.cost value=systemSource.cost localize=true disabled=locked}}
+            </fieldset>
+            
+            
+            <fieldset class="learn">
+                <legend>{{localize "CO.ui.learn"}}</legend>
+                {{formGroup systemFields.learned value=systemSource.learned localize=true disabled=isNotGmInDebugUnlock}}
+            </fieldset>
+        </section>
+
+        <section class="panel-right">
+            <fieldset class="typeFrequency">
+                <legend>{{localize "CO.ui.typeFrequency"}}</legend>
+                {{formGroup systemFields.actionType value=systemSource.actionType localize=true disabled=locked}}
+                {{formGroup systemFields.frequency value=systemSource.frequency localize=true disabled=locked}}
+                {{#if system.hasFrequency}}
+                    <div class="form-group">
+                        <label>{{localize "CO.label.long.usageNumber"}}</label>
+                        <div class="form-fields border-right">
+                            <input class="field-value" name="system.charges.current" type="number" value="{{system.charges.current}}" placeholder="{{localize 'CO.ui.current'}}" min="0" max="{{system.charges.max}}" data-dtype="Number" {{#if locked}}readonly{{/if}}/>
+                                /
+                            <input class="field-value" name="system.charges.max" type="number" value="{{system.charges.max}}" placeholder="{{localize 'CO.ui.max'}}" data-dtype="Number"  {{#if locked}}readonly{{/if}}/>
+                        </div>
+                    </div>
+                {{/if}}
+            </fieldset>
+
+            <fieldSet class="spell">
+                <legend>{{localize "CO.ui.spell"}}</legend>
+                {{formGroup systemFields.properties.fields.spell value=systemSource.properties.spell disabled=locked}}
+                {{#if system.isSpell}}
+                    {{formGroup systemFields.manaCost value=systemSource.manaCost localize=true disabled=locked}}
+                {{/if}}
+            </fieldset>
+
+            <fieldSet class="allowCapacity">
+                <legend>{{localize "CO.ui.allowCapacity"}}</legend>
+                {{formGroup systemFields.allowLinkedCapacity value=systemSource.allowLinkedCapacity localize=true disabled=locked}}
+
+                {{#if system.allowLinkedCapacity}}
+                    {{formGroup systemFields.linkedCapacity value=system.linkedCapacity localize=true disabled=locked}}
+                {{/if}}
+
+                {{#if system.parentCapacity}}
+                    {{formGroup systemFields.parentCapacity value=system.parentCapacity localize=true disabled=locked}}
+                {{/if}}
+            </fieldset>
+        </section>
+    </section>
+
+</section>

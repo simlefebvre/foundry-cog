@@ -1,0 +1,51 @@
+.sheet-sidebar {
+  .scrollable {
+    .sidebar-section {
+      &:nth-child(5) {
+        .labelled-field i {
+          color: var(--co-stat-damages);
+        }
+      }
+    }
+  }
+  span.max,
+  span.slash {
+    color: var(--co-sheet-accent-alt);
+  }
+  background-color: var(--co-encounter-accent);
+
+  .state-name {
+    list-style: "\1F782";
+    margin-left: 5px;
+    color: var(--co-surface);
+    img {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+  }
+  .status-effect {
+    margin-left: 5px;
+    display: flex;
+    img {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  }
+  .companion-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 5px;
+
+    .companion-icon {
+      border-radius: 50%;
+      cursor: pointer;
+      object-fit: cover;
+    }
+  }
+}

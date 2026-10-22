@@ -1,0 +1,78 @@
+{
+  "id": "co2",
+  "title": "Chroniques Oubliées 2e édition",
+  "description": "Le système Chroniques Oubliées 2e édition pour Foundry VTT.",
+  "url": "#{URL}#",
+  "version": "#{VERSION}#",
+  "compatibility": {
+    "minimum": "14",
+    "maximum": "14",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "Kristov"
+    },
+    {
+      "name": "Caloup"
+    },
+    {
+      "name": "LionelL2"
+    },
+    {
+      "name": "L'Alchimiste"
+    },
+    {
+      "name": "Zigmund"
+    }
+  ],
+  "esmodules": ["co.mjs"],
+  "styles": ["css/co.css"],
+  "packs": [],
+  "languages": [
+    {
+      "lang": "fr",
+      "name": "French",
+      "path": "lang/fr.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/fr.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": { "htmlFields": ["biography.private", "biography.public", "appearance.private", "appearance.public", "notes.private", "notes.public"] },
+      "encounter": { "htmlFields": ["description.private", "description.public", "notes.private", "notes.public"] }
+    },
+    "ChatMessage": {
+      "action": {},
+      "check": {},
+      "skill": {},
+      "item": {},
+      "heal": {},
+      "save": {}
+    },
+    "Item": {
+      "container": { "htmlFields": ["description"] },
+      "equipment": { "htmlFields": ["description"] },
+      "feature": { "htmlFields": ["description"] },
+      "profile": { "htmlFields": ["description"] },
+      "capacity": { "htmlFields": ["description", "inGame"] },
+      "attack": { "htmlFields": ["description"] },
+      "path": { "htmlFields": ["description"] }
+    }
+  },
+  "grid": {
+    "distance": 1.5,
+    "units": "m"
+  },
+  "primaryTokenAttribute": "attributes.hp",
+  "secondaryTokenAttribute": "resources.mana",
+  "socket": true,
+  "initiative": "1d20",
+  "background": "systems/co2/ui/logo_co.webp",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#"
+}

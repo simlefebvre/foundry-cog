@@ -1,0 +1,85 @@
+{{!-- Character Effects Tab Template --}}
+{{!log "Chroniques Oubliées | effects" this}}
+<section class="tab standard-form effects{{#if tabs.effects.active}} active{{/if}}" data-group="primary" data-tab="effects">
+    <div class="section-body-no-flex">
+        <!-- Activés : Actions Visibles Activables temporaires et Activées -->
+        <ol class="effects-container items-container">
+            <li class="items-container-header flexrow">
+                <h4 class="item-name flexrow">{{localize "CO.ui.enabledEffects"}}</h4>
+            </li>                      
+            <ol class="item-list">            
+                {{#each visibleActivableTemporaireActions as |action id|}}
+                    {{!log (concat "Chroniques Oubliées | effets - action " id) action}}
+                    {{#if action.properties.enabled}}
+                        <li class="item flexrow" data-item-uuid="{{action.source}}" data-item-indice="{{id}}" data-item-type="action" draggable="false">
+                        <div class="item-name flexrow">
+                            <a class="item-img" data-action="editItem" style="background-image: url('{{{actionImg}}}')"></a>
+                            <h4>{{action.itemName}}{{#if action.hasLabel}} - {{action.label}}{{/if}} <i class="{{action.iconFA}}" data-tooltip="{{action.iconTypeLabel}}"></i></h4>
+                        </div>
+                        <div class="item-controls-2"></div>
+                        </li>
+                    {{/if}}
+                {{/each}}
+            </ol>
+        </ol>
+        <!-- Désactivés : Actions Visibles Activables temporaires et Désactivées -->
+        <ol class="effects-container items-container">
+            <li class="items-container-header flexrow">
+                <h4 class="item-name flexrow">{{localize "CO.ui.disabledEffects"}}</h4>
+            </li>            
+            <ol class="item-list">            
+                {{#each visibleActivableTemporaireActions as |action id|}}
+                    {{!log (concat "Chroniques Oubliées | action " id) action}}
+                    {{#unless action.properties.enabled}}
+                        <li class="item flexrow" data-item-uuid="{{action.source}}" data-item-indice="{{id}}" data-item-type="action" draggable="false">
+                        <div class="item-name flexrow">
+                            <a class="item-img" data-action="editItem" style="background-image: url('{{{actionImg}}}')"></a>
+                            <h4>{{action.itemName}}{{#if action.hasLabel}} - {{action.label}}{{/if}} <i class="{{action.iconFA}}" data-tooltip="{{action.iconTypeLabel}}"></i></h4>
+                        </div>
+                        <div class="item-controls-2"></div>
+                        </li>
+                    {{/unless}}
+                {{/each}}
+            </ol>
+        </ol>
+        <!--Passifs : Actions Visibles non Activables Non temporaires et activées -->        
+        <ol class="effects-container items-container">
+            <li class="items-container-header flexrow">
+                <h4 class="item-name flexrow">{{localize "CO.ui.passiveEffects"}}</h4>
+            </li>
+            <ol class="item-list">                
+                {{#each visibleNonActivableNonTemporaireActions as |action id|}}
+                    {{!log (concat "Chroniques Oubliées | action " id) action}}
+                    {{#if action.properties.enabled}}
+                        <li class="item flexrow" data-item-uuid="{{action.source}}" data-item-indice="{{id}}" data-item-type="action" draggable="false">
+                        <div class="item-name flexrow">
+                            <a class="item-img" data-action="editItem" style="background-image: url('{{{actionImg}}}')"></a>
+                            <h4>{{action.itemName}}{{#if action.hasLabel}} - {{action.label}}{{/if}} <i class="{{action.iconFA}}" data-tooltip="{{action.iconTypeLabel}}"></i></h4>
+                        </div>
+                        <div class="item-controls-2"></div>
+                        </li>
+                    {{/if}}
+                {{/each}}
+            </ol>
+        </ol>
+        <!-- Personnalisés : Liste des customEffects actuellement actifs -->
+        <ol class="effects-container items-container">
+            <li class="items-container-header flexrow">
+                <h4 class="item-name flexrow">{{localize "CO.ui.customEffects"}}</h4>
+            </li>
+            <ol class="item-list">
+                {{#each currentEffects as |effect id|}}
+                    {{!log (concat "Chroniques Oubliées | customEffect " id) effect}}
+                    <li class="item flexrow" data-item-uuid="{{effect.source}}" data-item-indice="{{id}}" data-item-type="customEffectData" draggable="false">
+                        <div class="item-name flexrow">
+                            <a class="item-img" data-action="editItem" style="background-image: url('icons/svg/aura.svg')"></a>
+                            <h4 data-tooltip="{{effect.tooltip}}">{{effect.name}} : {{#if (eq effect.unit "combat") }} {{effect.duration}} {{effect.unit}} {{else}} {{effect.remainingTurn}} {{localize "CO.ui.remainingRound"}} {{/if}}</h4>
+                            {{#if @root/unlocked}}<a class="item-control" data-action="deleteCustomEffect" data-ce-slug="{{effect.slug}}" data-tooltip='{{localize "CO.ui.remove"}}'><i class="fas fa-trash"></i></a>{{/if}}
+                        </div>
+                        <div class="item-controls-2"></div>
+                    </li>
+                {{/each}}
+            </ol>
+        </ol>
+    </div>
+</section>

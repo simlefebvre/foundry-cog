@@ -1,0 +1,40 @@
+&:not(.minimized) {
+  min-height: 480px;
+  min-width: 540px;
+}
+
+.window-content {
+  display: grid;
+  grid-template-columns: minmax(17em, 25%) 1fr;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar tabs"
+    "sidebar content";
+  padding: 0;
+
+  .sheet-header {
+    grid-area: header;
+  }
+
+  .sheet-sidebar {
+    grid-area: sidebar;
+  }
+
+  .sheet-tabs {
+    margin-top: 8px;
+  }
+
+  .tab.active {
+    grid-area: content;
+  }
+
+  @import "./common-header.less";
+  @import "./common-sidebar.less";
+  @import "./common-abilities.less";
+}
+
+.notes .notes-section .details-label {
+  font-weight: bold;
+  font-size: 1rem;
+}

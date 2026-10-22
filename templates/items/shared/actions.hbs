@@ -1,0 +1,118 @@
+<section class="tab standard-form actions{{#if tabs.actions.active}} active{{/if}}" data-group="primary" data-tab="actions">
+    {{!log "Chroniques Oubliées | actions" this}}
+    {{#if @root.unlocked}}<button type="button" class="fas fa-add action-button" data-action="addAction" data-tooltip="{{localize 'CO.ui.add'}}">{{localize "CO.ui.add"}}</button>{{/if}}
+        
+    <div class="actions">
+
+        <nav class="sheet-tabs tabs action-tabs">
+            {{#each system.actions as |action idx|}}
+            <a data-action="tab" data-group="actions" data-tab="action-{{idx}}" data-tooltip="{{action.label}}" class="{{#if (isActionSubtabActive @root.subtabs idx)}}active{{/if}}">
+                <img class="action-icon-small" src="{{action.img}}" data-tooltip="{{action.label}}" />
+            </a>
+            {{/each}}
+        </nav>
+
+        {{#if system.actions}}
+        
+            <div class="action-body">
+                {{#each system.actions as |action idx|}}
+                {{!log 'action-partial action' idx action}}
+                    <div class="tab action item{{#if (isActionSubtabActive @root.subtabs idx)}} active{{/if}}" data-group="actions" data-tab="action-{{idx}}" data-item-id="{{idx}}" data-item-type="action">                        
+                        <section class="half-panel">
+                            <section class="panel1">
+                                <input type="hidden" name="system.actions.{{idx}}.source" value="{{action.source}}" data-dtype="String">
+                                <input type="hidden" name="system.actions.{{idx}}.indice" value="{{idx}}" data-dtype="Number">
+                                <div class="form-group">
+                                    <label>{{localize action.schema.fields.label.label}}</label>
+                                    <div class="form-fields">
+                                        <input class="field-value" name="system.actions.{{idx}}.label" type="text"
+                                            value="{{action.label}}" placeholder="{{localize 'CO.ui.actionName'}}"
+                                            data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+                                        <button type="button" class="icon fa-solid fa-trash" data-action="deleteAction" data-tooltip="CO.ui.removeAction" {{#if @root.locked}}disabled{{/if}}></button>
+                                    </div>
+                                </div>                            
+                                {{formGroup action.schema.fields.chatFlavor value=action.chatFlavor name=(concat "system.actions." idx ".chatFlavor") readonly=@root.locked}}                            
+                                <div class="form-group">
+                                    <label>{{localize "CO.ui.img"}}</label>
+                                    <div class="form-fields">
+                                        <img src="{{action.img}}" class="action-icon" {{#if @root.unlocked}}data-edit="system.actions.{{idx}}.img" data-action="selectActionIcon"{{/if}} />
+                                        <input class="field-value" readonly name="system.actions.{{idx}}.img" type="text" value="{{action.img}}" placeholder="{{localize 'CO.ui.img'}}" data-dtype="String" {{#if @root.locked}}readonly{{/if}}/>
+                                        <button type="button" class="action-button file-picker" data-type="imagevideo" data-target="system.actions.{{idx}}.img" data-tooltip="Parcourir les fichiers" tabindex="-1" {{#if @root.locked}}disabled{{/if}}>
+                                            <i class="fas fa-file-import fa-fw"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="panel2">
+                                <div class="form-group">
+                                    <label>{{localize "CO.ui.type"}}</label>
+                                    <div class="form-fields">
+                                        <select name="system.actions.{{idx}}.type" data-type="String" style="width:100%" {{#if @root.locked}}class="disabled"{{/if}}>
+                                            {{selectOptions @root.choiceActionTypes selected=action.type localize=true}}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>{{localize "CO.ui.typeFrequencyShort"}}</label>
+                                    <div class="form-fields">
+                                        <select name="system.actions.{{idx}}.actionType" data-type="String" style="width:100%" {{#if @root.locked}}class="disabled"{{/if}}>
+                                            {{selectOptions @root.choiceActionFrequency selected=action.actionType localize=true}}
+                                        </select>
+                                    </div>
+                                </div>                           
+                            </section>
+
+                            <section class="panel3">    
+                                <fieldSet>
+                                    <legend>{{localize "CO.label.long.properties"}}</legend>
+                                    <div class="flexrow">
+                                        <label>
+                                            <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.activable'}}" {{checked action.properties.activable}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                            {{action.schema.fields.properties.fields.activable.label}}
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.temporary'}}" {{checked action.properties.temporary}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                            {{action.schema.fields.properties.fields.temporary.label}}
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.noChargesUsed'}}" {{checked action.properties.noChargesUsed}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                            {{action.schema.fields.properties.fields.noChargesUsed.label}}
+                                        </label>
+                                        {{#if (and (eq ../itemType 'capacity') ../system.isSpell) }}
+                                            <label>
+                                                <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.noManaCost'}}" {{checked action.properties.noManaCost}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                                {{action.schema.fields.properties.fields.noManaCost.label}}
+                                            </label>
+                                        {{/if}}
+                                    </div>
+                                </fieldSet>
+                                {{#if @root.debugMode}}
+                                <fieldSet>
+                                    <legend>{{localize "CO.label.long.properties"}} (DEBUG)</legend>
+                                    <div class="flexrow">
+                                        <label>
+                                            <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.visible'}}" {{checked action.properties.visible}} {{#if @root.locked}}class="disabled"{{/if}}/>
+                                            {{action.schema.fields.properties.fields.visible.label}}
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.enabled'}}" {{checked action.properties.enabled}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                            {{action.schema.fields.properties.fields.enabled.label}}
+                                        </label>
+                                    </div>
+                                </fieldSet>
+                                {{/if}}                                
+                            </section>
+                        
+                            <section class="panel4">
+                                {{> "systems/co2/templates/items/parts/conditions-part.hbs" action=action idx=idx}}
+                            </section>
+                        </section>
+                        {{> "systems/co2/templates/items/parts/modifiers-part.hbs" action=action idx=idx choiceModifierSubtypes=@root.choiceModifierSubtypes choiceModifierTargets=@root.choiceModifierTargets}}
+                        {{> "systems/co2/templates/items/parts/resolvers-part.hbs" action=action idx=idx}}
+                    </div>
+                {{/each}}
+            </div>
+        {{/if}}
+    </div>
+</section>

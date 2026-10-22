@@ -1,0 +1,849 @@
+import Utils from "../helpers/utils.mjs"
+export class CORoll extends Roll {
+  static ROLL_TYPE = "standard"
+
+  /**
+   * Fonction qui va analyser les valeurs du jet de dé et indiquer s'il s'agit d'un succes ou non ainsi que les infos
+   * @param {*} roll
+   * @param {boolean} hasAttackSuccessThreshold Indique si l'attaque avait un seuil de succès automatique
+   * @param {number} attackSuccessThreshold Seuil à partir duquel on a un succès automatique
+   * @returns { diceResult, total, isCritical, isFumble, difficulty, isSuccess, isFailure, isSuccessThreshold } ou {} si le roll n'est pas un COAttackRoll de type "attack" ou COSkillRoll
+   */
+  static analyseRollResult(roll, hasAttackSuccessThreshold = false, attackSuccessThreshold = 20) {
+    let result = {}
+
+    // Vérification du type de roll
+    const isAttackRoll = roll instanceof COAttackRoll && roll.options?.type === "attack"
+    const isSkillRoll = roll instanceof COSkillRoll
+    const isRoll = roll instanceof Roll
+
+    // terms[0] n'est un dé (avec "results") que pour un jet de d20 direct : un jet de dommages/soins
+    // peut commencer par un ParentheticalTerm (formule entre parenthèses, ex: options tactiques), qui n'en a pas
+    const diceTerm = roll.terms[0]
+
+    if ((isAttackRoll || isSkillRoll || isRoll) && diceTerm?.results) {
+      // On récupère le résultat du dé conservé
+      const diceResult = diceTerm.results.find((r) => r.active).result
+      const total = Math.ceil(roll.total)
+      const isCritical = diceResult >= roll.options.critical
+      const luckyPointUsed = roll.options?.luckyPointUsed || false
+      const isFumble = diceResult === 1 && !luckyPointUsed
+      let difficulty = roll.options.difficulty
+      let isSuccess
+      let isFailure
+      let isSuccessThreshold = false
+      // Si on utilise une difficulté et qu'elle a été définie
+      // Si elle n'est pas saisie dans la fenêtre de dialogue, difficulty vaut ""
+      if (roll.options.useDifficulty && difficulty && difficulty !== "") {
+        if (!roll.options.oppositeRoll) {
+          if (typeof difficulty === "string") {
+            // On doit pouvoir avoir une formule dans la difficulté : ex : 10 + @cible.con
+            difficulty = parseInt(eval(difficulty))
+          }
+          isSuccess = roll.total >= difficulty
+          isFailure = roll.total < difficulty
+        }
+      }
+
+      if (hasAttackSuccessThreshold && diceResult >= attackSuccessThreshold) {
+        isSuccess = true // Si on aun seuil de succès automatique et que le dé est au dessus alors on a un succès
+        isSuccessThreshold = true
+        isFailure = false
+      }
+      if (isCritical) isSuccess = true
+      if (isFumble) {
+        isFailure = true
+        isSuccess = false
+      }
+
+      result = { diceResult, total, isCritical, isFumble, difficulty, isSuccess, isFailure, isSuccessThreshold }
+    }
+    return result
+  }
+}
+
+export class COSkillRoll extends CORoll {
+  static ROLL_TYPE = "skill"
+
+  static DIALOG_TEMPLATE = "systems/co2/templates/dialogs/skill-roll-dialog.hbs"
+
+  static CHAT_TEMPLATE = "systems/co2/templates/chat/skill-roll-card.hbs"
+
+  static ROLL_CSS = ["co", "skill-roll"]
+
+  /**
+   * Affiche une boîte de dialogue pour lancer un jet de compétence et retourne le résultat du jet.
+   *
+   * @param {Object} dialogContext Le contexte de la boîte de dialogue, contenant des informations comme l'acteur et le label.
+   * @param {Object} [options={}] Options supplémentaires pour le jet de compétence. Options.withDialog
+   * @returns {Promise<Object|null>} Le résultat du jet de compétence ou null si la boîte de dialogue a été annulée.
+   *
+   * @example
+   * const dialogContext = {
+   *   label: "Roll for Initiative",
+   *   actor: someActor
+   * };
+   * const roll = await COSkillRoll.prompt(dialogContext);
+   * if (roll) {
+   *   console.log("Roll result:", roll.total);
+   * }
+   */
+  static async prompt(dialogContext, options = {}) {
+    const withDialog = options.withDialog ?? true
+    let formula
+    let rollContext
+
+    if (withDialog) {
+      const content = await foundry.applications.handlebars.renderTemplate(this.DIALOG_TEMPLATE, dialogContext)
+
+      rollContext = await foundry.applications.api.DialogV2.wait({
+        window: { title: dialogContext.title },
+        position: { width: 800 },
+        classes: this.ROLL_CSS,
+        content,
+        rejectClose: false,
+        buttons: [
+          {
+            action: "ok",
+            label: game.i18n.localize("CO.ui.submit"),
+            icon: "fas fa-check",
+            default: true,
+            callback: (event, button, dialog) => {
+              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Callback`), event, button, dialog)
+              const output = Array.from(button.form.elements).reduce((obj, input) => {
+                if (input.name) obj[input.name] = input.value
+                return obj
+              }, {})
+              // Si jet opposé coché, on remplace la difficulté par @oppose.{ability}
+              const oppositeCheckbox = button.form.querySelector("#oppositeRoll")
+              if (oppositeCheckbox?.checked) {
+                output.difficulty = `@oppose.${output.oppositeAbility}`
+              }
+              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Output`), output)
+              // Récupère tous les éléments bonus-item checked pour l'afficher en chat message apres
+              const checkedBonuses = dialog.element.querySelectorAll(".bonus-item.checked")
+              const skillUsed = Array.from(checkedBonuses).map((item) => {
+                const descriptions = item.querySelectorAll(".bonus-name")
+                const name = descriptions[0]?.textContent.trim() || ""
+                const description = descriptions[1]?.textContent.trim() || ""
+                return {
+                  name,
+                  description,
+                  value: parseInt(item.dataset.value),
+                }
+              })
+              dialogContext.skillUsed = skillUsed
+              /* 
+                {
+                    "rollMode": "publicroll",
+                    "dice": "1d20",
+                    "formula": "2d20kl+3",
+                    "bonus": "+0",
+                    "malus": "+0",
+                    "totalSkillBonuses": "0",
+                    "difficulty": "",
+                    "critical": "20"
+                }
+              */
+              return output
+            },
+          },
+          {
+            action: "cancel",
+            label: game.i18n.localize("CO.ui.cancel"),
+            icon: "fas fa-times",
+            callback: () => false,
+          },
+        ],
+        render: (event, dialog) => {
+          const inputs = dialog.element.querySelectorAll(".bonus-item")
+          if (inputs) {
+            inputs.forEach((input) => {
+              input.addEventListener("click", this._onToggleCheckSkillBonus.bind(this))
+            })
+          }
+          // Toggle jet opposé / difficulté standard
+          const oppositeCheck = dialog.element.querySelector("#oppositeRoll")
+          if (oppositeCheck) {
+            oppositeCheck.addEventListener("change", (event) => {
+              const checked = event.target.checked
+              const oppositeAbility = dialog.element.querySelector(".opposite-ability")
+              const standardDifficulty = dialog.element.querySelector(".standard-difficulty")
+              if (oppositeAbility) oppositeAbility.style.display = checked ? "" : "none"
+              if (standardDifficulty) standardDifficulty.style.display = checked ? "none" : ""
+            })
+          }
+          const radios = dialog.element.querySelectorAll('input[name="dice"]')
+          radios.forEach((radio) => {
+            radio.addEventListener("change", (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              let newFormula
+              switch (event.target.value) {
+                case "standard":
+                  newFormula = `1d20+${dialogContext.skillValue}`
+                  break
+                case "bonus":
+                  newFormula = `2d20kh+${dialogContext.skillValue}`
+                  break
+                case "malus":
+                  newFormula = `2d20kl+${dialogContext.skillValue}`
+                  break
+              }
+              dialog.element.querySelector('input[name="formula"]').value = newFormula
+            })
+          })
+        },
+      })
+
+      if (!rollContext) return
+      rollContext.label = dialogContext.label
+      if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll - rollContext`), rollContext)
+
+      formula = `${rollContext.formula}`
+      if (parseInt(rollContext.bonus) > 0) formula += `+${parseInt(rollContext.bonus)}`
+      if (parseInt(rollContext.malus) !== 0) formula += `-${parseInt(Math.abs(rollContext.malus))}`
+      const totalSkillBonuses = parseInt(rollContext.totalSkillBonuses)
+      if (totalSkillBonuses) formula += `${totalSkillBonuses > 0 ? "+" : ""}${totalSkillBonuses}`
+    }
+    // Pas de prompt
+    else {
+      let dice = dialogContext.dice // Valeurs possibles : standard, bonus, malus
+      let diceFormula = "1d20"
+      if (dice === "bonus") diceFormula = "2d20kh"
+      else if (dice === "malus") diceFormula = "2d20kl"
+      formula = `${diceFormula}+${parseInt(dialogContext.skillValue)}`
+      if (parseInt(dialogContext.bonus) !== 0) formula += `+${parseInt(dialogContext.bonus)}`
+      if (parseInt(dialogContext.malus) !== 0) formula += `-${parseInt(Math.abs(dialogContext.malus))}`
+      const totalSkillBonuses = parseInt(dialogContext.totalSkillBonuses)
+      if (totalSkillBonuses) formula += `${totalSkillBonuses > 0 ? "+" : ""}${totalSkillBonuses}`
+    }
+
+    formula = Utils.evaluateFormulaCustomValues(dialogContext.actor, formula)
+
+    const roll = new this(formula, dialogContext.actor.getRollData())
+    await roll.evaluate()
+
+    const toolTip = await roll.getTooltip()
+    roll.options = {
+      actorId: dialogContext.actor.id,
+      actorName: dialogContext.actor.name,
+      rollMode: withDialog ? rollContext.rollMode : dialogContext.rollMode,
+      flavor: dialogContext.flavor,
+      bonus: withDialog ? rollContext.bonus : dialogContext.bonus,
+      malus: withDialog ? rollContext.malus : dialogContext.malus,
+      critical: withDialog ? rollContext.critical : dialogContext.critical,
+      oppositeRoll: withDialog ? rollContext.difficulty?.includes("@oppose") : dialogContext.difficulty?.includes("@oppose"),
+      oppositeTarget: dialogContext.targets?.length > 0 ? dialogContext.targets[0].uuid : null,
+      targetInfos: dialogContext.targets?.map((t) => ({ name: t.name, img: t.token?.document?.texture?.src || t.actor?.img })) || [],
+      oppositeValue: withDialog ? rollContext.difficulty : dialogContext.difficulty,
+      hasLuckyPoints: withDialog ? rollContext.hasLuckyPoints === "true" : dialogContext.hasLuckyPoints,
+      useDifficulty: dialogContext.useDifficulty,
+      showDifficulty: dialogContext.showDifficulty,
+      difficulty: withDialog ? rollContext.difficulty : dialogContext.difficulty,
+      toolTip,
+      skills: dialogContext.skills,
+      skillUsed: dialogContext.skillUsed,
+      ...options,
+    }
+
+    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll - roll`), roll)
+    return roll
+  }
+
+  static _onToggleCheckSkillBonus(event) {
+    let item = event.currentTarget.closest(".bonus-item")
+    item.classList.toggle("checked")
+    let total = this._calculateTotalSkillBonus(event)
+    const form = event.currentTarget.closest("form")
+    form.querySelector("#totalSkillBonuses").value = `${total >= 0 ? "+" : ""}${total}`
+  }
+
+  static _calculateTotalSkillBonus(event) {
+    let parent = event.currentTarget.closest(".skill-bonuses")
+    const skillBonuses = Array.from(parent.querySelectorAll(".bonus-item.checked"))
+    let total = skillBonuses.reduce((acc, curr) => acc + parseInt(curr.dataset.value), 0)
+    return total
+  }
+
+  async _prepareChatRenderContext({ flavor, isPrivate = false, ...options } = {}) {
+    const rollResults = CORoll.analyseRollResult(this)
+    // On peut utiliser un point de chance si on en a et que ce n'est pas déjà un critique
+    // Si la difficulté est visible par tous, on n'affiche le bouton que sur un échec
+    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const canUseLuckyPoints = this.options.hasLuckyPoints && !rollResults.isCritical && (displayDifficulty === "gm" || rollResults.isFailure)
+    // Libellé de la caractéristique opposée (ex : "Constitution", "Attaque de contact")
+    const oppositeAbilityId = this.options.oppositeValue?.startsWith("@oppose.") ? this.options.oppositeValue.replace("@oppose.", "") : null
+    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atm: "magic" }
+    const oppositeAbilityLabel = oppositeAbilityId
+      ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
+      : null
+    return {
+      formula: isPrivate ? "???" : this.formula,
+      flavor: this.options.flavor,
+      user: game.user.id,
+      tooltip: isPrivate ? "" : await this.getTooltip(),
+      total: isPrivate ? "?" : Math.round(this.total * 100) / 100,
+      actor: this.options.actor,
+      actorName: this.options.actorName,
+      speaker: ChatMessage.getSpeaker({ actor: this.options.actor, scene: canvas.scene }),
+      useDifficulty: this.options.useDifficulty,
+      showDifficulty: this.options.showDifficulty,
+      oppositeRoll: this.options.oppositeRoll,
+      oppositeTarget: this.options.oppositeTarget,
+      targetInfos: this.options.targetInfos,
+      oppositeValue: this.options.oppositeValue,
+      oppositeAbilityLabel,
+      difficulty: rollResults.difficulty,
+      isCritical: rollResults.isCritical,
+      isFumble: rollResults.isFumble,
+      isSuccess: rollResults.isSuccess,
+      isFailure: rollResults.isFailure,
+      hasLuckyPoints: this.options.hasLuckyPoints,
+      canUseLuckyPoints,
+      hasPendingConsequences: this.options.hasPendingConsequences || false,
+      skills: this.options.skills,
+      skillUsed: this.options.skillUsed,
+      opposeResult: this.options.opposeResult,
+      opposeTooltip: this.options.opposeTooltip,
+      opposeSkillUsed: this.options.opposeSkillUsed,
+      opposeFlavor: this.options.opposeFlavor,
+      opposeActorName: this.options.opposeActorName,
+      opposeActorId: this.options.opposeActorId,
+      opposeHasLuckyPoints: this.options.opposeHasLuckyPoints,
+      opposeCanUseLuckyPoints: this.options.opposeHasLuckyPoints && !rollResults.isCritical,
+    }
+  }
+}
+
+export class COAttackRoll extends CORoll {
+  static ROLL_TYPE = "attack"
+
+  static DIALOG_TEMPLATE = "systems/co2/templates/dialogs/attack-roll-dialog.hbs"
+
+  static ATTACK_CHAT_TEMPLATE = "systems/co2/templates/chat/attack-roll-card.hbs"
+
+  static DAMAGE_CHAT_TEMPLATE = "systems/co2/templates/chat/damage-roll-card.hbs"
+
+  static ROLL_CSS = ["co", "attack-roll"]
+
+  get isAttack() {
+    return this.options.type === "attack"
+  }
+
+  get isDamage() {
+    return this.options.type === "damage"
+  }
+
+  /** @override  */
+  async render({ flavor, template = this.constructor.CHAT_TEMPLATE, isPrivate = false } = {}) {
+    if (this.isAttack) {
+      return await super.render({ flavor, template: COAttackRoll.ATTACK_CHAT_TEMPLATE, isPrivate })
+    } else if (this.isDamage) return await super.render({ flavor, template: COAttackRoll.DAMAGE_CHAT_TEMPLATE, isPrivate })
+  }
+
+  async _prepareChatRenderContext({ flavor, isPrivate = false, ...options } = {}) {
+    if (this.isAttack) {
+      return this._getAttackChatCardData(flavor, isPrivate)
+    } else if (this.isDamage) {
+      return this._getDamageChatCardData(flavor, isPrivate)
+    }
+  }
+
+  static async prompt(dialogContext, options = {}) {
+    const withDialog = options.withDialog ?? true
+    // Le résultat est un jet d'attaque ou un jet d'attaque et un jet de dommages
+    let rolls = []
+    let rollContext
+
+    if (withDialog) {
+      const content = await foundry.applications.handlebars.renderTemplate(this.DIALOG_TEMPLATE, dialogContext)
+
+      rollContext = await foundry.applications.api.DialogV2.wait({
+        window: { title: dialogContext.title },
+        position: { width: dialogContext.hasSkillBonuses ? 780 : 700 },
+        classes: this.ROLL_CSS,
+        content,
+        rejectClose: false,
+        buttons: [
+          {
+            action: "ok",
+            label: game.i18n.localize("CO.ui.submit"),
+            icon: "fas fa-check",
+            default: true,
+            callback: (event, button, dialog) => {
+              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Callback`), event, button, dialog)
+              const output = Array.from(button.form.elements).reduce((obj, input) => {
+                if (input.name) {
+                  // Gestion spéciale pour les checkboxes multi-sélection (selectedStatuses)
+                  if (input.type === "checkbox" && input.name === "selectedStatuses") {
+                    if (!obj.selectedStatuses) obj.selectedStatuses = []
+                    if (input.checked) obj.selectedStatuses.push(input.value)
+                  } else if (input.type === "checkbox") {
+                    obj[input.name] = input.checked
+                  } else if (input.type === "radio") {
+                    // Only store the value if this radio button is checked
+                    if (input.checked) {
+                      obj[input.name] = input.value
+                    }
+                  } else {
+                    obj[input.name] = input.value
+                  }
+                }
+                return obj
+              }, {})
+              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Output`), output)
+              /* Output exemple
+                {
+                    "rollMode": "publicroll",
+                    "dice": "bonus",
+                    "formulaAttack": "1d20 + 13",
+                    "difficulty": "17",
+                    "critical": "20",
+                    "skillBonus": "0",
+                    "skillMalus": "-3",
+                    "formulaDamage": "(1d3+1)+1d4°",
+                    "damageBonus": "0",
+                    "damageMalus": "0",
+                    "tempDamage": true,
+                    "tactical": "violent",
+                    "flavor": "Mains nues "
+                }
+              */
+              return output
+            },
+          },
+          {
+            action: "cancel",
+            label: game.i18n.localize("CO.ui.cancel"),
+            icon: "fas fa-times",
+            callback: () => false,
+          },
+        ],
+        render: (event, dialog) => {
+          const radios = dialog.element.querySelectorAll('input[name="dice"]')
+          radios.forEach((radio) => {
+            radio.addEventListener("change", (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              let newFormula
+              switch (event.target.value) {
+                case "standard":
+                  newFormula = `1d20+${dialogContext.initialSkillFormula}`
+                  break
+                case "bonus":
+                  newFormula = `2d20kh+${dialogContext.initialSkillFormula}`
+                  break
+                case "malus":
+                  newFormula = `2d20kl+${dialogContext.initialSkillFormula}`
+                  break
+              }
+              dialog.element.querySelector('input[name="formulaAttack"]').value = newFormula
+            })
+          })
+          // Options tactiques
+          const radiosTactical = dialog.element.querySelectorAll('input[name="tactical"]')
+          radiosTactical.forEach((radio) => {
+            radio.addEventListener("change", (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              let newBonus
+              let newDamage
+              let newMalus
+              switch (event.target.value) {
+                case "none":
+                  newBonus = `${dialogContext.skillBonus}`
+                  newDamage = `${dialogContext.formulaDamage}`
+                  newMalus = `${dialogContext.skillMalus}`
+                  break
+                case "confident":
+                  newBonus = `${dialogContext.skillBonus + 5}`
+                  newDamage = `(${dialogContext.formulaDamage})/2`
+                  newMalus = `${dialogContext.skillMalus}`
+                  break
+                case "precise":
+                  newBonus = `${dialogContext.skillBonus}`
+                  newDamage = `(${dialogContext.formulaDamage})+1d4°`
+                  newMalus = `${dialogContext.skillMalus - 3}`
+                  break
+                case "violent":
+                  newBonus = `${dialogContext.skillBonus}`
+                  newDamage = `(${dialogContext.formulaDamage})+2d4°`
+                  newMalus = `${dialogContext.skillMalus - 7}`
+                  break
+              }
+              const skillBonusElement = dialog.element.querySelector('input[name="skillBonus"]')
+              if (skillBonusElement) {
+                skillBonusElement.value = newBonus
+              }
+              const skillMalusElement = dialog.element.querySelector('input[name="skillMalus"]')
+              if (skillMalusElement) {
+                skillMalusElement.value = newMalus
+              }
+              const formulaDamageElement = dialog.element.querySelector('input[name="formulaDamage"]')
+              if (formulaDamageElement) {
+                formulaDamageElement.value = newDamage
+              }
+            })
+          })
+          // Skill bonuses (pour les attaques basées sur une caractéristique)
+          const bonusItems = dialog.element.querySelectorAll(".bonus-item")
+          if (bonusItems.length > 0) {
+            bonusItems.forEach((input) => {
+              input.addEventListener("click", (event) => {
+                const item = event.currentTarget.closest(".bonus-item")
+                item.classList.toggle("checked")
+                const parent = event.currentTarget.closest(".skill-bonuses")
+                const checkedBonuses = Array.from(parent.querySelectorAll(".bonus-item.checked"))
+                const total = checkedBonuses.reduce((acc, curr) => acc + parseInt(curr.dataset.value), 0)
+                dialog.element.querySelector("#totalSkillBonuses").value = `${total >= 0 ? "+" : ""}${total}`
+              })
+            })
+          }
+          // Dommages temporaires
+          const tempDamageCb = dialog.element.querySelector('input[name="tempDamage"]')
+          const radioButtons = dialog.element.querySelectorAll('input[type="radio"]')
+          if (tempDamageCb && radioButtons.length > 0) {
+            tempDamageCb.addEventListener("click", this._onCheckTempDamage.bind(this))
+          }
+        },
+      })
+
+      if (!rollContext) return
+
+      rollContext.flavor = dialogContext.flavor
+      if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll - rollContext`), rollContext)
+    }
+
+    if (dialogContext.type === "attack") {
+      let formulaStr = withDialog
+        ? `${rollContext.formulaAttack}+${rollContext.skillBonus}+${rollContext.skillMalus}`
+        : `${dialogContext.formulaAttack}+${dialogContext.skillBonus}+${dialogContext.skillMalus}`
+      const totalSkillBonuses = parseInt(withDialog ? rollContext.totalSkillBonuses : dialogContext.totalSkillBonuses) || 0
+      if (totalSkillBonuses) formulaStr += `${totalSkillBonuses > 0 ? "+" : ""}${totalSkillBonuses}`
+      const formula = Utils.evaluateFormulaCustomValues(dialogContext.actor, formulaStr)
+
+      const roll = new this(formula, dialogContext.actor.getRollData())
+      await roll.evaluate()
+      const tooltip = await roll.getTooltip()
+      roll.options = {
+        actorId: dialogContext.actor.id,
+        rollMode: withDialog ? rollContext.rollMode : dialogContext.rollMode,
+        type: "attack",
+        itemName: dialogContext.itemName,
+        itemImg: dialogContext.itemImg,
+        itemUuid: dialogContext.itemUuid,
+        itemId: dialogContext.itemId,
+        actionName: dialogContext.actionName,
+        flavor: dialogContext.flavor,
+        dice: withDialog ? rollContext.dice : dialogContext.dice,
+        formulaAttack: withDialog ? rollContext.formulaAttack : dialogContext.formulaAttack,
+        skillBonus: withDialog ? rollContext.skillBonus : dialogContext.skillBonus,
+        skillMalus: withDialog ? rollContext.skillMalus : dialogContext.skillMalus,
+        formulaDamage: withDialog ? rollContext.formulaDamage : dialogContext.formulaDamage,
+        damageBonus: withDialog ? rollContext.damageBonus : dialogContext.damageBonus,
+        damageMalus: withDialog ? rollContext.damageMalus : dialogContext.damageMalus,
+        critical: withDialog ? rollContext.critical : dialogContext.critical,
+        oppositeRoll: withDialog ? rollContext.difficulty?.includes("@oppose") : dialogContext.oppositeRoll.includes("@oppose"),
+        oppositeTarget: dialogContext.targets?.length > 0 ? dialogContext.targets[0].uuid : null,
+        oppositeValue: withDialog ? rollContext.difficulty : dialogContext.difficulty,
+        hasLuckyPoints: dialogContext.hasLuckyPoints,
+        useDifficulty: dialogContext.useDifficulty,
+        showDifficulty: dialogContext.showDifficulty,
+        difficulty: withDialog ? rollContext.difficulty : dialogContext.difficulty,
+        tooltip,
+        tempDamage: withDialog ? rollContext.tempDamage : dialogContext.tempDamage,
+        tactical: withDialog ? rollContext.tactical : dialogContext.tactical,
+        opposeResult: dialogContext.opposeResult,
+        opposeTooltip: dialogContext.opposeTooltip,
+        hasAttackSuccessThreshold: dialogContext.hasAttackSuccessThreshold,
+        attackSuccessThreshold: dialogContext.attackSuccessThreshold,
+        selectedStatuses: withDialog ? rollContext.selectedStatuses : undefined,
+        formulaAttackTooltip: dialogContext.formulaAttackTooltip || "",
+        formulaDamageTooltip: dialogContext.formulaDamageTooltip || "",
+        ...options,
+      }
+
+      rolls.push(roll)
+
+      // Si l'option Jet combiné est activée, on lance le jet de dommages immédiatement
+      // Jet de dommages enregistré si la formule de dommages n'est pas vide ou égale à 0
+      let damageFormula
+      const formulaToEvaluate = COAttackRoll._buildDamageFormula(withDialog ? rollContext : dialogContext)
+      if (formulaToEvaluate) damageFormula = Utils.evaluateFormulaCustomValues(dialogContext.actor, formulaToEvaluate)
+
+      if (damageFormula && damageFormula !== "" && Roll.validate(damageFormula)) {
+        const damageRoll = new this(damageFormula, dialogContext.actor.getRollData())
+        await damageRoll.evaluate()
+        const damageRollTooltip = await damageRoll.getTooltip()
+        // Pas d'itemUuid ni d'itemId ici : la carte d'attaque porte déjà l'identité de l'objet.
+        // Les dupliquer ferait jouer deux fois les animations des modules qui repèrent l'objet dans la carte de chat.
+        damageRoll.options = {
+          actorId: dialogContext.actor.id,
+          rollMode: rolls[0].options.rollMode,
+          type: "damage",
+          flavor: dialogContext.flavor,
+          itemName: dialogContext.itemName,
+          itemImg: dialogContext.itemImg,
+          actionName: dialogContext.actionName,
+          tooltip: damageRollTooltip,
+          formulaDamage: damageFormula,
+          formulaDamageTooltip: dialogContext.formulaDamageTooltip || "",
+          tempDamage: rollContext.tempDamage,
+          ...options,
+        }
+        rolls.push(damageRoll)
+      }
+    } else if (dialogContext.type === "damage") {
+      const formula = Utils.evaluateFormulaCustomValues(dialogContext.actor, COAttackRoll._buildDamageFormula(withDialog ? rollContext : dialogContext) || "0")
+      const roll = new this(formula, dialogContext.actor.getRollData())
+      await roll.evaluate()
+
+      const tooltip = await roll.getTooltip()
+      roll.options = {
+        actorId: dialogContext.actor.id,
+        rollMode: withDialog ? rollContext.rollMode : dialogContext.rollMode,
+        type: dialogContext.type,
+        flavor: dialogContext.flavor,
+        itemName: dialogContext.itemName,
+        itemImg: dialogContext.itemImg,
+        itemUuid: dialogContext.itemUuid,
+        itemId: dialogContext.itemId,
+        actionName: dialogContext.actionName,
+        tooltip: tooltip,
+        formulaDamage: formula,
+        formulaDamageTooltip: dialogContext.formulaDamageTooltip || "",
+        tempDamage: rollContext.tempDamage,
+        ...options,
+      }
+      rolls.push(roll)
+    }
+
+    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll - rolls`), rolls)
+    return rolls
+  }
+
+  /**
+   * Builds the raw damage formula by appending the dialog bonus and malus to the base damage formula.
+   * The bonus is always a positive number and the malus a negative one : both are appended with an explicit sign
+   * so that the resulting formula stays valid whatever the values.
+   *
+   * @param {Object} context The roll context, either the dialog output or the initial context
+   * @param {string} context.formulaDamage The base damage formula, may contain custom values such as `@for`
+   * @param {string|number} context.damageBonus The damage bonus entered in the dialog
+   * @param {string|number} context.damageMalus The damage malus entered in the dialog
+   * @returns {string} The damage formula, empty string if there is nothing to roll
+   */
+  static _buildDamageFormula({ formulaDamage, damageBonus, damageMalus } = {}) {
+    const base = formulaDamage !== undefined && formulaDamage !== null && String(formulaDamage) !== "" && String(formulaDamage) !== "0" ? String(formulaDamage) : ""
+    const bonus = Number(damageBonus) || 0
+    const malus = Number(damageMalus) || 0
+    if (!base && !bonus && !malus) return ""
+
+    let formula = base || "0"
+    if (bonus) formula += `${bonus > 0 ? " + " : " - "}${Math.abs(bonus)}`
+    if (malus) formula += `${malus > 0 ? " + " : " - "}${Math.abs(malus)}`
+    return formula
+  }
+
+  /**
+   * Generates chat card data for an attack roll.
+   *
+   * @param {string} flavor The flavor text to display with the roll
+   * @param {boolean} isPrivate Whether the roll should be displayed as private (hiding formula and results)
+   * {Object} Chat card data object
+   * @private
+   */
+  _getAttackChatCardData(flavor, isPrivate) {
+    const rollResults = CORoll.analyseRollResult(this, this.options.hasAttackSuccessThreshold, this.options.attackSuccessThreshold)
+    if (CONFIG.debug.co2?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
+    const oppositeAbilityId = this.options.difficulty?.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
+    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atm: "magic" }
+    const oppositeAbilityLabel = oppositeAbilityId
+      ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
+      : null
+
+    // Gestion des dés bonus/malus
+    const hasDice = this.options.dice === "bonus" || this.options.dice === "malus"
+    // Libellé du dé
+    let diceType = ""
+    if (hasDice) {
+      switch (this.options.dice) {
+        case "bonus":
+          diceType = game.i18n.localize("CO.ui.rollBonus")
+          break
+        case "malus":
+          diceType = game.i18n.localize("CO.ui.rollMalus")
+          break
+      }
+    }
+
+    // Option tactique
+    const hasTactical = this.options.tactical !== "none"
+    // Libellé de l'option tactique
+    let tactical = ""
+    if (hasTactical) {
+      switch (this.options.tactical) {
+        case "confident":
+          tactical = game.i18n.localize("CO.ui.tactiqueAssuree")
+          break
+        case "precise":
+          tactical = game.i18n.localize("CO.ui.tactiquePrecise")
+          break
+        case "violent":
+          tactical = game.i18n.localize("CO.ui.tactiqueViolente")
+          break
+      }
+    }
+
+    // Affichage de la difficulté
+    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const viewerCanSeeDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
+    const showDifficulty = !!this.options.useDifficulty && viewerCanSeeDifficulty
+
+    // On peut utiliser un point de chance si on en a et que ce n'est pas déjà un critique
+    // Si la difficulté est visible par tous, on n'affiche le bouton que sur un échec (global ou par cible)
+    const anyTargetFailure = this.options.targetResults?.some((tr) => tr.isFailure) ?? false
+    const canUseLuckyPoints = this.options.hasLuckyPoints && !rollResults.isCritical && (displayDifficulty === "gm" || rollResults.isFailure || anyTargetFailure)
+
+    return {
+      formula: isPrivate ? "???" : this.formula,
+      flavor: `${this.options.flavor}`,
+      itemName: this.options.itemName || this.options.flavor,
+      itemImg: this.options.itemImg || null,
+      itemUuid: this.options.itemUuid || null,
+      itemId: this.options.itemId || null,
+      actionName: this.options.actionName || "",
+      user: game.user.id,
+      tooltip: isPrivate ? "" : this.options.tooltip,
+      total: isPrivate ? "?" : Math.ceil(this.total),
+      type: this.options.type,
+      actorId: this.options.actorId,
+      speaker: ChatMessage.getSpeaker({ actor: this.options.actorId, scene: canvas.scene }),
+      hasDice,
+      diceType,
+      useDifficulty: this.options.useDifficulty,
+      showDifficulty,
+      oppositeRoll: this.options.oppositeRoll,
+      oppositeTarget: this.options.oppositeTarget,
+      oppositeValue: this.options.difficulty,
+      oppositeAbilityLabel,
+      hasLuckyPoints: this.options.hasLuckyPoints,
+      canUseLuckyPoints,
+      difficulty: rollResults.difficulty,
+      isCritical: rollResults.isCritical,
+      isFumble: rollResults.isFumble,
+      isSuccess: rollResults.isSuccess,
+      isFailure: rollResults.isFailure,
+      tempDamage: this.options.tempDamage,
+      hasTactical,
+      tactical,
+      opposeResult: this.options.opposeResult,
+      opposeTooltip: this.options.opposeTooltip,
+      opposeHasLuckyPoints: this.options.opposeHasLuckyPoints ?? false,
+      opposeActorId: this.options.opposeActorId ?? null,
+      formulaAttackTooltip: isPrivate ? "" : this.options.formulaAttackTooltip || "",
+      formulaDamageTooltip: isPrivate ? "" : this.options.formulaDamageTooltip || "",
+      targetResults: this.options.targetResults ?? [],
+      hasTargetResults: (this.options.targetResults?.length ?? 0) > 0,
+    }
+  }
+
+  /**
+   * Generates chat card data for a damage roll.
+   *
+   * @param {string} flavor The flavor text to display with the roll
+   * @param {boolean} isPrivate Whether the roll should be displayed as private (hiding formula and results)
+   * {Object} Chat card data object
+   * @private
+   */
+  _getDamageChatCardData(flavor, isPrivate) {
+    if (CONFIG.debug.co2?.chat) console.debug(Utils.log(`COAttackRoll - _getDamageChatCardData options`), this.options)
+
+    return {
+      formula: isPrivate ? "???" : this.formula,
+      flavor: `${this.options.flavor}`,
+      itemName: this.options.itemName || this.options.flavor,
+      itemImg: this.options.itemImg || null,
+      itemUuid: this.options.itemUuid || null,
+      itemId: this.options.itemId || null,
+      actionName: this.options.actionName || "",
+      user: game.user.id,
+      tooltip: isPrivate ? "" : this.options.tooltip,
+      total: isPrivate ? "?" : Math.ceil(this.total),
+      type: this.options.type,
+      actorId: this.options.actorId,
+      speaker: ChatMessage.getSpeaker({ actor: this.options.actorId, scene: canvas.scene }),
+      tempDamage: this.options.tempDamage,
+      // Les dommages temporaires sont une règle propre à COF2 : la case n'est proposée que si un module l'active
+      showTempDamage: game.system.CONST.rules.tempDamage,
+      formulaDamageTooltip: isPrivate ? "" : this.options.formulaDamageTooltip || "",
+      targetResults: this.options.targetResults ?? [],
+      hasTargetResults: (this.options.targetResults?.length ?? 0) > 0,
+    }
+  }
+
+  /**
+   * Evènement déclenché lorsque l'on coche/décoche la case à cocher Dommages temporaires
+   * Si on coche alors que l'arme ne propose pas l'option de dégat temporaire on met le Dé en dé malus
+   * Par contre on ne peux pas faire l'inverse car si le dé était déjà un dé malus avant on lui donnerais un dé standard
+   * à la place ce qui n'est pas souhaitable
+   * @param {*} event évènement déclenché par le click
+   * @param {*} dialogContext Context de la fenetre avec son ensemble d'éléments
+   */
+  static _onCheckTempDamage(event, dialogContext) {
+    let checked = event.target.checked
+    let canBeTempDamage = event.target.dataset.canbetempdamage
+    if (checked === true && canBeTempDamage === "false") {
+      const form = event.target.closest("form")
+      let radio = form.querySelector("#diceMalus")
+      radio.checked = true
+      // Créer et déclencher un événement change
+      const changeEvent = new Event("change", {
+        bubbles: true, // Permet à l'événement de remonter dans le DOM
+        cancelable: true,
+      })
+
+      radio.dispatchEvent(changeEvent)
+    }
+  }
+}
+
+export class COHealRoll extends CORoll {
+  static ROLL_TYPE = "heal"
+
+  static CHAT_TEMPLATE = "systems/co2/templates/chat/heal-card.hbs"
+
+  static ROLL_CSS = ["co", "heal-roll"]
+
+  /**
+   * Prepares the context object for rendering a chat message for this roll.
+   *
+   * @param {Object} [options={}] Options for preparing the chat render context
+   * @param {string} [options.flavor] Flavor text for the chat message
+   * @param {boolean} [options.isPrivate=false] Whether the roll details should be hidden (showing "???" instead)
+   * @param {Object} options.message Message object containing additional properties
+   * @param {string} options.message.flavor Flavor text from the message
+   * @returns {Promise<Object>} The chat render context object containing:
+   *   - actor: The actor associated with this roll
+   *   - speaker: The chat speaker object for this roll
+   *   - formula: The roll formula (or "???" if private)
+   *   - flavor: The flavor text for the message
+   *   - user: The current user's ID
+   *   - tooltip: The roll tooltip HTML (or empty string if private)
+   *   - total: The rounded total result (or "?" if private)
+   * @private
+   */
+  async _prepareChatRenderContext({ flavor, isPrivate = false, ...options } = {}) {
+    const message = options.message || {}
+    const messageSystem = message?.system || {}
+    return {
+      speaker: ChatMessage.getSpeaker(message.speaker),
+      formula: isPrivate ? "???" : this.formula,
+      flavor: message.flavor ? message.flavor : messageSystem.label,
+      user: game.user.id,
+      tooltip: isPrivate ? "" : await this.getTooltip(),
+      total: isPrivate ? "?" : Math.round(this.total * 100) / 100,
+    }
+  }
+}

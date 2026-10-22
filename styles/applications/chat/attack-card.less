@@ -1,0 +1,51 @@
+.co.chat-card.roll-card.attack-card {
+  .card-header {
+    border-top: none;
+    color: inherit;
+    padding: 2px 0 4px;
+  }
+
+  .card-content {
+    .bloc-result.has-target-results {
+      grid-template-columns: 1fr;
+    }
+
+    .result {
+      width: 100%;
+      gap: 10px;
+    }
+
+    .attack-total-group {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      .total-result {
+        margin: 0;
+      }
+
+      .lucky-points {
+        margin: 0;
+        font-size: var(--font-size-24);
+      }
+    }
+
+    button.opposite-roll {
+      height: 40px;
+      font-size: 18px;
+      color: var(--co-chat-attack);
+      background: #5d142b3d;
+      border: 2px solid var(--co-chat-attack);
+      border-radius: 5px;
+      box-shadow: 1px 1px 0px 1px var(--co-chat-attack);
+      padding: 0px 5px;
+      margin: 0;
+    }
+  }
+
+  .apply-effects-btn {
+    margin-top: 6px;
+    color: var(--co-chat-attack);
+  }
+}

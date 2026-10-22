@@ -1,0 +1,72 @@
+multi-select {
+  margin-bottom: 4px;
+  min-height: var(--input-height);
+  position: relative;
+  overflow: hidden;
+
+  .tags.input-element-tags {
+    align-items: flex-start;
+    flex-flow: row wrap;
+    gap: 1px 2px;
+    justify-content: flex-start;
+    margin: 2px 3px;
+    padding: 0;
+    padding-right: 22px;
+    pointer-events: none;
+
+    &::after {
+      content: "";
+      clear: both;
+    }
+
+    .tag {
+      border: 1px solid var(--color-cool-3);
+      height: calc(var(--input-height) - 5px);
+      max-width: 170px;
+      overflow: hidden;
+      padding: 2px 4px;
+      vertical-align: baseline;
+
+      span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .theme-dark & {
+        background-color: var(--color-dark-3);
+      }
+
+      .theme-light & {
+        background-color: var(--color-light-3);
+      }
+
+      a.remove {
+        pointer-events: all;
+        margin-top: -2px;
+      }
+    }
+  }
+}
+select {
+  option {
+    .theme-dark & {
+      background: var(--co-window-content);
+    }
+    .theme-light & {
+      background: inherit;
+    }
+  }
+}
+
+// En mode lecture, empêcher l'interaction avec le multi-select sans utiliser disabled
+.form-fields.tags.locked {
+  multi-select {
+    pointer-events: none;
+    opacity: 0.8;
+
+    .tags.input-element-tags .tag a.remove {
+      display: none;
+    }
+  }
+}

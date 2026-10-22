@@ -1,0 +1,27 @@
+<h4 class="form-header conditions flexrow">
+    <a class="flex1" data-action="toggleSection">{{localize "CO.ui.conditions"}}</a>
+    {{#if @root.unlocked}} <a class="flex0" data-action="addCondition" data-tooltip="{{localize 'CO.ui.add'}}"><i class="fas fa-add"></i></a> {{/if}}
+</h4>
+
+<div class="conditions-container foldable">
+    {{#if action.conditions}}
+        <div class="form-group-stacked">
+            {{#each action.conditions as |c id|}}
+                <div class="form-fields condition" data-item-id="{{id}}" data-action-id="{{../idx}}" data-item-type="condition">
+                    <select name="system.actions.{{../idx}}.conditions.{{id}}.predicate" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
+                        {{selectOptions @root.choiceConditionPredicates selected=c.predicate localize=true}}
+                    </select>
+                {{#if (eq c.predicate "isLinkedActionActivated")}}
+                    <input name="system.actions.{{../idx}}.conditions.{{id}}.object" type="text" value="{{c.object}}" data-dtype="String" data-tooltip="{{localize "CO.ui.conditionLiee"}}" {{#if @root.locked}}readonly{{/if}}/>
+                {{/if}}
+                    {{#if @root.unlocked}}<button type="button" data-action="deleteCondition" {{#if @root.locked}}disabled{{/if}}><i class="fas fa-trash"></i></button>{{/if}}
+                </div>
+            {{/each}}
+        </div>
+    {{else}}
+        <div class="empty">
+            {{localize "CO.notif.conditions.empty"}}
+        </div>
+    {{/if}}
+</div>
+

@@ -1,0 +1,40 @@
+<section class="co info flexcol">
+  <h1 class="title">{{{localize "CO.Sidebar.title"}}}</h1>
+  <p class="subtitle version">{{version}}</p>
+</section>
+
+{{#if user.isGM}}
+  <section class="co tools flexcol">
+    <h4 class="divider">{{localize "CO.Sidebar.menu"}}</h4>
+    <a class="button" data-action="openApp" data-app="party" data-tooltip="{{localize 'CO.party.title'}}">
+      <i class="fa-solid fa-users" inert></i>
+      {{localize "CO.party.title"}}
+    </a>
+    <a class="button" data-action="openApp" data-app="release-notes" data-tooltip="{{localize 'CO.Sidebar.releaseNotesTooltip'}}">
+      <i class="fa-solid fa-scroll" inert></i>
+      {{localize "CO.Sidebar.releaseNotes"}}
+    </a>
+  </section>
+{{/if}}
+
+<section class="co support flexcol">
+  <h4 class="divider">{{localize "CO.Sidebar.support"}}</h4>
+  <a class="button" href="https://discord.gg/pPSDNJk" rel="nofollow noopener" target="_blank" data-tooltip="{{localize 'CO.Sidebar.discordLaFonderieTooltip'}}">
+    <i class="fa-solid fa-landmark" inert></i>
+    {{localize "CO.Sidebar.discordLaFonderie"}}
+  </a>
+  <a class="button" href="https://github.com/BlackBookEditions/foundry-co2" rel="nofollow noopener" target="_blank" data-tooltip="{{localize 'CO.Sidebar.githubTooltip'}}">
+    <i class="fa-brands fa-github" inert></i>
+    {{localize "CO.Sidebar.github"}}
+  </a>
+  <a
+    class="button"
+    href="https://github.com/BlackBookEditions/foundry-co2/issues/new/choose"
+    rel="nofollow noopener"
+    target="_blank"
+    data-tooltip="{{localize 'CO.Sidebar.bugReportTooltip'}}"
+  >
+    <i class="fa-solid fa-bug" inert></i>
+    {{localize "CO.Sidebar.bugReport"}}
+  </a>
+</section>

@@ -1,0 +1,22 @@
+{{!-- Encounter Notes Tab Template --}}
+{{!log "Chroniques Oubliées | Encounter notes" this}}
+<section class="tab standard-form notes{{#if tabs.notes.active}} active{{/if}}" data-group="primary" data-tab="notes">
+    <div class="notes foldable">
+        <div class="notes-section public-notes">
+            <label class="details-label">{{localize "CO.ui.public"}}</label>
+            <div class="notes-text">
+                {{formInput systemFields.details.fields.notes.fields.public enriched=enrichedNotesPublic value=system.details.notes.public name="system.details.notes.public" toggled=true}}
+            </div>
+        </div>
+    </div>
+     {{#if editable}}
+        <div class="notes foldable">
+            <div class="notes-section private-notes">
+                <label class="details-label">{{localize "CO.ui.private"}}</label>
+                <div class="notes-text">
+                    {{formInput systemFields.details.fields.notes.fields.private enriched=enrichedNotesPrivate value=system.details.notes.private name="system.details.notes.private" toggled=true}}
+                </div>
+            </div>
+        </div>
+    {{/if}}
+</section>

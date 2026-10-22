@@ -1,0 +1,199 @@
+import CustomEffectData from "./schemas/custom-effect.mjs"
+import Utils from "../helpers/utils.mjs"
+
+export default class ActorData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    const fields = foundry.data.fields
+
+    const schema = {}
+
+    schema.currentEffects = new fields.ArrayField(new fields.EmbeddedDataField(CustomEffectData))
+    return schema
+  }
+
+  /** @override */
+  prepareDerivedData() {
+    this.slug = this.parent.name.slugify({ strict: true })
+  }
+
+  /**
+   * Retrieves an array of ability modifiers from various sources associated with the character.
+   *
+   * @returns {Array} An array of ability modifiers.
+   */
+  get abilityModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.ability.id)
+  }
+
+  /**
+   * Gets the resource modifiers for the character.
+   *
+   * @returns {Array} An array of resource modifiers.
+   */
+  get resourceModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.resource.id)
+  }
+
+  /**
+   * Retrieves the state modifiers for the character.
+   *
+   * @returns {Array} An array of state modifiers.
+   */
+  get stateModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.state.id)
+  }
+
+  /**
+   * Retrieves the bonusDice modifiers for the character.
+   *
+   * @returns {Array} An array of state modifiers.
+   */
+  get bonusDiceModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.bonusDice.id)
+  }
+
+  /**
+   * Retrieves the malusDice modifiers for the character.
+   *
+   * @returns {Array} An array of state modifiers.
+   */
+  get malusDiceModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.malusDice.id)
+  }
+
+  /**
+   * Retrieves an array of combat modifiers from various sources associated with the character.
+   *
+   * @returns {Array} An array of combat modifiers.
+   */
+  get combatModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.combat.id)
+  }
+
+  /**
+   * Retrieves the attribute modifiers for the character.
+   *
+   * @returns {Array} An array of attribute modifiers.
+   */
+  get attributeModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.attribute.id)
+  }
+
+  /**
+   * Retrieves the skill modifiers for the character.
+   *
+   * @returns {Array} An array of skill modifiers.
+   */
+  get skillModifiers() {
+    return this._getModifiers(SYSTEM.MODIFIERS_SUBTYPE.skill.id)
+  }
+
+  /**
+   * Retrieves an array of modifiers from various sources
+   *
+   * For character : the sources include features, profiles, capacities, and equipment.
+   * For encounter : the sources include capacities, and equipment.
+   *
+   * Each source is checked for enabled modifiers of the specified type and subtype.
+   * Only modifiers of applyOn self or both should be considered.
+   * For features and profiles, the modifiers are in the item
+   * for capacities and equipment, the modifiers are in the actions
+   *
+   * @param {string} subtype The subtype of the modifier.
+   * @returns {Array} An array of modifiers.
+   */
+  _getModifiers(subtype) {
+    const sources = this.parent.type === "character" ? ["features", "profiles", "capacities", "equipments"] : ["capacities", "equipments"]
+    let modifiersArray = []
+
+    sources.forEach((source) => {
+      let items = this.parent[source]
+      if (items) {
+        let allModifiers = items
+          .reduce((mods, item) => mods.concat(item.modifiers), [])
+          .filter((m) => m.subtype === subtype && (m.apply === SYSTEM.MODIFIERS_APPLY.self.id || m.apply === SYSTEM.MODIFIERS_APPLY.both.id))
+        modifiersArray.push(...allModifiers)
+      }
+    })
+
+    // Prise en compte des customEffects en cours
+    // Les modifiers ont déjà été filtrés selon `apply` à la création de l'effet
+    // (Resolver#_createCustomEffect) en fonction de la cible réelle : ne pas re-filtrer ici.
+    if (this.currentEffects.length > 0) {
+      for (const effect of this.currentEffects) {
+        if (effect.modifiers.length > 0) {
+          modifiersArray.push(...effect.modifiers.filter((m) => m.subtype === subtype))
+        }
+      }
+    }
+
+    return modifiersArray
+  }
+
+  /**
+   * Return the total modifier and the tooltip for the given target and an array of modifiers.
+   * @param {Array} modifiers An array of modifier objects.
+   * @param {SYSTEM.MODIFIERS.MODIFIER_TARGET} target The target for which the modifiers are filtered.
+   * @param {boolean} withDice Raw dice value can't be reduce, use a different methode
+   **/
+  computeTotalModifiersByTarget(modifiers, target, withDice = false) {
+    if (!modifiers) return { total: 0, tooltip: "" }
+    let modifiersByTarget = modifiers.filter((m) => m.target === target)
+
+    // Ajout des modifiers qui affecte toutes les cibles
+    // Attention on utilise "toutes les cibles uniquement sur un jet de competence ou une Caractéristique ! sinon on va le compter aussi pour le combat etc et on va doubler les bonus apres..."
+    // Les modifiers de sous-type skill sont exclus car ils sont traités par COActor.getSkillBonuses
+    if (Object.keys(SYSTEM.ABILITIES).includes(target)) {
+      modifiersByTarget.push(...modifiers.filter((m) => m.target === SYSTEM.MODIFIERS_TARGET.all.id && m.subtype !== SYSTEM.MODIFIERS_SUBTYPE.skill.id))
+    }
+
+    let total = 0
+    if (modifiersByTarget && modifiersByTarget.length > 0) {
+      let evaluatedModifiers = modifiersByTarget.map((m) => m.evaluate(this.parent, withDice))
+      total = withDice ? Utils.joinFormulaTerms(evaluatedModifiers) : evaluatedModifiers.reduce((acc, curr) => acc + curr, 0)
+    }
+
+    let tooltip = ""
+    for (const modifier of modifiersByTarget) {
+      let partialTooltip = modifier.getTooltip(this.parent, withDice)
+      if (partialTooltip !== null) tooltip += partialTooltip
+    }
+
+    return { total: total, tooltip: tooltip }
+  }
+
+  /**
+   * Checks if there are any bonus dice modifiers for a given attack type.
+   *
+   * @param {string} attackType The type of attack to check for bonus dice modifiers.
+   * @returns {boolean} - Returns true if there are bonus dice modifiers for the given attack type, otherwise false.
+   */
+  hasBonusDiceForAttack(attackType) {
+    if (!attackType) return false
+    const target = attackType === "magical" ? "magic" : attackType
+    const modifiers = this.bonusDiceModifiers.filter((m) => m.target === target)
+    return modifiers.length > 0
+  }
+
+  /**
+   * Checks if there are any malus dice modifiers for a given attack type.
+   *
+   * @param {string} attackType The type of attack to check for malus dice modifiers.
+   * @returns {boolean} - Returns true if there are malus dice modifiers for the given attack type, otherwise false.
+   */
+  hasMalusDiceForAttack(attackType) {
+    if (!attackType) return false
+    const target = attackType === "magical" ? "magic" : attackType
+    const modifiers = this.malusDiceModifiers.filter((m) => m.target === target)
+    return modifiers.length > 0
+  }
+
+  /**
+   * Determines whether the current temporary damage (tempDm) exceeds the current hit points (hp).
+   *
+   * @returns {boolean} True if the temporary damage is greater than the current hit points, otherwise false.
+   */
+  get isTempDmSuperiorToCurrentHp() {
+    return this.attributes.tempDm > this.attributes.hp.value
+  }
+}

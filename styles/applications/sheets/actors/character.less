@@ -1,0 +1,119 @@
+&:not(.minimized) {
+  min-width: 840px;
+}
+&.character-mini:not(.minimized) {
+  min-width: 350px;
+}
+
+.window-content {
+  @import "./character-header.less";
+  @import "./character-sidebar.less";
+
+  .dropzone {
+    margin-left: 53px;
+    .item-list {
+      padding: 0;
+    }
+  }
+  .no-path {
+    .dropzone {
+      margin-left: 28px;
+      .item-list {
+        padding: 0;
+      }
+    }
+  }
+  .btn-mini-sheet {
+    border: none;
+    background: none;
+    color: var(--co-sheet-accent);
+    margin-right: 30px;
+    font-size: var(--font-size-20);
+  }
+  .btn-mini-sheet:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  .btn-mini-sheet:hover {
+    color: red;
+  }
+}
+
+.features-container {
+  .item-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 5px 10px 0px 10px;
+    column-gap: 20px;
+  }
+}
+
+.features.section-container {
+  margin: 0;
+  padding: 0;
+}
+
+.currency-row {
+  gap: 20px;
+  label {
+    text-align: end;
+    font-weight: bold;
+    font-size: 15px;
+  }
+  .current {
+    margin-left: 0px;
+    font-weight: bold;
+    font-size: 15px;
+    background-color: transparent;
+    border: none;
+    box-shadow: 2px 2px var(--co-sheet-accent-alt);
+    height: 25px;
+  }
+}
+
+section.standard-form.biography {
+  .biography-details {
+    display: flex;
+    gap: 16px;
+
+    .form-group > label {
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    .size-group {
+      flex: 0 0 175px;
+    }
+
+    .form-group:not(.size-group) {
+      flex: 1 1 auto;
+    }
+  }
+
+  .misc,
+  .bio,
+  .appearance {
+    &.folded {
+      display: none;
+    }
+  }
+}
+
+.btn-sort-items-default,
+.btn-sort-items-rank,
+.btn-sort-items-type,
+.btn-sort-items-action-type {
+  border: none;
+  background: none;
+  color: white;
+  padding: 0;
+  &.active {
+    color: var(--co-sheet-accent);
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+.btn-sort-items-action-type {
+  margin-right: 30px;
+}

@@ -1,0 +1,239 @@
+&.character-mini:not(.minimized) {
+  min-width: 350px;
+  min-height: 250px;
+  height: fit-content;
+  max-height: 900px;
+}
+
+&.character-mini {
+  &.minimized {
+    max-width: var(--minimized-width);
+    max-height: var(--header-height);
+  }
+
+  .window-header {
+    .mode-slider {
+      display: none;
+    }
+  }
+
+  .window-content {
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+
+    .image-container,
+    .level,
+    .traits {
+      display: none;
+    }
+
+    .tab {
+      padding: 5px 0 0 5px;
+      mask: none;
+      .section-container {
+        padding-bottom: 0;
+        margin-bottom: 0;
+        .actions-container {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .sheet-header {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      margin: 0;
+      gap: 0;
+    }
+    .abilities {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      font-size: 17px;
+      .ability-id {
+        line-height: normal;
+      }
+      .ability-mod {
+        line-height: 1;
+        font-size: 22px;
+      }
+    }
+    .abilities-edit {
+      display: none;
+    }
+    .btn-mini-sheet {
+      display: none;
+    }
+    .name {
+      font-size: 25px;
+      display: flex;
+      height: 30px;
+      font-weight: bold;
+      justify-content: center;
+      margin: 5px 0px;
+    }
+    .name::before,
+    .name::after {
+      content: "\f005"; /* code de l’icône 'star' */
+      font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "Font Awesome 6 Pro", "Font Awesome 5 Pro";
+      font-weight: 900; /* 'solid' */
+      margin: 0 0.5rem;
+      line-height: 1;
+      vertical-align: middle;
+      pointer-events: none;
+      color: red;
+      font-size: large;
+      align-self: center;
+    }
+    .mini-sidebar {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      padding: 5px 0;
+      overflow: visible;
+      mask: none;
+
+      .labelled-field {
+        background-color: var(--co-surface);
+        border-radius: 12px 0 0 12px;
+        height: 23px;
+        padding: 4px;
+
+        i.fas,
+        i[class="fa-"] {
+          font-size: 18px;
+          line-height: 1.2;
+        }
+      }
+      .sidebar-section {
+        background-color: var(--color-primary);
+        .sidebar-label {
+          h4 {
+            font-size: inherit;
+            margin: 0;
+
+            .theme-light & {
+              color: var(--co-text-light);
+            }
+          }
+        }
+        .field,
+        .labelled-field {
+          color: var(--co-surface);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 20px;
+          font-weight: bold;
+          line-height: 1.2;
+          margin: 0;
+          overflow: hidden;
+          padding: 2px 4px;
+
+          select,
+          input {
+            background-color: var(--co-surface);
+            border: 0;
+            color: var(--color-primary);
+            flex: 1;
+            font-size: 20px;
+            padding: 0;
+
+            &::placeholder {
+              color: var(--color-primary);
+            }
+          }
+
+          input {
+            font-weight: bold;
+            line-height: 1.8;
+            text-align: center;
+          }
+
+          select {
+            font-size: 12px;
+            option {
+              .theme-dark & {
+                background: var(--co-surface);
+              }
+            }
+          }
+          .slash,
+          .max {
+            font-size: 16px;
+            font-weight: normal;
+            margin-top: 6px;
+            transform: scaleX(80%);
+          }
+        }
+
+        .field {
+          background-color: var(--co-surface);
+        }
+
+        .labelled-field {
+          i {
+            justify-self: flex-start;
+          }
+        }
+      }
+
+      .sidebar-section-content {
+        padding: 4px;
+
+        .field,
+        .labelled-field {
+          font-weight: normal;
+        }
+      }
+      .armor-section,
+      .dr-section {
+        background-color: var(--co-stat-defense);
+        padding: 5px;
+
+        .field,
+        .labelled-field {
+          color: var(--co-stat-defense);
+        }
+      }
+      .health-section {
+        grid-column: auto;
+        margin-top: 0;
+        background-color: var(--co-stat-health);
+        padding: 5px;
+
+        .field,
+        .labelled-field,
+        .labelled-field input {
+          color: var(--co-stat-health);
+        }
+      }
+      .hp-section {
+        grid-column: 1 / 3;
+      }
+      .resource-section.mini-section {
+        grid-column: auto;
+        margin-top: 0;
+        background-color: var(--co-stat-resource);
+        padding: 5px;
+        .field,
+        .labelled-field,
+        .labelled-field input {
+          color: var(--co-stat-resource);
+        }
+        .fa-clover {
+          cursor: pointer;
+        }
+        .fa-clover:hover {
+          text-shadow: 0px 0px 4px darkred;
+        }
+      }
+      .fa-heart-broken {
+        color: var(--co-stat-damages);
+      }
+    }
+  }
+}

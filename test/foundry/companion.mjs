@@ -1,7 +1,7 @@
 /**
  * Vérification d'intégration à exécuter comme MJ dans un monde de test CO2.
  * Crée ses propres documents et les supprime à la fin.
- * await (await import('/systems/co2/test/foundry/companion.mjs')).checkCompanions()
+ * await (await import('/systems/cog/test/foundry/companion.mjs')).checkCompanions()
  */
 export async function checkCompanions() {
   const { COAttackRoll } = await import("../../module/documents/roll.mjs")

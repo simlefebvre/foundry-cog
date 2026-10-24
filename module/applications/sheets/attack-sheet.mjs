@@ -12,18 +12,18 @@ export default class CoAttackSheet extends CoBaseItemSheet {
   }
 
   static PARTS = {
-    header: { template: "systems/co2/templates/items/shared/header.hbs" },
+    header: { template: "systems/cog/templates/items/shared/header.hbs" },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
-    description: { template: "systems/co2/templates/items/shared/description.hbs" },
-    details: { template: "systems/co2/templates/items/attack.hbs" },
+    description: { template: "systems/cog/templates/items/shared/description.hbs" },
+    details: { template: "systems/cog/templates/items/attack.hbs" },
     actions: {
-      template: "systems/co2/templates/items/shared/actions.hbs",
+      template: "systems/cog/templates/items/shared/actions.hbs",
       templates: [
-        "systems/co2/templates/items/parts/conditions-part.hbs",
-        "systems/co2/templates/items/parts/modifiers-part.hbs",
-        "systems/co2/templates/items/parts/modifier.hbs",
-        "systems/co2/templates/items/parts/resolvers-part.hbs",
-        "systems/co2/templates/items/parts/resolver-part.hbs",
+        "systems/cog/templates/items/parts/conditions-part.hbs",
+        "systems/cog/templates/items/parts/modifiers-part.hbs",
+        "systems/cog/templates/items/parts/modifier.hbs",
+        "systems/cog/templates/items/parts/resolvers-part.hbs",
+        "systems/cog/templates/items/parts/resolver-part.hbs",
       ],
       scrollable: [".tab", ".action-body"],
     },

@@ -54,7 +54,7 @@ export function setupTextEnrichers() {
             rollOptions,
           }
 
-          const content = await foundry.applications.handlebars.renderTemplate("systems/co2/templates/chat/check-card.hbs", templateData)
+          const content = await foundry.applications.handlebars.renderTemplate("systems/cog/templates/chat/check-card.hbs", templateData)
 
           await ChatMessage.create({
             content,

@@ -74,7 +74,7 @@
   "primaryTokenAttribute": "attributes.hp",
   "socket": true,
   "initiative": "1d20",
-  "background": "systems/cog/ui/logo_co2.webp",
+  "background": "systems/cog/ui/logo_co.webp",
   "manifest": "",
   "download": ""
 }

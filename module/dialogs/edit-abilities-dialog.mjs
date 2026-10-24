@@ -68,7 +68,7 @@ export class CoEditAbilitiesDialog extends foundry.applications.api.DialogV2 {
       used: assigned.includes(`v${index}`),
     }))
     const abilities = this.actor.system.abilities
-    return foundry.applications.handlebars.renderTemplate("systems/co2/templates/dialogs/edit-abilities-dialog.hbs", {
+    return foundry.applications.handlebars.renderTemplate("systems/cog/templates/dialogs/edit-abilities-dialog.hbs", {
       actor: this.actor,
       abilities,
       mode: this.mode,

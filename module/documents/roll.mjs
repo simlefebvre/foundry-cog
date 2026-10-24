@@ -65,9 +65,9 @@ export class CORoll extends Roll {
 export class COSkillRoll extends CORoll {
   static ROLL_TYPE = "skill"
 
-  static DIALOG_TEMPLATE = "systems/co2/templates/dialogs/skill-roll-dialog.hbs"
+  static DIALOG_TEMPLATE = "systems/cog/templates/dialogs/skill-roll-dialog.hbs"
 
-  static CHAT_TEMPLATE = "systems/co2/templates/chat/skill-roll-card.hbs"
+  static CHAT_TEMPLATE = "systems/cog/templates/chat/skill-roll-card.hbs"
 
   static ROLL_CSS = ["co", "skill-roll"]
 
@@ -319,11 +319,11 @@ export class COSkillRoll extends CORoll {
 export class COAttackRoll extends CORoll {
   static ROLL_TYPE = "attack"
 
-  static DIALOG_TEMPLATE = "systems/co2/templates/dialogs/attack-roll-dialog.hbs"
+  static DIALOG_TEMPLATE = "systems/cog/templates/dialogs/attack-roll-dialog.hbs"
 
-  static ATTACK_CHAT_TEMPLATE = "systems/co2/templates/chat/attack-roll-card.hbs"
+  static ATTACK_CHAT_TEMPLATE = "systems/cog/templates/chat/attack-roll-card.hbs"
 
-  static DAMAGE_CHAT_TEMPLATE = "systems/co2/templates/chat/damage-roll-card.hbs"
+  static DAMAGE_CHAT_TEMPLATE = "systems/cog/templates/chat/damage-roll-card.hbs"
 
   static ROLL_CSS = ["co", "attack-roll"]
 
@@ -812,7 +812,7 @@ export class COAttackRoll extends CORoll {
 export class COHealRoll extends CORoll {
   static ROLL_TYPE = "heal"
 
-  static CHAT_TEMPLATE = "systems/co2/templates/chat/heal-card.hbs"
+  static CHAT_TEMPLATE = "systems/cog/templates/chat/heal-card.hbs"
 
   static ROLL_CSS = ["co", "heal-roll"]
 

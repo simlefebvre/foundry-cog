@@ -1025,7 +1025,7 @@ export default class CharacterData extends ActorData {
       tooltip: tooltip,
     }
 
-    const content = await foundry.applications.handlebars.renderTemplate("systems/co2/templates/chat/fortune-roll-card.hbs", templateData)
+    const content = await foundry.applications.handlebars.renderTemplate("systems/cog/templates/chat/fortune-roll-card.hbs", templateData)
 
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: this.parent }),

@@ -66,7 +66,7 @@ export const CUSTOM_STATUS_EFFECT = [
   {
     id: "immobilized",
     name: "CO.customStatus.immobilized",
-    img: "systems/co2/ui/effects/immobilized.webp",
+    img: "systems/cog/ui/effects/immobilized.webp",
     changes: [
       {
         key: "system.attributes.movement.base",
@@ -158,7 +158,7 @@ export const CUSTOM_STATUS_EFFECT = [
   {
     id: "outOfBreath",
     name: "CO.customStatus.outOfBreath",
-    img: "systems/co2/ui/effects/breath.webp",
+    img: "systems/cog/ui/effects/breath.webp",
     changes: [
       {
         key: "system.attributes.movement.base",
@@ -186,7 +186,7 @@ export const CUSTOM_STATUS_EFFECT = [
   {
     id: "invalid",
     name: "CO.customStatus.invalid",
-    img: "systems/co2/ui/effects/disably.webp",
+    img: "systems/cog/ui/effects/disably.webp",
     changes: [
       {
         key: "system.attributes.movement.bonuses.effects",
@@ -204,13 +204,13 @@ export const CUSTOM_STATUS_EFFECT = [
   {
     id: "slowed",
     name: "CO.customStatus.slowed",
-    img: "systems/co2/ui/effects/slow.webp",
+    img: "systems/cog/ui/effects/slow.webp",
     description: "CO.customStatus.slowedDescription",
   },
   {
     id: "overturned",
     name: "CO.customStatus.overturned",
-    img: "systems/co2/ui/effects/upsidedown.webp",
+    img: "systems/cog/ui/effects/upsidedown.webp",
     changes: [
       {
         key: "system.combat.melee.bonuses.effects",
@@ -238,7 +238,7 @@ export const CUSTOM_STATUS_EFFECT = [
   {
     id: "surprised",
     name: "CO.customStatus.surprised",
-    img: "systems/co2/ui/effects/surprised.webp",
+    img: "systems/cog/ui/effects/surprised.webp",
     changes: [
       {
         key: "system.combat.def.bonuses.effects",

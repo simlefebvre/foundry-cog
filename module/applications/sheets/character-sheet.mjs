@@ -34,14 +34,14 @@ export default class COCharacterSheet extends COBaseActorSheet {
 
   /** @override */
   static PARTS = {
-    header: { template: "systems/co2/templates/actors/character-header.hbs" },
+    header: { template: "systems/cog/templates/actors/character-header.hbs" },
     sidebar: { template: "systems/cog/templates/actors/character-sidebar.hbs" },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
-    main: { template: "systems/co2/templates/actors/character-main.hbs", templates: ["systems/co2/templates/actors/shared/actions.hbs"] },
-    inventory: { template: "systems/co2/templates/actors/character-inventory.hbs" },
-    paths: { template: "systems/co2/templates/actors/shared/paths.hbs", templates: ["systems/co2/templates/actors/shared/capacities-nopath.hbs"], scrollable: [""] },
-    effects: { template: "systems/co2/templates/actors/shared/effects.hbs" },
-    biography: { template: "systems/co2/templates/actors/character-biography.hbs" },
+    main: { template: "systems/cog/templates/actors/character-main.hbs", templates: ["systems/cog/templates/actors/shared/actions.hbs"] },
+    inventory: { template: "systems/cog/templates/actors/character-inventory.hbs" },
+    paths: { template: "systems/cog/templates/actors/shared/paths.hbs", templates: ["systems/cog/templates/actors/shared/capacities-nopath.hbs"], scrollable: [""] },
+    effects: { template: "systems/cog/templates/actors/shared/effects.hbs" },
+    biography: { template: "systems/cog/templates/actors/character-biography.hbs" },
   }
 
   /** @override */

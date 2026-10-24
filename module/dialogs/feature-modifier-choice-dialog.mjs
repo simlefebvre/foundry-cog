@@ -14,7 +14,7 @@ export class CoFeatureModifierChoiceDialog {
     if (Object.keys(groups).length === 0) return null
 
     const content = await foundry.applications.handlebars.renderTemplate(
-      "systems/co2/templates/dialogs/feature-modifier-choice-dialog.hbs",
+      "systems/cog/templates/dialogs/feature-modifier-choice-dialog.hbs",
       { groups },
     )
 

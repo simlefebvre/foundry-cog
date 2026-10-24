@@ -183,7 +183,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
           }
         } else {
           capacity.linkedCapacityName = ""
-          capacity.linkedCapacityImg = "systems/co2/ui/effects/question.webp"
+          capacity.linkedCapacityImg = "systems/cog/ui/effects/question.webp"
           capacity.linkedCapacityItem = null
         }
       }

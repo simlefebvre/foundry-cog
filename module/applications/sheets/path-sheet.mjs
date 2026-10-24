@@ -11,10 +11,10 @@ export default class CoPathSheet extends CoBaseItemSheet {
   }
 
   static PARTS = {
-    header: { template: "systems/co2/templates/items/shared/header.hbs" },
+    header: { template: "systems/cog/templates/items/shared/header.hbs" },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
-    description: { template: "systems/co2/templates/items/shared/description.hbs" },
-    details: { template: "systems/co2/templates/items/path.hbs" },
+    description: { template: "systems/cog/templates/items/shared/description.hbs" },
+    details: { template: "systems/cog/templates/items/path.hbs" },
   }
 
   static TABS = {

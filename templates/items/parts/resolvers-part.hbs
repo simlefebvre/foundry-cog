@@ -6,7 +6,7 @@
 <div class="resolvers-container foldable">
     {{#if action.resolvers}}
         {{#each action.resolvers as |r id|}}
-            {{> "systems/co2/templates/items/parts/resolver-part.hbs" r=r id=id idx=../idx }}
+            {{> "systems/cog/templates/items/parts/resolver-part.hbs" r=r id=id idx=../idx }}
         {{/each}}
     {{else}}
         <div class="empty">

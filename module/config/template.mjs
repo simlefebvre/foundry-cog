@@ -1,5 +1,5 @@
 // Template utilisés sur COFv2
 export const TEMPLATE = {
-  MESSAGE: "systems/co2/templates/chat/message-card.hbs",
-  SAVE: "systems/co2/templates/chat/save-card.hbs",
+  MESSAGE: "systems/cog/templates/chat/message-card.hbs",
+  SAVE: "systems/cog/templates/chat/save-card.hbs",
 }

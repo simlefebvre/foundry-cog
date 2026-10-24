@@ -42,7 +42,7 @@ export default class COReleaseNotes extends HandlebarsApplicationMixin(foundry.a
   /** @override */
   static PARTS = {
     content: {
-      template: "systems/co2/templates/release-notes.hbs",
+      template: "systems/cog/templates/release-notes.hbs",
       root: true,
       scrollable: [".release-notes-body"],
     },
@@ -52,7 +52,7 @@ export default class COReleaseNotes extends HandlebarsApplicationMixin(foundry.a
    * Le chemin du fichier source des notes de version.
    * @type {string}
    */
-  static SOURCE = "systems/co2/release-notes.md"
+  static SOURCE = "systems/cog/release-notes.md"
 
   /**
    * La version couverte par les entrées affichées, mémorisée quand le MJ coche « ne plus afficher ».

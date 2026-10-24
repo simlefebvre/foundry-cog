@@ -28,7 +28,7 @@ export default class COPartySheet extends HandlebarsApplicationMixin(foundry.app
 
   static PARTS = {
     party: {
-      template: "systems/co2/templates/party/party-sheet.hbs",
+      template: "systems/cog/templates/party/party-sheet.hbs",
     },
   }
 
@@ -66,7 +66,7 @@ export default class COPartySheet extends HandlebarsApplicationMixin(foundry.app
     const title = `Test ${preposition}${label}`
 
     const rollOptions = whisper ? "secret" : undefined
-    const content = await foundry.applications.handlebars.renderTemplate("systems/co2/templates/chat/check-card.hbs", { title, ability, rollOptions })
+    const content = await foundry.applications.handlebars.renderTemplate("systems/cog/templates/chat/check-card.hbs", { title, ability, rollOptions })
 
     const messageData = {
       content,

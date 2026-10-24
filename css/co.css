@@ -5627,7 +5627,7 @@ a.roll-check-enricher:hover {
   padding: 8px 0 3px 0;
 }
 .icon.co {
-  background-image: url('/systems/co2/ui/icone_co.webp');
+  background-image: url('/systems/cog/ui/icone_co.webp');
   background-size: 100%;
   background-position: center;
 }
@@ -5693,7 +5693,7 @@ a.roll-check-enricher:hover {
   top: calc(80vh - 100px);
 }
 #pause > img {
-  content: url("/systems/co2/ui/pause_co.webp");
+  content: url("/systems/cog/ui/pause_co.webp");
   height: 120px;
   width: 120px;
   top: -45px;

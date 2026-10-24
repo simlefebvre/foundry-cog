@@ -157,7 +157,7 @@ export async function applyCheckConsequences(result, consequences, actor) {
       tempDamage: false,
     }
 
-    const content = await foundry.applications.handlebars.renderTemplate("systems/co2/templates/chat/damage-roll-card.hbs", templateData)
+    const content = await foundry.applications.handlebars.renderTemplate("systems/cog/templates/chat/damage-roll-card.hbs", templateData)
 
     await ChatMessage.create({
       content,

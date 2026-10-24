@@ -183,7 +183,7 @@ export default class COActor extends Actor {
             }
           } else {
             capacity.linkedCapacityName = ""
-            capacity.linkedCapacityImg = "systems/co2/ui/effects/question.webp"
+            capacity.linkedCapacityImg = "systems/cog/ui/effects/question.webp"
             capacity.linkedCapacityItem = null
           }
         }
@@ -2763,7 +2763,7 @@ export default class COActor extends Actor {
     }
 
     const chatBuilder = new CoChat(this)
-      .withTemplate("systems/co2/templates/chat/save-card.hbs")
+      .withTemplate("systems/cog/templates/chat/save-card.hbs")
       .withData(contentData)
       .withMessageType("save")
       .withSystem(messageSystem)
@@ -3081,7 +3081,7 @@ export default class COActor extends Actor {
 
     let itemChatData = item.getChatData(item, this, chatType, indice)
     const chat = new CoChat(this)
-      .withTemplate("systems/co2/templates/chat/item-card.hbs")
+      .withTemplate("systems/cog/templates/chat/item-card.hbs")
       .withData({
         actorId: this.id,
         actorUuid: this.uuid,

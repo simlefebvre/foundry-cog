@@ -183,11 +183,6 @@ export const MODIFIERS_TARGET = {
     label: "CO.label.long.fp",
     subtype: "resource",
   },
-  mp: {
-    id: "mp",
-    label: "CO.label.long.mp",
-    subtype: "resource",
-  },
   darkvision: {
     id: "darkvision",
     label: "CO.label.long.darkvision",

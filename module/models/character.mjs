@@ -312,11 +312,6 @@ export default class CharacterData extends ActorData {
         this._prepareFP(skill, bonuses)
       }
 
-      // Points de mana - Mana Points - MP
-      if (key === SYSTEM.RESOURCES.mana.id) {
-        this._prepareMP(skill, bonuses)
-      }
-
       // Dés de récupération - Recovery Points - RP
       if (key === SYSTEM.RESOURCES.recovery.id) {
         this._prepareRP(skill, bonuses)
@@ -643,41 +638,6 @@ export default class CharacterData extends ActorData {
   }
 
   /**
-   * Calcule les points de mana
-   * Dans COF : si le personnage a au moins un sort, VOLONTE + Nombre de sorts Modificateurs
-   * Prepares the MP (Magic Points) for a given skill by calculating its base value,
-   * applying resource modifiers, and adding any additional bonuses.
-   *
-   * @param {Object} skill The skill object to prepare MP for.
-   * @param {number} bonuses Additional bonuses to be added to the skill's MP.
-   */
-  _prepareMP(skill, bonuses) {
-    const baseMP = this._computeBaseMP()
-    skill.base = baseMP.value
-    skill.tooltipBase = baseMP.tooltip
-
-    const resourceModifiers = this.computeTotalModifiersByTarget(this.resourceModifiers, SYSTEM.MODIFIERS_TARGET.mp.id)
-    skill.max = skill.base + bonuses + resourceModifiers.total
-    skill.value = Math.min(skill.max, skill.value) // On ne depasse pas le max
-    skill.tooltip = skill.tooltipBase.concat(resourceModifiers.tooltip, Utils.getTooltip("Bonus", bonuses))
-  }
-
-  /**
-   * Computes the base MP (Magic Points) for the character.
-   * Si le personnage a au moins une capacité signalée par un * (donc un sort), il a alors VOL + nb de sorts points de Mana
-   * @returns {number} The base MP value. Returns 0 if the character has no spells.
-   */
-  _computeBaseMP() {
-    let value = 0
-    if (!this.hasSpells) return { value, tooltip: "Pas de sorts" }
-    const nbSpells = this.nbSpells
-    const baseValue = this.abilities[this.resources.mana.ability].value
-    let tooltip = Utils.getTooltip("Nb de sorts", nbSpells)
-    tooltip = tooltip.concat(Utils.getTooltip(Utils.getAbilityName(this.resources.mana.ability), baseValue))
-    return { value: baseValue + nbSpells, tooltip }
-  }
-
-  /**
    * Prepares the RP (Resource Points) for a given skill by computing its base value,
    * applying resource modifiers, and adding any additional bonuses.
    *
@@ -822,7 +782,6 @@ export default class CharacterData extends ActorData {
   async useRecovery(isFullRest) {
     let hp = this.attributes.hp
     let rp = this.resources.recovery
-    let mp = this.resources.mana
     const newRp = foundry.utils.duplicate(rp)
 
     // Récupération des charges des capacités
@@ -865,19 +824,6 @@ export default class CharacterData extends ActorData {
     }
     // Récupération complète
     else {
-      // Récupération du mana
-      if (mp.value < mp.max) {
-        const proceed = await foundry.applications.api.DialogV2.confirm({
-          window: { title: `${game.i18n.localize("CO.dialogs.fullRest.title")} - ${game.i18n.localize("CO.dialogs.fullRest.manaTitle")}` },
-          content: game.i18n.localize("CO.dialogs.fullRest.manaContent"),
-          rejectClose: false,
-          modal: true,
-        })
-        if (proceed) {
-          await this.parent.update({ "system.resources.mana.value": mp.max })
-        }
-      }
-
       // Un module peut prendre en charge lui-même la récupération à la place du système (voir co2.preUseRecovery)
       if (await this._isRecoveryHandledByModule(isFullRest)) return
 

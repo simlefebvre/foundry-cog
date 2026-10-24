@@ -482,58 +482,6 @@
       {{/if}}
     </div>
     {{/if}}
-    <!-- MP -->
-    <div class="sidebar-section resource-section">
-      <div class="sidebar-section-header">
-        <div class="sidebar-label">
-          <h4>{{localize "CO.resources.medium.mana"}}</h4>
-        </div>
-        <div class="resource-points labelled-field">
-          {{#if viewLimited}}
-            <i class="fas fa-fw fa-bolt"></i>??
-          {{else}}
-            <i class="fas fa-fw fa-bolt"></i>
-            <input class="current" name="system.resources.mana.value" value="{{resources.mana.value}}" type="number" data-dtype="Number" placeholder="0" />
-            <span class="slash">/</span>
-            <span class="max" data-tooltip="{{resources.mana.tooltip}}">{{resources.mana.max}}</span>
-          {{/if}}
-        </div>
-      </div>
-      {{#if unlocked}}
-        <div class="sidebar-section-content">
-          <div class="field">
-            {{!--<label>{{localize "CO.label.short.ability"}}</label>--}}
-            <select name="system.resources.mana.ability" data-type="String">
-              {{selectOptions choiceAbilities selected=resources.mana.ability localize=true}}
-            </select>
-          </div>
-        </div>
-        <div class="sidebar-section-content">
-          <div class="field">
-            <input
-              class="mp-base"
-              type="number"
-              name="system.resources.mana.base"
-              value="{{resources.mana.base}}"
-              data-dtype="Number"
-              placeholder="0"
-              readonly
-              data-tooltip="{{localize 'CO.label.long.base'}}"
-            />
-            <span class="slash">/</span>
-            <input
-              class="mp-bonus"
-              type="text"
-              name="system.resources.mana.bonuses.sheet"
-              value="{{numberFormat resources.mana.bonuses.sheet decimals=0 sign=true}}"
-              data-dtype="Number"
-              data-tooltip="{{localize 'CO.label.long.bonus'}}"
-              placeholder="0"
-            />
-          </div>
-        </div>
-      {{/if}}
-    </div>
     <!-- MOVEMENT -->
     <div class="sidebar-section speed-section">
       <div class="sidebar-section-header">

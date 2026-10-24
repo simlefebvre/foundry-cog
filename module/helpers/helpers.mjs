@@ -188,9 +188,6 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper("isTrainedWithShield", function (actor, itemId) {
     return actor.isTrainedWithShield(itemId)
   })
-  Handlebars.registerHelper("manaCostFromArmor", function (capacity, actor) {
-    return capacity.system.getManaCostFromArmor(actor)
-  })
   Handlebars.registerHelper("isActionSubtabActive", function (subtabs, tabId) {
     const id = `action-${tabId}`
     if (!subtabs || !subtabs[id]) return false

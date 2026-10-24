@@ -36,11 +36,6 @@ export const RESOURCES = {
     label: "CO.resources.long.recovery",
     ability: "con",
   },
-  mana: {
-    id: "mana",
-    label: "CO.resources.long.mana",
-    ability: "vol",
-  },
 }
 
 export const COMBAT = {

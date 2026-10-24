@@ -41,7 +41,6 @@ export class Action extends foundry.abstract.DataModel {
         activable: new fields.BooleanField(),
         enabled: new fields.BooleanField(),
         temporary: new fields.BooleanField(),
-        noManaCost: new fields.BooleanField(),
         noChargesUsed: new fields.BooleanField(),
       }),
       conditions: new fields.ArrayField(new fields.EmbeddedDataField(Condition)),
@@ -225,12 +224,6 @@ export class Action extends foundry.abstract.DataModel {
   get chargesUsed() {
     if (this.properties.noChargesUsed) return 0
     if (this.parent?.parent.type === SYSTEM.ITEM_TYPE.capacity.id) return 1
-    return 0
-  }
-
-  get manaCost() {
-    if (this.properties.noManaCost) return 0
-    if (this.parent.isSpell) return this.parent.getManaCost()
     return 0
   }
 

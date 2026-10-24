@@ -35,7 +35,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
   /** @override */
   static PARTS = {
     header: { template: "systems/co2/templates/actors/character-header.hbs" },
-    sidebar: { template: "systems/co2/templates/actors/character-sidebar.hbs" },
+    sidebar: { template: "systems/cog/templates/actors/character-sidebar.hbs" },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
     main: { template: "systems/co2/templates/actors/character-main.hbs", templates: ["systems/co2/templates/actors/shared/actions.hbs"] },
     inventory: { template: "systems/co2/templates/actors/character-inventory.hbs" },

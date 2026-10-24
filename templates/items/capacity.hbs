@@ -47,7 +47,6 @@
                 <legend>{{localize "CO.ui.spell"}}</legend>
                 {{formGroup systemFields.properties.fields.spell value=systemSource.properties.spell disabled=locked}}
                 {{#if system.isSpell}}
-                    {{formGroup systemFields.manaCost value=systemSource.manaCost localize=true disabled=locked}}
                 {{/if}}
             </fieldset>
 

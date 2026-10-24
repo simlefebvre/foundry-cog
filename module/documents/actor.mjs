@@ -849,42 +849,6 @@ export default class COActor extends Actor {
       }
     }
 
-    // TODO Incantation
-    // Magie profane (famille Réflexion) : En revanche, il n’est pas possible d’utiliser un bouclier et une arme ou une arme dans chaque main tout en lançant des sorts de magie profane.
-    // Magie divine : respecter les armes autorisées
-
-    // Profil hybride : gestion du lancement de sort avec une armure maitrisée mais trop lourde, ce qui implique un surcoût de mana
-    const manaCostFromArmor = item.type === SYSTEM.ITEM_TYPE.capacity.id ? item.system.getManaCostFromArmor(this) : 0
-
-    // Concentration accrue pour les sorts qui nécessitent une action d'attaque
-    let manaConcentration = false
-    if (item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell && item.system.actions[indice].isActionTypeAttack && shiftKey) {
-      manaConcentration = true
-    }
-
-    // Gestion de la brûlure de mana pour les sorts
-    let manaBurned = false
-    let manaBurnedCost = 0
-    // Si l'action consomme du mana, que la capacité est un sort et qu'on l'active, on vérifie que le nombre de PM restants est suffisant
-    if (!item.system.actions[indice].properties.noManaCost && state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell) {
-      const spellManaCost = item.system.actions[indice].manaCost + manaCostFromArmor - (manaConcentration ? 2 : 0)
-      if (spellManaCost > 0) {
-        if (this.system.resources.mana.value < spellManaCost) {
-          const needed = spellManaCost - this.system.resources.mana.value
-          const content = `Vous n'avez pas assez de mana : il vous manque ${needed} point(s) de mana. Voulez-vous tout de même lancer le sort en sacrifiant votre énergie vitale ?`
-          const proceed = await foundry.applications.api.DialogV2.confirm({
-            window: { title: "Brûlure de mana" },
-            content: content,
-            rejectClose: false,
-            modal: true,
-          })
-          if (!proceed) return
-          manaBurned = true
-          manaBurnedCost = needed
-        }
-      }
-    }
-
     let results = []
     let allResolversTrue
 
@@ -923,27 +887,6 @@ export default class COActor extends Actor {
       if (action.chargesUsed > 0 && state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.hasFrequency && item.system.hasCharges) {
         item.system.charges.current = Math.max(item.system.charges.current - action.chargesUsed, 0)
         await item.update({ "system.charges.current": item.system.charges.current })
-      }
-      // Si c'est une capacité qui est un sort avec un coût en mana et qu'on l'active, il faut consommer les Points de Mana
-      if (state && item.type === SYSTEM.ITEM_TYPE.capacity.id && item.system.isSpell && !item.system.actions[indice].properties.noManaCost) {
-        const spellManaCost = item.system.getManaCost() + manaCostFromArmor - (manaConcentration ? 2 : 0)
-        if (spellManaCost > 0) {
-          const newMana = Math.max(this.system.resources.mana.value - spellManaCost, 0)
-          await this.update({ "system.resources.mana.value": newMana })
-
-          // Brûlure de mana
-          if (manaBurned) {
-            const recoveryDice = this.system.hd
-            if (recoveryDice) {
-              const burnRoll = new Roll(`${manaBurnedCost}${recoveryDice}`)
-              let result = await burnRoll.roll()
-              const message = game.i18n.format("CO.notif.manaBurn", { actorName: this.name, amount: result.total, capacityName: item.name })
-              new CoChat(this).withTemplate(SYSTEM.TEMPLATE.MESSAGE).withData({ message: message }).create()
-              const newHP = Math.max(this.system.attributes.hp.value - burnRoll.total, 0)
-              await this.update({ "system.attributes.hp.value": newHP })
-            }
-          }
-        }
       }
     }
 

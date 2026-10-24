@@ -22,7 +22,6 @@ export default class CapacityData extends ItemData {
    *   - `spell` {BooleanField}: A boolean field indicating if the property is a spell.
    * - `path` {DocumentUUIDField}: A field representing a document UUID of type "Item".
    * - `cost` {NumberField}: A required, non-nullable integer field with an initial value of -1.
-   * - `manaCost` {NumberField}: A required, non-nullable integer field with an initial value of -1.
    * - `actions` {ArrayField}: An array field containing embedded data fields of type `Action`.
    * - `allowLinkedCapacity` {BooleanField}: A boolean field indicating if linked capacity is allowed.
    * - `linkedCapacity` {DocumentUUIDField}: A field representing a document UUID of type "Item" for linked capacity.
@@ -46,7 +45,6 @@ export default class CapacityData extends ItemData {
       }),
       path: new fields.DocumentUUIDField({ type: "Item" }),
       cost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: -1, min: -1 }),
-      manaCost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: -1, min: -1 }),
       actions: new fields.ArrayField(new fields.EmbeddedDataField(Action)),
       allowLinkedCapacity: new fields.BooleanField({ initial: false }),
       linkedCapacity: new fields.DocumentUUIDField({ type: "Item" }),
@@ -80,10 +78,6 @@ export default class CapacityData extends ItemData {
 
   get hasCost() {
     return this.cost !== -1
-  }
-
-  get hasManaCost() {
-    return this.manaCost !== -1
   }
 
   get hasParent() {
@@ -123,39 +117,4 @@ export default class CapacityData extends ItemData {
     return 2
   }
 
-  /**
-   * Calculates and returns the mana cost for the current instance.
-   *
-   * @returns {number} The mana cost, which is determined by the following:
-   *   - If `hasManaCost` is true, returns `manaCost`.
-   *   - If `path` is null, returns 0.
-   *   - Otherwise, returns `rank`.
-   */
-  getManaCost() {
-    if (this.hasManaCost) return this.manaCost
-    if (this.path === null) return 0 // Off path capacity
-    return this.rank
-  }
-
-  /**
-   * Calcule le coût en mana basé sur l'armure et la voie de l'acteur.
-   * Si l'armure n'est pas définie, le coût est de 0.
-   * Pour une capacité hors voie, le coût est de 0.
-   *
-   * @param {Object} actor L'objet acteur contenant l'armure et les objets.
-   * @returns {number} Le coût en mana dérivé de la défense de l'armure dépassant la défense maximale autorisée par la voie.
-   */
-  getManaCostFromArmor(actor) {
-    const armor = actor.mainArmor
-    // Pas d'armure
-    if (!armor) return 0
-    // Capacité hors voie
-    if (!this.path) return 0
-    // Recherche la voie pour obtenir la défense maximale pour utiliser la capacité
-    const { id } = foundry.utils.parseUuid(this.path)
-    const path = actor.items.get(id)
-    if (!path) return 0
-    const maxDefenseArmor = path.system.maxDefenseArmor
-    return Math.max(armor.system.defense - maxDefenseArmor, 0)
-  }
 }

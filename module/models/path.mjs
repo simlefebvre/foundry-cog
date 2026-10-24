@@ -6,18 +6,20 @@ import { SYSTEM } from "../config/system.mjs"
  * subtype : the type of the path
  * capacities : an array of capacities' uuis
  * rank : the rank in the path, will be define when a capacity is learned and unlearned
- * maxDefenseArmor : définie la protection maximale autorisé pour la voie
- * pvByLevel : Pour les voies de prestige, indique le nombre de PV obtenu par niveau
+ * livingStandard : niveau de vie accordé par une voie culturelle
+ * isPrestige : marque une voie culturelle ou de savoir-faire comme prestige, sans effet mécanique pour le moment
  */
 export default class PathData extends ItemData {
   static defineSchema() {
     const fields = foundry.data.fields
     return foundry.utils.mergeObject(super.defineSchema(), {
-      subtype: new fields.StringField({ required: true, choices: SYSTEM.PATH_TYPES, initial: "profile" }),
+      subtype: new fields.StringField({ required: true, choices: SYSTEM.PATH_TYPES, initial: "knowhow" }),
       capacities: new fields.ArrayField(new fields.DocumentUUIDField({ type: "Item" })),
+      equipment: new fields.ArrayField(new fields.DocumentUUIDField({ type: "Item" })),
       rank: new fields.NumberField({ required: true, nullable: false, initial: 0, integer: true }),
-      maxDefenseArmor: new fields.NumberField({ integer: true, min: 0, initial: 0 }),
       pvByLevel: new fields.NumberField({ integer: true, min: 0, initial: 0 }),
+      livingStandard: new fields.StringField({ required: true, choices: SYSTEM.LIVING_STANDARDS, initial: "modest" }),
+      isPrestige: new fields.BooleanField({ initial: false }),
     })
   }
 
@@ -88,29 +90,12 @@ export default class PathData extends ItemData {
    * Détermine si la voie doit être affichée en fonction de son sous-type et de son rang.
    *
    * @returns {boolean} - Retourne `true` si la voie remplit les conditions pour être affichée :
-   *                      - Le sous-type est `SYSTEM.PATH_TYPES.prestige.id` et le rang est supérieur à 3.
-   *                      - Le sous-type est `SYSTEM.PATH_TYPES.profile.id` et le rang est supérieur à 0.
-   *                      - Le sous-type est `SYSTEM.PATH_TYPES.people.id` et le rang est supérieur à 0.
-   *                      - Le sous-type est `SYSTEM.PATH_TYPES.feature.id` et le rang est supérieur à 0.
+   *                      - Le sous-type est `SYSTEM.PATH_TYPES.species.id` (toujours affiché).
+   *                      - Le sous-type culturel ou savoir-faire est affiché si son rang est supérieur à 0.
    *                      - Le sous-type est `SYSTEM.PATH_TYPES.encounter.id` (toujours affiché).
    *                      Sinon, retourne `false`.
    */
   get displayPath() {
-    if (this.subtype === SYSTEM.PATH_TYPES.prestige.id && this.rank > 3) {
-      return true
-    }
-    if (this.subtype === SYSTEM.PATH_TYPES.profile.id && this.rank > 0) {
-      return true
-    }
-    if (this.subtype === SYSTEM.PATH_TYPES.people.id && this.rank > 0) {
-      return true
-    }
-    if (this.subtype === SYSTEM.PATH_TYPES.feature.id && this.rank > 0) {
-      return true
-    }
-    if (this.subtype === SYSTEM.PATH_TYPES.encounter.id) {
-      return true
-    }
-    return false
+    return this.subtype === SYSTEM.PATH_TYPES.species.id || this.subtype === SYSTEM.PATH_TYPES.encounter.id || this.rank > 0
   }
 }

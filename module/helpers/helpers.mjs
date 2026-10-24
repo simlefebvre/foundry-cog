@@ -164,9 +164,6 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper("add", function (a, b) {
     return parseInt(a) + parseInt(b)
   })
-  Handlebars.registerHelper("isPathprestigious", function (value) {
-    return value === SYSTEM.PATH_TYPES.prestige.id
-  })
   Handlebars.registerHelper("isNotNull", function (value) {
     return value !== null
   })

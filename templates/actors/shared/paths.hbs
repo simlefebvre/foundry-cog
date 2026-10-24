@@ -29,6 +29,12 @@
                             </a>
                         </h4>
                         <div class="item-controls-3">
+                            {{#if (and ../unlocked (or (eq pg.path.system.subtype "culture") (eq pg.path.system.subtype "knowhow")))}}
+                                <label class="path-prestige">
+                                    <input type="checkbox" data-action="togglePathPrestige" data-item-id="{{pg.path.id}}" {{checked pg.path.system.isPrestige}} />
+                                    {{localize "CO.Path.FIELDS.isPrestige.label"}}
+                                </label>
+                            {{/if}}
                             {{#if ../unlocked}}
                                 <a class="edit" data-action="editItem" data-tooltip="{{localize 'CO.label.long.edit'}}"><i class="fas fa-fw fa-edit"></i></a>
                                 <a class="item-control" data-action="deleteItem" data-tooltip="{{localize 'CO.ui.remove'}}"><i class="fas fa-trash"></i></a>

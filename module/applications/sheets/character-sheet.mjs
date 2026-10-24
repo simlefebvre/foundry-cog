@@ -18,6 +18,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
     actions: {
       editAbilities: COCharacterSheet.#onEditAbilities,
       deleteItem: COCharacterSheet.#onDeleteItem,
+      togglePathPrestige: COCharacterSheet.#onPathPrestigeToggle,
       roll: COCharacterSheet.#onRoll,
       attack: COCharacterSheet._onUseAction,
       damage: COCharacterSheet._onUseAction,
@@ -108,6 +109,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
     context.choiceAbilities = SYSTEM.ABILITIES
     context.choiceSize = SYSTEM.SIZES
     context.choiceLivingStandards = SYSTEM.LIVING_STANDARDS
+    context.hasCulturalPath = this.document.paths.some((path) => path.system.subtype === SYSTEM.PATH_TYPES.culture.id)
 
     // Compagnons : lus directement depuis system.companions (tableau d'UUID de Rencontres)
     context.companions = this.actor.system.companions
@@ -258,6 +260,19 @@ export default class COCharacterSheet extends COBaseActorSheet {
       default:
         await this.document.deleteEmbeddedDocuments("Item", [id])
     }
+  }
+
+  /**
+   * Toggle the prestige marker on a cultural or know-how path.
+   * @param {PointerEvent} event The originating click event
+   * @param {HTMLElement} target The capturing HTML element which defined a [data-action]
+   */
+  static async #onPathPrestigeToggle(event, target) {
+    if (!this.isEditable) return
+    const pathId = target.closest('[data-item-type="path"]')?.dataset.itemId
+    const path = pathId ? this.document.items.get(pathId) : null
+    if (!path || ![SYSTEM.PATH_TYPES.culture.id, SYSTEM.PATH_TYPES.knowhow.id].includes(path.system.subtype)) return
+    await path.update({ "system.isPrestige": target.checked })
   }
 
   /**

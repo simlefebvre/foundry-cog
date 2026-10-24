@@ -45,7 +45,7 @@ export default class COPartySheet extends HandlebarsApplicationMixin(foundry.app
           actor: c,
           name: c.name,
           img: c.img,
-          livingStandard: c.system.details.livingStandard,
+          livingStandard: c.system.livingStandard,
           abilities: c.system.abilities,
           combat: c.system.combat,
           hp: c.system.attributes.hp,

@@ -101,6 +101,13 @@ export const LIVING_STANDARDS = {
   comfortable: "CO.livingStandard.comfortable",
 }
 
+export const LIVING_STANDARD_RANK = {
+  poor: 0,
+  modest: 1,
+  comfortable: 2,
+  wealthy: 3,
+}
+
 export const BASE_FORTUNE = 2
 export const BASE_RECOVERY = 2
 export const BASE_INITIATIVE = 10

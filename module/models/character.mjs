@@ -273,6 +273,19 @@ export default class CharacterData extends ActorData {
     return family === "reflexion"
   }
 
+  /**
+   * Returns the highest living standard granted by a cultural path, falling back to the actor's own value.
+   * @returns {string} The effective living standard identifier.
+   */
+  get livingStandard() {
+    const culturalPaths = this.parent.paths.filter((path) => path.system.subtype === SYSTEM.PATH_TYPES.culture.id)
+    return culturalPaths.reduce((highest, path) => {
+      const currentRank = SYSTEM.LIVING_STANDARD_RANK[path.system.livingStandard] ?? -1
+      const highestRank = SYSTEM.LIVING_STANDARD_RANK[highest] ?? -1
+      return currentRank > highestRank ? path.system.livingStandard : highest
+    }, this.details.livingStandard)
+  }
+
   prepareDerivedData() {
     super.prepareDerivedData()
 

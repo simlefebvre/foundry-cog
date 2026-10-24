@@ -216,11 +216,17 @@
         "subtype": {
           "label": "Sous-type"
         },
+        "equipment": {
+          "label": "Équipement accordé"
+        },
+        "livingStandard": {
+          "label": "Niveau de vie"
+        },
+        "isPrestige": {
+          "label": "Voie de prestige"
+        },
         "rank": {
           "label": "Rang"
-        },
-        "maxDefenseArmor": {
-          "label": "Défense max de l'armure"
         },
         "pvByLevel": {
           "label": "Vigueur par niveau"
@@ -240,9 +246,6 @@
         },
         "family": {
           "label": "Famille"
-        },
-        "maxDefenseArmor": {
-          "label": "Défense max de l'armure"
         },
         "mainProfile": {
           "label": "Profil principal"
@@ -807,7 +810,6 @@
       "xpCost": "Coût en points de capacité",
       "defense": "Défense",
       "magicalDefense": "Défense magique",
-      "maxDefenseArmor": "Défense max de l'armure",
       "remainingQuantity": "Quantité restante",
       "melee": "Contact",
       "ranged": "Distance",
@@ -818,7 +820,6 @@
       "linkedCapacity": "Capacité liée",
       "parentCapacity": "Capacité parente",
       "pvByLevel": "Vigueur par niveau",
-      "warningPrestigeAlreadyExist": "Vous avez déjà une classe de prestige, vous devez la désapprendre pour pouvoir en apprendre une autre",
       "tempDamage": "Temporaires",
       "attackTarget": "Les cibles de l'attaque",
       "additionalEffect": "Effets supplémentaires",
@@ -1289,11 +1290,10 @@
     },
     "path": {
       "subtypes": {
-        "profile": "Voie de profil",
-        "people": "Voie de peuple",
-        "feature": "Voie de trait",
-        "encounter": "Voie de créature",
-        "prestige": "Voie de prestige"
+        "species": "Voie d'espèce",
+        "culture": "Voie culturelle",
+        "knowhow": "Voie de savoir-faire",
+        "encounter": "Voie de créature"
       },
       "martialCategories": {
         "melee": "Arme de contact",

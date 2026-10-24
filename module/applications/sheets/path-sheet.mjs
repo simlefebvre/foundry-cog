@@ -37,6 +37,12 @@ export default class CoPathSheet extends CoBaseItemSheet {
       capacity.enrichedTooltip = await enrichHTML(capacity.system.description ?? "")
     }
 
+    context.equipment = []
+    for (const uuid of this.item.system.equipment) {
+      const equipment = await fromUuid(uuid)
+      if (equipment) context.equipment.push({ uuid: equipment.uuid, name: equipment.name, img: equipment.img })
+    }
+
     // Select options
     context.choicePathSubtypes = SYSTEM.PATH_TYPES
 

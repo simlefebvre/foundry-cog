@@ -1,19 +1,15 @@
 export const PATH_TYPES = {
-  profile: {
-    id: "profile",
-    label: "CO.path.subtypes.profile",
+  species: {
+    id: "species",
+    label: "CO.path.subtypes.species",
   },
-  people: {
-    id: "people",
-    label: "CO.path.subtypes.people",
+  culture: {
+    id: "culture",
+    label: "CO.path.subtypes.culture",
   },
-  feature: {
-    id: "feature",
-    label: "CO.path.subtypes.feature",
-  },
-  prestige: {
-    id: "prestige",
-    label: "CO.path.subtypes.prestige",
+  knowhow: {
+    id: "knowhow",
+    label: "CO.path.subtypes.knowhow",
   },
   encounter: {
     id: "encounter",

@@ -931,12 +931,7 @@ export default class COActor extends Actor {
     await this._toggleItemFieldAndActions(capacity, "learned", state)
 
     // Mise à jour du rang de la voie correspondante
-    // Cas particulier de la voie de prestige où le rang commence à 4
-    if (path.system.subtype === "prestige") {
-      await path.update({ "system.rank": 3 + path.system.numberLearnedCapacities })
-    } else {
-      await path.update({ "system.rank": path.system.numberLearnedCapacities })
-    }
+    await path.update({ "system.rank": path.system.numberLearnedCapacities })
 
     // Gestion d'une éventuelle capacité liée
     if (capacity.system.allowLinkedCapacity && capacity.system.linkedCapacity) {
@@ -1412,20 +1407,6 @@ export default class COActor extends Actor {
       return
     }
 
-    // If path creation is related to a profile creation
-    // Update maxDefenseArmor
-    if (profile !== null) {
-      itemData.system.maxDefenseArmor = profile.system.maxDefenseArmor
-    }
-    // S'il s'agit d'une voie de prestige on vérifie si on a pas déjà une voie de prestige, si oui on annule
-    if (itemData.system.subtype === SYSTEM.PATH_TYPES.prestige.id) {
-      let currentprestige = this.paths.find((item) => item.system.subtype === SYSTEM.PATH_TYPES.prestige.id)
-      if (currentprestige) {
-        ui.notifications.warn(game.i18n.localize("CO.notif.warningPrestigeAlreadyExist"))
-        return
-      }
-    }
-
     // Create the path
     const newPath = await this.createEmbeddedDocuments("Item", [itemData])
     let updatedCapacitiesUuids = []
@@ -1441,6 +1422,23 @@ export default class COActor extends Actor {
     }
     // Update the array of capacities of the path with ids of created path
     await newPath[0].update({ "system.capacities": updatedCapacitiesUuids })
+
+    if (itemData.system.subtype === SYSTEM.PATH_TYPES.species.id && updatedCapacitiesUuids.length > 0) {
+      const firstCapacity = this.getEmbeddedItemByUuid(updatedCapacitiesUuids[0])
+      if (firstCapacity) await this._toggleItemFieldAndActions(firstCapacity, "learned", true)
+      await newPath[0].update({ "system.rank": newPath[0].system.numberLearnedCapacities })
+    }
+
+    // L'équipement accordé devient indépendant de la voie après sa copie dans l'inventaire.
+    for (const equipmentUuid of path.system.equipment ?? []) {
+      const equipment = await fromUuid(equipmentUuid)
+      if (!equipment) continue
+      if (equipment.type === SYSTEM.ITEM_TYPE.container.id) {
+        await this.addContainer(equipment)
+      } else {
+        await this.addEquipment(equipment)
+      }
+    }
 
     return newPath[0].uuid
   }

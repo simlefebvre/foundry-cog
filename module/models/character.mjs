@@ -3,7 +3,6 @@ import { BaseValue } from "./schemas/base-value.mjs"
 import { AbilityValue } from "./schemas/ability-value.mjs"
 import ActorData from "./actor.mjs"
 import Utils from "../helpers/utils.mjs"
-import { computeProfileHp } from "../helpers/hp-rules.mjs"
 import CoChat from "../chat.mjs"
 
 import DefaultConfiguration from "../config/configuration.mjs"
@@ -59,6 +58,7 @@ export default class CharacterData extends ActorData {
             sheet: new fields.NumberField({ ...requiredInteger, initial: 0 }),
             effects: new fields.NumberField({ ...requiredInteger, initial: 0 }),
           }),
+          lvlGain: new fields.NumberField({ ...requiredInteger, initial: 0 }),
         },
         { label: "CO.label.long.hp", nullable: false },
       ),
@@ -376,66 +376,52 @@ export default class CharacterData extends ActorData {
   _prepareHPMax() {
     const hpMaxBonuses = Object.values(this.attributes.hp.bonuses).reduce((prev, curr) => prev + curr)
     const hpMaxModifiers = this.computeTotalModifiersByTarget(this.attributeModifiers, "hp")
-
     const nbProfiles = this.parent.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.profile.id).length
-
     const constitutionBonus = this.attributes.level * this.abilities.con.value
-    // Pas de profil
+
+    // Sans profil, les PV sont calculés à partir de la Constitution à chaque niveau.
     if (nbProfiles === 0) {
       this.attributes.hp.base = 0
       this.attributes.hp.max = this.attributes.hp.base + constitutionBonus + hpMaxBonuses + hpMaxModifiers.total
+
       this.attributes.hp.tooltip = Utils.getTooltip("Base ", this.attributes.hp.base).concat(
         Utils.getTooltip(Utils.getAbilityName("con"), constitutionBonus),
         hpMaxModifiers.tooltip,
         Utils.getTooltip("Bonus", hpMaxBonuses),
       )
-    }
-    // Profil unique
-    else if (nbProfiles === 1) {
-      // Calcul de la base de PV sans le bonus de constitution
-      // Au niveau 1 : 2 * PV de la famille
-      // Pour chaque niveau supplémentaire : + PV de la famille
-      const pvData = { profile: this.profile, value: SYSTEM.FAMILIES[this.profile?.system.family]?.hp ?? 0 }
+    } else if (nbProfiles === 1) {
+      // Le dé de vie est défini par la famille du profil (champ recoveryDice).
+      // La valeur hp de la famille correspond à sa vigueur par niveau, utilisée par l'ancien calcul.
+      const hitDie = this.hd
+      const hitDieFaces = hitDie ? Number(hitDie.slice(1)) : 0
 
-      // Point d'extension : un module (ex. cof2-compagnon / profil Psionique) peut surcharger les PV/niveau du profil
-      Hooks.callAll("co2.computeProfileHpPerLevel", this.parent, pvData)
+      // La base représente les PV du niveau 1 : Constitution + faces du dé de vie.
+      // On la conserve ensuite ; les gains des niveaux suivants seront stockés dans lvlGain.
+      if (this.attributes.level <= 1 || this.attributes.hp.base === 0) this.attributes.hp.base = this.abilities.con.value + hitDieFaces
 
-      const pvFromFamily = pvData.value
+      this.attributes.hp.max = this.attributes.hp.base + hpMaxBonuses + hpMaxModifiers.total + this.attributes.hp.lvlGain
 
-      // Une voie de prestige octroie sa propre vigueur, qui remplace celle du profil au niveau où l'on choisit une de ses capacités
-      const currentprestige = this.parent.paths.find((item) => item.system.subtype === SYSTEM.PATH_TYPES.prestige.id)
-      const pvPrestige = currentprestige?.system.pvByLevel ?? 0
-      const { base, prestige: currentprestigePV } = computeProfileHp({
-        level: this.attributes.level,
-        pvFromFamily,
-        pvPrestige,
-        learnedPrestige: pvPrestige > 0 ? currentprestige.system.numberLearnedCapacities : 0,
-      })
-      this.attributes.hp.base = base
-
-      this.attributes.hp.max = this.attributes.hp.base + constitutionBonus + hpMaxBonuses + hpMaxModifiers.total + currentprestigePV
-      this.attributes.hp.tooltip = Utils.getTooltip("Base ", this.attributes.hp.base).concat(
-        Utils.getTooltip(currentprestige?.name ?? "", currentprestigePV),
-        Utils.getTooltip(Utils.getAbilityName("con"), constitutionBonus),
+      this.attributes.hp.tooltip = Utils.getTooltip("Base (CON niv. 1 + DV) ", this.attributes.hp.base).concat(
         hpMaxModifiers.tooltip,
         Utils.getTooltip("Bonus", hpMaxBonuses),
+        Utils.getTooltip("Gain de niveau", this.attributes.hp.lvlGain),
       )
-    }
-    // Profil hybride
-    else if (nbProfiles > 1) {
-      // La base est saisie à la main : la vigueur d'une éventuelle voie de prestige n'est volontairement pas calculée ici, elle se saisit dans la base
+    } else {
+      // TODO : rétablir le calcul des PV pour les personnages ayant plusieurs profils.
+      /*
       const tooltipBase = Utils.getTooltip("Base", this.attributes.hp.base)
 
       this.attributes.hp.max = this.attributes.hp.base + constitutionBonus + hpMaxBonuses + hpMaxModifiers.total
-
       this.attributes.hp.tooltip = tooltipBase.concat(
         Utils.getTooltip(Utils.getAbilityName("con"), constitutionBonus),
         hpMaxModifiers.tooltip,
         Utils.getTooltip("Bonus", hpMaxBonuses),
       )
+      */
     }
 
-    if (this.attributes.hp.value > this.attributes.hp.max) this.attributes.hp.value = this.attributes.hp.max // On ne depasse pas le max
+    // Les PV actuels ne peuvent pas dépasser le maximum calculé.
+    if (this.attributes.hp.value > this.attributes.hp.max) this.attributes.hp.value = this.attributes.hp.max
   }
 
   _prepareMovement() {

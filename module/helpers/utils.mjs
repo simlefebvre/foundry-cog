@@ -41,10 +41,7 @@ export default class Utils {
    * @returns {string} "Nom : valeur " the formatted tooltip string if both name and value are valid, otherwise an empty string.
    */
   static getTooltip(name, value) {
-    if (name !== "" && value !== 0) {
-      return `${name} : ${value}<br />`
-    }
-    return ""
+    return `${name} : ${value}<br />`
   }
 
   /**

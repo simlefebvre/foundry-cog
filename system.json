@@ -1,9 +1,9 @@
 {
-  "id": "co2",
-  "title": "Chroniques Oubliées 2e édition",
-  "description": "Le système Chroniques Oubliées 2e édition pour Foundry VTT.",
-  "url": "#{URL}#",
-  "version": "#{VERSION}#",
+  "id": "cog",
+  "title": "Chroniques Oubliées galactiques 2e édition",
+  "description": "Le système Chroniques Oubliées galactiques 2e édition pour Foundry VTT.",
+  "url": "",
+  "version": "0.0.1",
   "compatibility": {
     "minimum": "14",
     "maximum": "14",
@@ -24,6 +24,9 @@
     },
     {
       "name": "Zigmund"
+    },
+    {
+      "name": "Simon"
     }
   ],
   "esmodules": ["co.mjs"],
@@ -72,7 +75,7 @@
   "secondaryTokenAttribute": "resources.mana",
   "socket": true,
   "initiative": "1d20",
-  "background": "systems/co2/ui/logo_co.webp",
-  "manifest": "#{MANIFEST}#",
-  "download": "#{DOWNLOAD}#"
+  "background": "systems/cog/ui/logo_co2.webp",
+  "manifest": "",
+  "download": ""
 }

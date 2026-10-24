@@ -518,7 +518,7 @@
         "def": "Défense",
         "init": "Initiative",
         "hd": "Dé de vie",
-        "hp": "Points de vigueur",
+        "hp": "Points de vie",
         "fp": "Points de chance",
         "rp": "Dés de récupération",
         "mp": "Points de mana",
@@ -599,7 +599,7 @@
         "difficulty": "Diff.",
         "effects": "FX",
         "properties": "Props",
-        "hp": "Vigueur",
+        "hp": "Vie",
         "tempDm": "DM temp.",
         "xp": "XP",
         "movement": "Dépl.",
@@ -1051,7 +1051,7 @@
         "infoLibre": "Indiquez les valeurs de chaque caractéristique manuellement",
         "infoAutres": "Glissez-déposez les valeurs ci-dessus à la place sur la ligne Base"
       },
-      "restHpRecovered": "Vous avez récupéré {hp} points de vigueur",
+      "restHpRecovered": "Vous avez récupéré {hp} points de vie",
       "healRecovered": "PV soigné(s)",
       "healTooltip": "Le soin est appliqué directement sur la cible",
       "featureModifierChoice": {
@@ -1159,7 +1159,7 @@
         "magic": "Attaque magique",
         "init": "Initiative",
         "def": "Défense",
-        "hp": "Points de vigueur",
+        "hp": "Points de vie",
         "rp": "Dés de récupération",
         "mp": "Points de mana",
         "fp": "Points de chance"

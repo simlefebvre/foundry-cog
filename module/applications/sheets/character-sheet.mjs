@@ -107,6 +107,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
     // Select options
     context.choiceAbilities = SYSTEM.ABILITIES
     context.choiceSize = SYSTEM.SIZES
+    context.choiceLivingStandards = SYSTEM.LIVING_STANDARDS
 
     // Compagnons : lus directement depuis system.companions (tableau d'UUID de Rencontres)
     context.companions = this.actor.system.companions

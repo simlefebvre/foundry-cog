@@ -3818,7 +3818,8 @@ a.roll-check-enricher:hover {
   text-shadow: 0 0 8px var(--color-shadow-primary);
 }
 .co.party-sheet .party-table .col-ability,
-.co.party-sheet .party-table .col-combat {
+.co.party-sheet .party-table .col-combat,
+.co.party-sheet .party-table .col-living-standard {
   text-align: center;
 }
 .co.party-sheet .party-table .clickable {

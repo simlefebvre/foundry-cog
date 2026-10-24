@@ -69,7 +69,7 @@ export const EQUIPMENT_DAMAGETYPE = {
 }
 
 /**
- * Devises par défaut du système (hypothèse fantasy COF2 : or/argent/cuivre).
+ * Devise par défaut du système (crédit unique).
  * Un module de contenu d'univers peut REMPLACER l'ensemble à son hook
  * `init` via `game.system.CONST.CURRENCY = {...}`, AVANT que le schéma `wealth` des acteurs (character/
  * encounter) ne soit figé : `defineSchema` est paresseux (appelé au plus tôt à setup/ready, donc après
@@ -78,17 +78,9 @@ export const EQUIPMENT_DAMAGETYPE = {
  * helper Handlebars `getCurrencyLabel` — un module fournit ses propres clés dans son namespace.
  */
 export const EQUIPMENT_CURRENCIES = {
-  gp: {
-    id: "gp",
-    label: "CO.currency.gp",
-  },
-  sp: {
-    id: "sp",
-    label: "CO.currency.sp",
-  },
-  cp: {
-    id: "cp",
-    label: "CO.currency.cp",
+  credit: {
+    id: "credit",
+    label: "CO.currency.credit",
   },
 }
 

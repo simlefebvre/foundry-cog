@@ -94,6 +94,13 @@ export const ATTACK_TYPE = {
   },
 }
 
+export const LIVING_STANDARDS = {
+  wealthy: "CO.livingStandard.wealthy",
+  poor: "CO.livingStandard.poor",
+  modest: "CO.livingStandard.modest",
+  comfortable: "CO.livingStandard.comfortable",
+}
+
 export const BASE_FORTUNE = 2
 export const BASE_RECOVERY = 2
 export const BASE_INITIATIVE = 10

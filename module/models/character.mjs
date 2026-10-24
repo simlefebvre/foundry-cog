@@ -123,6 +123,11 @@ export default class CharacterData extends ActorData {
         nullable: true,
         initial: "medium",
       }),
+      livingStandard: new fields.StringField({
+        required: true,
+        choices: SYSTEM.LIVING_STANDARDS,
+        initial: "modest",
+      }),
       languages: new fields.ArrayField(new fields.StringField()),
     })
 

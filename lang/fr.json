@@ -91,6 +91,9 @@
           "size": {
             "label": "Taille"
           },
+          "livingStandard": {
+            "label": "Niveau de vie"
+          },
           "languages": {
             "label": "Langages"
           }
@@ -956,9 +959,13 @@
       }
     },
     "currency": {
-      "gp": "Pièces d'or",
-      "sp": "Pièces d'argent",
-      "cp": "Pièces de cuivre"
+      "credit": "Crédits"
+    },
+    "livingStandard": {
+      "wealthy": "Fortuné",
+      "poor": "Pauvre",
+      "modest": "Modeste",
+      "comfortable": "Aisé"
     },
     "customEffect": {
       "damageOrHeal": "Dommages ou soins",

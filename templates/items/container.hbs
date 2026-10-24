@@ -27,7 +27,9 @@
                     <label>{{localize "CO.ui.price"}}</label>
                     <div class="form-fields border-right">
                         {{formInput systemFields.price.fields.value value=systemSource.price.value localize=true disabled=locked}}
-                        {{formInput systemFields.price.fields.unit value=systemSource.price.unit localize=true disabled=locked}}
+                        <select name="system.price.unit" data-type="String" {{#if locked}}disabled{{/if}}>
+                            {{selectOptions choiceCurrency selected=systemSource.price.unit localize=true}}
+                        </select>
                     </div>
                 </div>
             </fieldset>

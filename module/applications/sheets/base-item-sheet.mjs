@@ -203,6 +203,7 @@ export default class COBaseItemSheet extends HandlebarsApplicationMixin(sheets.I
     )
     context.choiceResolverApplyOnAlways = Object.fromEntries(Object.entries(SYSTEM.RESOLVER_RESULT).filter(([key, value]) => key === "always"))
     context.choiceResolverTargets = SYSTEM.RESOLVER_TARGET
+    context.choiceCurrency = SYSTEM.CURRENCY
     context.choiceResolverScopes = SYSTEM.RESOLVER_SCOPE
     context.choiceResolverEffectDurationUnit = SYSTEM.COMBAT_UNITE
     context.choiceResolverEffectElementTypes = SYSTEM.CUSTOM_EFFECT_ELEMENT

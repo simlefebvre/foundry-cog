@@ -127,7 +127,7 @@ Hooks.once("init", async function () {
     game.system.CONST.baseItems = []
   }
 
-  // Devises : par défaut fantasy (or/argent/cuivre, hypothèse COF2). Un module d'univers peut remplacer
+  // Devise : crédit unique par défaut. Un module d'univers peut remplacer
   // l'ensemble à son hook init (cf. coc2-base « $ », cth-base) via game.system.CONST.CURRENCY. Le schéma wealth des acteurs lit cette valeur à la première préparation de document (setup/ready), donc après
   // tous les init de modules. Toujours défini par config/system.mjs — ce garde-fou ne fait que documenter le contrat, homogène avec les overlays voisins.
   if (!game.system.CONST.CURRENCY) {

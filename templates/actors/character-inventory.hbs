@@ -16,6 +16,12 @@
         <input class="current center" type="number" name="system.wealth.{{id}}.value" value="{{currency.value}}" data-dtype="Number" placeholder="0" />
       </div>
     {{/each}}
+    <div class="flexrow">
+      <label>{{localize "CO.Character.FIELDS.details.livingStandard.label"}} : </label>
+      <select class="current center" name="system.details.livingStandard" data-dtype="String" {{#unless unlocked}}disabled{{/unless}}>
+        {{selectOptions choiceLivingStandards selected=system.details.livingStandard localize=true}}
+      </select>
+    </div>
   </div>
 </ol>
 

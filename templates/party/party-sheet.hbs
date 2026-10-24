@@ -4,6 +4,7 @@
     <tr>
       <th class="col-player">{{localize "CO.party.player"}}</th>
       <th class="col-character">{{localize "CO.party.character"}}</th>
+      <th class="col-living-standard">{{localize "CO.Character.FIELDS.details.livingStandard.label"}}</th>
       <th class="col-ability clickable" data-action="rollAbilityAll" data-ability="agi">{{localize "CO.abilities.short.agi"}}</th>
       <th class="col-ability clickable" data-action="rollAbilityAll" data-ability="con">{{localize "CO.abilities.short.con"}}</th>
       <th class="col-ability clickable" data-action="rollAbilityAll" data-ability="for">{{localize "CO.abilities.short.for"}}</th>
@@ -33,6 +34,7 @@
           {{this.name}}
         </a>
       </td>
+      <td class="col-living-standard">{{localize (concat "CO.livingStandard." this.livingStandard)}}</td>
       <td class="col-ability clickable" data-action="rollAbility" data-ability="dex" data-user-id="{{this.userId}}">{{this.abilities.dex.value}}</td>
       <td class="col-ability clickable" data-action="rollAbility" data-ability="con" data-user-id="{{this.userId}}">{{this.abilities.con.value}}</td>
       <td class="col-ability clickable" data-action="rollAbility" data-ability="for" data-user-id="{{this.userId}}">{{this.abilities.for.value}}</td>

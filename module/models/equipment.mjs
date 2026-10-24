@@ -50,7 +50,7 @@ export default class EquipmentData extends ItemData {
       }),
       price: new fields.SchemaField({
         value: new fields.NumberField({ required: true, nullable: false, initial: 0, integer: true, min: 0 }),
-        unit: new fields.StringField({ required: true, initial: "pa" }),
+        unit: new fields.StringField({ required: true, initial: "credit" }),
       }),
       rarity: new fields.StringField({ required: true, initial: "common", choices: SYSTEM.EQUIPMENT_RARITY }),
       equipped: new fields.BooleanField(),

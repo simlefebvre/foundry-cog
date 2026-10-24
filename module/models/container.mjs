@@ -25,7 +25,7 @@ export default class ContainerData extends ItemData {
       }),
       price: new fields.SchemaField({
         value: new fields.NumberField({ required: true, nullable: false, initial: 0, integer: true, min: 0 }),
-        unit: new fields.StringField({ required: true, initial: "pa" }),
+        unit: new fields.StringField({ required: true, initial: "credit" }),
       }),
       actions: new fields.ArrayField(new fields.EmbeddedDataField(Action)),
       maxItems: new fields.NumberField({ required: true, nullable: false, integer: true, min: 0, initial: 0 }),

@@ -3,6 +3,7 @@ import { BaseValue } from "./schemas/base-value.mjs"
 import { AbilityValue } from "./schemas/ability-value.mjs"
 import ActorData from "./actor.mjs"
 import Utils from "../helpers/utils.mjs"
+import { PROFILE_FAMILY_ALIASES } from "../config/profile.mjs"
 import CoChat from "../chat.mjs"
 
 import DefaultConfiguration from "../config/configuration.mjs"
@@ -238,11 +239,9 @@ export default class CharacterData extends ActorData {
   }
 
   get fpFromFamily() {
-    return SYSTEM.FAMILIES[this.profile?.system.family]?.fp ?? 0
-  }
-
-  get rpFromFamily() {
-    return SYSTEM.FAMILIES[this.profile?.system.family]?.recoveryBonus ?? 0
+    const familyId = this.profile?.system.family
+    const family = PROFILE_FAMILY_ALIASES[familyId] ?? familyId
+    return SYSTEM.FAMILIES[family]?.fp ?? 0
   }
 
   get currentLevel() {
@@ -263,9 +262,10 @@ export default class CharacterData extends ActorData {
    *
    * @returns {boolean} Returns true if the profile exists and its system family is "mage"; otherwise, false.
    */
-  get hasProfileMageFamily() {
+  get hasProfileReflexionFamily() {
     const profile = this.profile
-    return profile && profile.system.family === "mage"
+    const family = PROFILE_FAMILY_ALIASES[profile?.system.family] ?? profile?.system.family
+    return family === "reflexion"
   }
 
   prepareDerivedData() {
@@ -326,7 +326,7 @@ export default class CharacterData extends ActorData {
     // XP dépensés dans les capacités des voies
     // Un personnage a 3 points de capacités au niveau 1, et 2 points de capacités par niveau supplémentaire
     // Un personnage avec un profil de la famille des mages a un point de capacité supplémentaire au niveau 1
-    this.attributes.xp.max = 3 + 2 * (this.attributes.level - 1) + (this.hasProfileMageFamily ? 1 : 0)
+    this.attributes.xp.max = 3 + 2 * (this.attributes.level - 1) + (this.hasProfileReflexionFamily ? 1 : 0)
     // His._prepareVision()
   }
 
@@ -696,22 +696,18 @@ export default class CharacterData extends ActorData {
   }
 
   /**
-   * Computes the base RP (Resource Points) for the character.
+   * Calcule la base des dés de récupération du personnage.
    *
-   * The base RP is calculated as the sum of:
-   * - A constant value of 2
-   * - The character's Constitution ability value
-   * - The RP value from the character's family : 1 dé supplémentaire pour la famille des mystiques
+   * Elle correspond à la valeur de base et au score de Constitution.
    *
    * @returns {number,string} The computed base RP value and tooltip
    */
   _computeBaseRP() {
     const baseRP = DefaultConfiguration.baseRecovery()
     const baseValue = this.abilities[this.resources.recovery.ability].value
-    const value = baseRP + baseValue + this.rpFromFamily
+    const value = baseRP + baseValue
     let tooltip = Utils.getTooltip("Base", baseRP)
     tooltip = tooltip.concat(Utils.getTooltip(Utils.getAbilityName(this.resources.recovery.ability), baseValue))
-    if (this.rpFromFamily > 0) tooltip = tooltip.concat(Utils.getTooltip("Profil", this.rpFromFamily))
     return { value, tooltip }
   }
 

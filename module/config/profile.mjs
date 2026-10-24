@@ -1,6 +1,12 @@
 export const FAMILIES = {
-  aventurier: { label: "CO.profile.family.aventurier", hp: 4, recoveryDice: "d8", recoveryBonus: 0, fp: 1 },
-  combattant: { label: "CO.profile.family.combattant", hp: 5, recoveryDice: "d10", recoveryBonus: 0, fp: 0 },
-  mage: { label: "CO.profile.family.mage", hp: 3, recoveryDice: "d6", recoveryBonus: 0, fp: 0 },
-  mystique: { label: "CO.profile.family.mystique", hp: 4, recoveryDice: "d8", recoveryBonus: 1, fp: 0 },
+  action: { label: "CO.profile.family.action", recoveryDice: "d10", fp: 2 },
+  aventure: { label: "CO.profile.family.aventure", recoveryDice: "d8", fp: 4 },
+  reflexion: { label: "CO.profile.family.reflexion", recoveryDice: "d6", fp: 2 },
+}
+
+export const PROFILE_FAMILY_ALIASES = {
+  combattant: "action",
+  aventurier: "aventure",
+  mage: "reflexion",
+  mystique: "aventure",
 }

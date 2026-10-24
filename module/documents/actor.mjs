@@ -1,4 +1,5 @@
 import { SYSTEM } from "../config/system.mjs"
+import { PROFILE_FAMILY_ALIASES } from "../config/profile.mjs"
 import CustomEffectData from "../models/schemas/custom-effect.mjs"
 import { CORoll, COSkillRoll, COAttackRoll, COHealRoll } from "./roll.mjs"
 import { CoFeatureModifierChoiceDialog } from "../dialogs/feature-modifier-choice-dialog.mjs"
@@ -849,8 +850,8 @@ export default class COActor extends Actor {
     }
 
     // TODO Incantation
-    // Magie profane (famille des mages) : En revanche, il n’est pas possible d’utiliser un bouclier et une arme ou une arme dans chaque main tout en lançant des sorts de magie profane.
-    // Magie divine (famille des mystiques) : respecter les armes autorisées
+    // Magie profane (famille Réflexion) : En revanche, il n’est pas possible d’utiliser un bouclier et une arme ou une arme dans chaque main tout en lançant des sorts de magie profane.
+    // Magie divine : respecter les armes autorisées
 
     // Profil hybride : gestion du lancement de sort avec une armure maitrisée mais trop lourde, ce qui implique un surcoût de mana
     const manaCostFromArmor = item.type === SYSTEM.ITEM_TYPE.capacity.id ? item.system.getManaCostFromArmor(this) : 0
@@ -1018,8 +1019,9 @@ export default class COActor extends Actor {
     // Les capacités de rang 6 à 8 sont réservées aux voies de prestige
     const requiredLevel = SYSTEM.CAPACITY_MINIMUM_LEVEL[capacity.system.rank]
 
-    // Exception : Au niveau 1, un personnage avec un profil de la famille des mages peut apprendre une capacité de rang 2 parmi les 2 voies de profil choisies
-    if (this.type === "character" && this.system.profile && this.system.profile.system.family === "mage" && this.system.attributes.level === 1 && capacity.system.rank === 2) {
+    // Exception : Au niveau 1, un personnage de la famille Réflexion peut apprendre une capacité de rang 2 parmi les 2 voies de profil choisies
+    const profileFamily = PROFILE_FAMILY_ALIASES[this.system.profile?.system.family] ?? this.system.profile?.system.family
+    if (this.type === "character" && profileFamily === "reflexion" && this.system.attributes.level === 1 && capacity.system.rank === 2) {
       return true
     }
 

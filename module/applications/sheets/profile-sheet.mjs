@@ -1,5 +1,6 @@
 import CoBaseItemSheet from "./base-item-sheet.mjs"
 import { SYSTEM } from "../../config/system.mjs"
+import { PROFILE_FAMILY_ALIASES } from "../../config/profile.mjs"
 import Utils from "../../helpers/utils.mjs"
 
 export default class CoProfileSheet extends CoBaseItemSheet {
@@ -13,10 +14,10 @@ export default class CoProfileSheet extends CoBaseItemSheet {
   }
 
   static PARTS = {
-    header: { template: "systems/co2/templates/items/shared/header.hbs" },
+    header: { template: "systems/cog/templates/items/shared/header.hbs" },
     tabs: { template: "templates/generic/tab-navigation.hbs" },
-    description: { template: "systems/co2/templates/items/shared/description.hbs" },
-    details: { template: "systems/co2/templates/items/profile.hbs", scrollable: [""] },
+    description: { template: "systems/cog/templates/items/shared/description.hbs" },
+    details: { template: "systems/cog/templates/items/profile.hbs", scrollable: [""] },
   }
 
   static TABS = {
@@ -67,6 +68,7 @@ export default class CoProfileSheet extends CoBaseItemSheet {
 
     // Select options
     context.choiceProfileFamily = Object.fromEntries(Object.entries(SYSTEM.FAMILIES).map(([key, value]) => [key, value.label]))
+    context.profileFamily = PROFILE_FAMILY_ALIASES[this.item.system.family] ?? this.item.system.family
     context.choiceModifierSubtypes = SYSTEM.MODIFIERS.MODIFIERS_SUBTYPE
     context.choiceModifierAbilityTargets = Object.fromEntries(Object.entries(SYSTEM.MODIFIERS.MODIFIERS_TARGET).filter(([key, value]) => value.subtype === "ability"))
     context.choiceModifierCombatTargets = Object.fromEntries(

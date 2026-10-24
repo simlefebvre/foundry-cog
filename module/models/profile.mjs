@@ -1,5 +1,6 @@
 import ItemData from "./item.mjs"
 import { SYSTEM } from "../config/system.mjs"
+import { PROFILE_FAMILY_ALIASES } from "../config/profile.mjs"
 import { Modifier } from "./schemas/modifier.mjs"
 
 export default class ProfileData extends ItemData {
@@ -26,10 +27,10 @@ export default class ProfileData extends ItemData {
   prepareBaseData() {
     super.prepareBaseData()
     if (this.family) {
-      this.hp = SYSTEM.FAMILIES[this.family].hp
-      this.fp = SYSTEM.FAMILIES[this.family].fp
-      this.recoveryDice = SYSTEM.FAMILIES[this.family].recoveryDice
-      this.recoveryBonus = SYSTEM.FAMILIES[this.family].recoveryBonus
+      const familyId = PROFILE_FAMILY_ALIASES[this.family] ?? this.family
+      const family = SYSTEM.FAMILIES[familyId]
+      this.fp = family.fp
+      this.recoveryDice = family.recoveryDice
     }
   }
 }

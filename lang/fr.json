@@ -803,7 +803,6 @@
       "fastRestLabelTooltip": "Un repos de 30 minutes vous permet de récupérer [1 DR + ½ NIV] ({formula}) PV",
       "fullRest": "Récupération complète",
       "fullRestLabelTooltip": "Un repos de 8 heures vous permet de récupérer [Valeur DR + NIV] ({formula}) PV",
-      "pvLevel": "Vigueur par niveau",
       "noTarget": "Vous n'avez ciblé personne",
       "critTooltip": "Laisser vide pour utiliser la valeur par défaut du personnage",
       "formulaTooltip": "Vous pouvez utiliser : @agi, @con, @for, @per, @cha, @int, @vol, @atc, @atd, @atm, @def, @ini, @niv, d4°, @toutrang[x], @rang, @rang[x,x,x,x,x], @cible, @oppose",
@@ -1315,10 +1314,9 @@
     },
     "profile": {
       "family": {
-        "aventurier": "Aventurier",
-        "combattant": "Combattant",
-        "mage": "Mage",
-        "mystique": "Mystique"
+        "action": "Action",
+        "aventure": "Aventure",
+        "reflexion": "Réflexion"
       }
     },
     "rarity": {

@@ -19,16 +19,10 @@
                     <label>{{localize "CO.label.long.family"}}</label>
                     <div class="form-fields">
                         <select name="system.family" data-type="String" class="{{#if locked}}disabled{{/if}}">
-                            {{selectOptions @root.choiceProfileFamily selected=system.family localize=true blank=""}}
+                            {{selectOptions @root.choiceProfileFamily selected=@root.profileFamily localize=true blank=""}}
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>{{localize "CO.ui.pvLevel"}}</label>
-                    <div class="form-fields">
-                        <input value="{{system.hp}}" class="center" readonly />
-                    </div>
-                </div>  
                 <div class="form-group">
                     <label>{{localize "CO.ui.recovery"}}</label>
                     <div class="form-fields">

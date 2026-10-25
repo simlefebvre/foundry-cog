@@ -15,8 +15,8 @@ export function createActor(document, options, userId) {
 
 /**
  * Hook function called when an actor is updated.
- * Handles automatic status effects based on HP changes:
- * - For characters: applies unconscious status when HP reaches 0
+ * Handles automatic status effects based on HP and temporary damage changes:
+ * - For characters: applies unconscious status when HP reaches 0 or temporary damage exceeds current HP
  * - For encounters: applies dead status when HP reaches 0
  *
  * @param {Actor} actor The actor being updated
@@ -28,9 +28,27 @@ export function createActor(document, options, userId) {
 export async function updateActor(actor, updateData, options, userId) {
   if (!game.user.isActiveGM) return
 
-  if (actor.type === "character" && updateData?.system?.attributes?.hp?.value === 0 && !actor.statuses.has("unconscious")) {
-    await actor.toggleStatusEffect("unconscious", { active: true })
-    await actor.setFlag("cog", "statuses.unconsciousFromZeroHP", true)
+  if (actor.type === "character") {
+    const hpUpdated = updateData?.system?.attributes?.hp?.value !== undefined || updateData?.["system.attributes.hp.value"] !== undefined
+    const tempDmUpdated = updateData?.system?.attributes?.tempDm !== undefined || updateData?.["system.attributes.tempDm"] !== undefined
+    const tempDmExceededHp = (hpUpdated || tempDmUpdated) && actor.system.attributes.tempDm > actor.system.attributes.hp.value
+    const wasUnconscious = actor.statuses.has("unconscious")
+
+    if (actor.system.attributes.hp.value === 0 && hpUpdated && !wasUnconscious) {
+      await actor.toggleStatusEffect("unconscious", { active: true })
+      await actor.setFlag("cog", "statuses.unconsciousFromZeroHP", true)
+    } else if (tempDmExceededHp && !wasUnconscious) {
+      await actor.toggleStatusEffect("unconscious", { active: true })
+    }
+
+    if (tempDmExceededHp && !wasUnconscious) {
+      await ChatMessage.create({
+        content: game.i18n.format("CO.notif.unconsciousFromTempDm", { actorName: actor.name }),
+        speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
+        whisper: [],
+        blind: false,
+      })
+    }
   }
 
   if (actor.type === "character") {

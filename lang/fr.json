@@ -433,6 +433,7 @@
       "damagedBy": "{actorName} perd {amount} point(s) de vigueur par {source}",
       "tmpDamaged": "{actorName} prend {amount} point(s) de dommages temporaires",
       "tmpDamagedBy": "{actorName} prend {amount} point(s) de dommages temporaires par {source}",
+      "unconsciousFromTempDm": "{actorName} tombe inconscient car ses dommages temporaires dépassent ses PV restants.",
       "seriousWoundCheck": "Blessure grave : {finalDamage} dégât(s) après RD, seuil {threshold} — effet présent : {hasSeriousWoundAfter}",
       "shockTest": {
         "rollFlavor": "Test de choc",

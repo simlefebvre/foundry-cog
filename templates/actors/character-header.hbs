@@ -13,6 +13,9 @@
     <label class="level-label">{{localize "CO.label.short.level"}}</label>
     {{#if unlocked}}
       <input class="adjustable" type="text" name="system.attributes.level" value="{{attributes.level}}" data-dtype="Number" />
+      <button type="button" class="level-up" data-action="levelUp">
+        <i class="fas fa-arrow-up"></i> {{localize "CO.ui.levelUp"}}
+      </button>
     {{else}}
       {{#if viewLimited}}
         <span>??</span>

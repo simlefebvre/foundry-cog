@@ -861,7 +861,8 @@
       "encounterAttackBase": "Attaque de base",
       "encounterAttackFormula": "Formule d'attaque",
       "noMasterTooltip": "Déposer un personnage pour qu'il devienne le maître",
-      "update": "Mettre à jour"
+      "update": "Mettre à jour",
+      "levelUp": "Passer au niveau supérieur"
     },
     "properties": {
       "attack": "Attaque",
@@ -1003,7 +1004,8 @@
       "features": "Features",
       "lock": "Verrouiller",
       "unlock": "Déverrouiller",
-      "companion": "Compagnon"
+      "companion": "Compagnon",
+      "levelUp": "Level Up"
     },
     "dialogs": {
       "skillCheck": "Test de compétence",
@@ -1019,6 +1021,23 @@
         "specialist": "Spécialiste",
         "infoLibre": "Indiquez les valeurs de chaque caractéristique manuellement",
         "infoAutres": "Glissez-déposez les valeurs ci-dessus à la place sur la ligne Base"
+      },
+      "levelUp": {
+        "title": "Passage au niveau supérieur",
+        "summary": "Passer au niveau {level} accorde {capacityPoints} points de capacité, disponibles dans l’onglet Voies.",
+        "hpGain": "Gain de points de vie",
+        "automaticHpGain": "Gain de PV selon la Constitution : {hpGain}.",
+        "multipleProfilesHint": "Le gain est ajouté aux PV maximum et actuels.",
+        "noHitDieGain": "À partir du niveau 10, aucun gain de PV n’est appliqué aux niveaux pairs.",
+        "rollHitDie": "Lancer {die}",
+        "hitDieRoll": "{actor} — DV au niveau {level}",
+        "rollHitDieFirst": "Lancez le dé de vie avant de valider le passage de niveau.",
+        "rollHitDieError": "Le dé de vie n’a pas pu être lancé.",
+        "chooseAttack": "Choisissez la caractéristique d’attaque à augmenter",
+        "chooseAttackHint": "Sélectionnez ATC ou ATD pour attribuer le point de progression.",
+        "attackBasesMaxed": "Les bases ATC et ATD ont déjà atteint leur maximum de 6.",
+        "confirm": "Passer au niveau",
+        "cancel": "Annuler"
       },
       "restHpRecovered": "Vous avez récupéré {hp} points de vie",
       "healRecovered": "PV soigné(s)",

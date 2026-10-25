@@ -1,0 +1,34 @@
+<section class="level-up-dialog" data-dialog-id="{{dialogId}}">
+  <p>{{localize "CO.dialogs.levelUp.summary" level=nextLevel capacityPoints=capacityPoints}}</p>
+  <div class="hp-gain">
+    <span>{{localize "CO.dialogs.levelUp.hpGain"}}</span>
+    {{#if rollHitDie}}
+      <button type="button" data-level-up-roll>
+        <i class="fas fa-dice"></i>
+        {{localize "CO.dialogs.levelUp.rollHitDie" die=hitDie}}
+      </button>
+    {{/if}}
+    <output id="level-up-hp-gain" aria-live="polite">{{initialHpGain}}</output>
+  </div>
+  {{#if multipleProfiles}}
+    <p class="hint">{{localize "CO.dialogs.levelUp.multipleProfilesHint"}}</p>
+  {{/if}}
+  {{#if noHitDieGain}}
+    <p class="hint">{{localize "CO.dialogs.levelUp.noHitDieGain"}}</p>
+  {{/if}}
+  <fieldset class="attack-choice">
+    <legend>{{localize "CO.dialogs.levelUp.chooseAttack"}}</legend>
+    {{#each attackChoices as |choice|}}
+      <label>
+        <input type="radio" name="level-up-attack" value="{{choice.id}}" />
+        {{choice.label}}
+        ({{choice.base}}
+        →
+        {{choice.nextBase}})
+      </label>
+    {{/each}}
+    {{#unless hasAttackChoices}}
+      <p class="hint">{{localize "CO.dialogs.levelUp.attackBasesMaxed"}}</p>
+    {{/unless}}
+  </fieldset>
+</section>

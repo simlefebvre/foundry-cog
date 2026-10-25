@@ -1397,6 +1397,31 @@ a.roll-check-enricher:hover {
 .co.application.dialog.feature-modifier-choice-dialog .window-content .feature-modifier-choice .choice-group-fieldset .choice-option .option-target {
   color: var(--color-text-dark-secondary);
 }
+.co.application.dialog.level-up-dialog .window-content {
+  padding: 12px;
+}
+.co.application.dialog.level-up-dialog .window-content .hint {
+  font-style: italic;
+  margin-top: 8px;
+}
+.co.application.dialog.level-up-dialog .window-content .hp-gain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.co.application.dialog.level-up-dialog .window-content .hp-gain output {
+  min-width: 2em;
+  font-weight: bold;
+  text-align: center;
+}
+.co.application.dialog.level-up-dialog .window-content .attack-choice {
+  margin-top: 12px;
+}
+.co.application.dialog.level-up-dialog .window-content .attack-choice label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .co.application.sheet {
   --color-primary: var(--color-text-selection-bg);
   /*
@@ -2969,6 +2994,11 @@ a.roll-check-enricher:hover {
 .co.application.sheet.actor .window-content .sheet-header .level input {
   padding: 0;
   width: 68px;
+}
+.co.application.sheet.actor .window-content .sheet-header .level .level-up {
+  display: block;
+  margin: 0 auto;
+  white-space: nowrap;
 }
 .co.application.sheet.actor .window-content .sheet-header .abilities {
   grid-area: abilities;

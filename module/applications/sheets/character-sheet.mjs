@@ -2,6 +2,7 @@ import COBaseActorSheet from "./base-actor-sheet.mjs"
 import { SYSTEM } from "../../config/system.mjs"
 import Utils from "../../helpers/utils.mjs"
 import { CoEditAbilitiesDialog } from "../../dialogs/edit-abilities-dialog.mjs"
+import { CoLevelUpDialog } from "../../dialogs/level-up-dialog.mjs"
 import { COMiniCharacterSheet } from "./mini-character-sheet.mjs"
 
 export default class COCharacterSheet extends COBaseActorSheet {
@@ -17,6 +18,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
     },
     actions: {
       editAbilities: COCharacterSheet.#onEditAbilities,
+      levelUp: COCharacterSheet.#onLevelUp,
       deleteItem: COCharacterSheet.#onDeleteItem,
       togglePathPrestige: COCharacterSheet.#onPathPrestigeToggle,
       roll: COCharacterSheet.#onRoll,
@@ -124,6 +126,41 @@ export default class COCharacterSheet extends COBaseActorSheet {
   }
 
   // #region Actions
+
+  /**
+   * Augmente le niveau du personnage et applique les gains de capacités et de PV.
+   * @param {PointerEvent} event The originating click event
+   */
+  static async #onLevelUp(event) {
+    if (!this.isEditable || !this.isEditMode) return
+    event.preventDefault()
+
+    const actor = this.document
+    const system = actor.system
+    const profileCount = actor.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.profile.id).length
+    const levelUp = await CoLevelUpDialog.choose({ actor, profileCount })
+    if (!levelUp) return
+
+    const updates = {
+      "system.attributes.level": system.attributes.level + 1,
+      "system.attributes.hp.value": system.attributes.hp.value + levelUp.hpGain,
+    }
+
+    if (profileCount === 1) {
+      updates["system.attributes.hp.lvlGain"] = system.attributes.hp.lvlGain + levelUp.hpGain
+    } else if (profileCount > 1) {
+      updates["system.attributes.hp.max"] = system.attributes.hp.max + levelUp.hpGain
+    }
+
+    if (levelUp.attackType) {
+      const attackBase = system.combat[levelUp.attackType].base
+      updates[`system.combat.${levelUp.attackType}.base`] = Math.min(6, attackBase + 1)
+    }
+
+    await actor.update(updates)
+    await actor.update({ "system.resources.fortune.value": actor.system.resources.fortune.max })
+    this.render()
+  }
 
   /**
    * Action de diminution de charge ou de quantité

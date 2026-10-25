@@ -385,7 +385,7 @@ export default class CharacterData extends ActorData {
     const hpMaxBonuses = Object.values(this.attributes.hp.bonuses).reduce((prev, curr) => prev + curr)
     const hpMaxModifiers = this.computeTotalModifiersByTarget(this.attributeModifiers, "hp")
     const nbProfiles = this.parent.items.filter((item) => item.type === SYSTEM.ITEM_TYPE.profile.id).length
-    const constitutionBonus = this.attributes.level * this.abilities.con.value
+    const constitutionBonus = this.attributes.level * Math.max(0, this.abilities.con.value)
 
     // Sans profil, les PV sont calculés à partir de la Constitution à chaque niveau.
     if (nbProfiles === 0) {
@@ -507,14 +507,15 @@ export default class CharacterData extends ActorData {
    * @param {*} bonuses Autres bonus (customeffect par ex)
    */
   _prepareAttack(key, skill, abilityBonus, bonuses) {
-    // Le bonus de niveau est limité à 10
-    const levelBonus = Math.min(this.attributes.level, 10)
+    const usesProgression = [SYSTEM.COMBAT.melee.id, SYSTEM.COMBAT.ranged.id].includes(key)
+    const attackBase = usesProgression ? Math.max(0, Math.min(skill.base, 6)) : Math.min(this.attributes.level, 10)
     const combatModifiers = this.computeTotalModifiersByTarget(this.combatModifiers, key)
 
-    skill.base = abilityBonus + levelBonus
-    skill.tooltipBase = Utils.getTooltip(game.i18n.localize("CO.label.long.level"), levelBonus).concat(Utils.getTooltip(Utils.getAbilityName(skill.ability), abilityBonus))
+    skill.base = usesProgression ? attackBase : abilityBonus + attackBase
+    const baseLabel = game.i18n.localize(usesProgression ? "CO.label.long.base" : "CO.label.long.level")
+    skill.tooltipBase = Utils.getTooltip(baseLabel, attackBase).concat(Utils.getTooltip(Utils.getAbilityName(skill.ability), abilityBonus))
 
-    skill.value = skill.base + bonuses + combatModifiers.total
+    skill.value = attackBase + abilityBonus + bonuses + combatModifiers.total
     skill.tooltipValue = skill.tooltipBase.concat(combatModifiers.tooltip, Utils.getTooltip("Bonus", bonuses))
   }
 

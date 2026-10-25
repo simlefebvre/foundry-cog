@@ -112,7 +112,7 @@ export default class ActionMessageData extends BaseMessageData {
       }
 
       // Affiche ou non la difficulté
-      const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+      const displayDifficulty = game.settings.get("cog", "displayDifficulty")
       if (displayDifficulty === "gm" && !game.user.isGM) {
         html.querySelectorAll(".display-difficulty").forEach((elt) => {
           elt.remove()
@@ -128,7 +128,7 @@ export default class ActionMessageData extends BaseMessageData {
         const hasResolvedOppose = targetResults.some((tr) => !tr.needsOppositeRoll && tr.opposeActorId)
         const singleTargetResolved = targetResults.length === 0 && !!message.rolls?.[0]?.options?.opposeResult
         if (hasResolvedOppose || singleTargetResolved) {
-          const canApply = game.user.isGM || (game.settings.get("co2", "allowPlayersToModifyTargets") && this.parent.isAuthor)
+          const canApply = game.user.isGM || (game.settings.get("cog", "allowPlayersToModifyTargets") && this.parent.isAuthor)
           if (canApply) {
             const footer = html.querySelector(".card-footer")
             if (footer) {
@@ -146,7 +146,7 @@ export default class ActionMessageData extends BaseMessageData {
     else {
       // Affiche ou non le panneau d'application des dommages
       // Visible uniquement par le MJ ou l'auteur du message si l'option est activée
-      if (!game.settings.get("co2", "allowPlayersToModifyTargets") && !game.user.isGM) {
+      if (!game.settings.get("cog", "allowPlayersToModifyTargets") && !game.user.isGM) {
         const applyCollapsible = html.querySelector(".apply-collapsible")
         if (applyCollapsible) applyCollapsible.style.display = "none"
       }
@@ -210,7 +210,7 @@ export default class ActionMessageData extends BaseMessageData {
     if (this.isAttack) {
       // Click sur le bouton de chance si c'est un jet d'attaque raté
       // Si la difficulté n'est visible que par le MJ, le joueur ne connaît pas le résultat : on active le bouton dans tous les cas
-      const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+      const displayDifficulty = game.settings.get("cog", "displayDifficulty")
       const anyTargetFailure = this.targetResults.some((tr) => tr.isFailure)
       if (this.isFailure || anyTargetFailure || displayDifficulty === "gm") {
         const luckyButton = html.querySelector(".lp-button-attack")
@@ -249,7 +249,7 @@ export default class ActionMessageData extends BaseMessageData {
             }
 
             // Gestion du message de dommages après le point de chance
-            const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+            const displayDifficulty = game.settings.get("cog", "displayDifficulty")
             const anyRowSuccess = newTargetResults.some((tr) => tr.isSuccess)
             const shouldTriggerDamage = currentTargetResults.length > 0 ? anyRowSuccess : newResult.isSuccess
             const hasLinkedRoll = message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0
@@ -260,7 +260,7 @@ export default class ActionMessageData extends BaseMessageData {
                 linkedDamageMessageId: message.system.linkedDamageMessageId,
                 targetResults: newTargetResults,
               })
-            } else if (game.settings.get("co2", "useComboRolls") && hasLinkedRoll) {
+            } else if (game.settings.get("cog", "useComboRolls") && hasLinkedRoll) {
               // Un message de dommages existe déjà si la difficulté est masquée (MJ) ou si le résultat global était un succès
               const damageMessageExists = displayDifficulty === "gm" || this.result?.isSuccess
 
@@ -286,7 +286,7 @@ export default class ActionMessageData extends BaseMessageData {
                     if (game.user.isGM) {
                       await damageMessage.update(dmgUpdateData)
                     } else {
-                      await game.users.activeGM.query("co2.updateTargetResults", { existingMessageId: damageMessage.id, targetResults: updatedDamageTargetResults, customEffect: dmgUpdateData["system.customEffect"], additionalEffect: dmgUpdateData["system.additionalEffect"] })
+                      await game.users.activeGM.query("cog.updateTargetResults", { existingMessageId: damageMessage.id, targetResults: updatedDamageTargetResults, customEffect: dmgUpdateData["system.customEffect"], additionalEffect: dmgUpdateData["system.additionalEffect"] })
                     }
                   }
                 }
@@ -311,14 +311,14 @@ export default class ActionMessageData extends BaseMessageData {
             const hasOpposedRoll = !!message.system.oppositeValue
             const customEffect = message.system.customEffect
             const additionalEffect = message.system.additionalEffect
-            const damageCardWillHandleEffect = hasOpposedRoll || (hasLinkedRoll && (!!message.system.linkedDamageMessageId || game.settings.get("co2", "useComboRolls")))
+            const damageCardWillHandleEffect = hasOpposedRoll || (hasLinkedRoll && (!!message.system.linkedDamageMessageId || game.settings.get("cog", "useComboRolls")))
             if (customEffect && additionalEffect && additionalEffect.active && !damageCardWillHandleEffect && Resolver.shouldManageAdditionalEffect(newResult, additionalEffect)) {
               const target = message.system.targets.length > 0 ? message.system.targets[0] : null
               if (target) {
                 const targetActor = fromUuidSync(target)
                 if (game.user.isGM) await targetActor.applyCustomEffect(customEffect)
                 else {
-                  await game.users.activeGM.query("co2.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
+                  await game.users.activeGM.query("cog.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
                 }
               }
             }
@@ -330,7 +330,7 @@ export default class ActionMessageData extends BaseMessageData {
             if (game.user.isGM) {
               await message.update(updateData)
             } else {
-              await game.users.activeGM.query("co2.updateMessageAfterLuck", {
+              await game.users.activeGM.query("cog.updateMessageAfterLuck", {
                 existingMessageId: message.id,
                 rolls: rolls,
                 result: newResult,
@@ -529,7 +529,7 @@ export default class ActionMessageData extends BaseMessageData {
           if (game.user.isGM) {
             await message.update({ "system.effectsApplied": true })
           } else {
-            await game.users.activeGM.query("co2.updateMessageAfterOpposedRoll", { existingMessageId: message.id, effectsApplied: true })
+            await game.users.activeGM.query("cog.updateMessageAfterOpposedRoll", { existingMessageId: message.id, effectsApplied: true })
           }
         })
       }
@@ -582,7 +582,7 @@ export default class ActionMessageData extends BaseMessageData {
     // Message de dommages
     else {
       // Gestion des boutons d'application des dommages
-      if ((game.settings.get("co2", "allowPlayersToModifyTargets") && this.parent.isAuthor) || game.user.isGM) {
+      if ((game.settings.get("cog", "allowPlayersToModifyTargets") && this.parent.isAuthor) || game.user.isGM) {
         const damageCard = html.querySelector(".damage-card")
         if (!damageCard) return
         const total = parseInt(damageCard.dataset.total) || 0
@@ -752,7 +752,7 @@ export default class ActionMessageData extends BaseMessageData {
                 const targetActor = fromUuidSync(targetUuid)
                 if (targetActor) {
                   if (game.user.isGM) await targetActor.applyCustomEffect(customEffect)
-                  else await game.users.activeGM.query("co2.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
+                  else await game.users.activeGM.query("cog.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
                 }
               }
             }
@@ -793,7 +793,7 @@ export default class ActionMessageData extends BaseMessageData {
               if (game.user.isGM) {
                 await message.update(updateData)
               } else {
-                await game.users.activeGM.query("co2.updateTargetResults", { existingMessageId: message.id, targetResults, effectsApplied: shouldMarkEffectsApplied || undefined })
+                await game.users.activeGM.query("cog.updateTargetResults", { existingMessageId: message.id, targetResults, effectsApplied: shouldMarkEffectsApplied || undefined })
               }
             }
           })

@@ -175,7 +175,7 @@ export default class OpposedRollHandler {
       const damageMessage = game.messages.get(linkedDamageMessageId)
       if (damageMessage) await damageMessage.update(updateData)
     } else {
-      await game.users.activeGM.query("co2.updateTargetResults", {
+      await game.users.activeGM.query("cog.updateTargetResults", {
         existingMessageId: linkedDamageMessageId,
         targetResults: resolvedTargets,
       })
@@ -195,7 +195,7 @@ export default class OpposedRollHandler {
     if (!Resolver.shouldManageAdditionalEffect(result, additionalEffect)) return
     if (game.user.isGM) await targetActor.applyCustomEffect(customEffect)
     else {
-      await game.users.activeGM.query("co2.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
+      await game.users.activeGM.query("cog.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
     }
   }
 
@@ -209,7 +209,7 @@ export default class OpposedRollHandler {
     if (game.user.isGM) {
       await message.update(updateData)
     } else {
-      await game.users.activeGM.query("co2.updateMessageAfterOpposedRoll", {
+      await game.users.activeGM.query("cog.updateMessageAfterOpposedRoll", {
         existingMessageId: message.id,
         rolls: updateData.rolls,
         result: updateData["system.result"],

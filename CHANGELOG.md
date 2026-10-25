@@ -41,13 +41,13 @@
 - Une famille de personnage inconnue ou renommée par un module de contenu pouvait faire planter entièrement la fiche.
 - Une durée d'effet mal formée pouvait se propager comme une valeur invalide au lieu d'être ramenée à 1.
 - Fiabilisation de la détection du type de jet (attaque/compétence) pour les modules tiers.
-- Un modificateur ciblant « Soi-même » posé via un effet personnalisé (buff/debuff sur le lanceur) était ignoré à la lecture des statistiques ([#429](https://github.com/BlackBookEditions/foundry-co2/issues/429))
-- Correction du calcul des Dés de récupérations et des points de mana qui utilisent maintenant bien les caractéristiques personnalisées sur la fiche du personnage ([#392](https://github.com/BlackBookEditions/foundry-co2/issues/392)
+- Un modificateur ciblant « Soi-même » posé via un effet personnalisé (buff/debuff sur le lanceur) était ignoré à la lecture des statistiques ([#429](https://github.com/BlackBookEditions/foundry-cog/issues/429))
+- Correction du calcul des Dés de récupérations et des points de mana qui utilisent maintenant bien les caractéristiques personnalisées sur la fiche du personnage ([#392](https://github.com/BlackBookEditions/foundry-cog/issues/392)
 - Si plusieurs fenêtres de jet de caractéristique étaient ouvertes, les bonus sélectionnés pouvaient aller dans la mauvaise fenêtre
 
 ## Améliorations
 
-- Le malus d'armure peut désormais être modifié par un modificateur (ex. capacité), en plus de la valeur de base de l'armure équipée ([#342](https://github.com/BlackBookEditions/foundry-co2/issues/342))
+- Le malus d'armure peut désormais être modifié par un modificateur (ex. capacité), en plus de la valeur de base de l'armure équipée ([#342](https://github.com/BlackBookEditions/foundry-cog/issues/342))
 - Ajout du système de Compagnon. Les compagnons sont les créatures (rencontre) qui suivent un joueur et dont certaines caractéristiques sont liées à ce joueur. On parle de 'master' et de 'companion'. Cocher la case 'Est un compagnon' sur une fiche de rencontre, fera s'afficher l'onglet 'Compagnon'. Glisser déposer un joueur sur une fiche de rencontre le rendra alors 'master' et vous pourrez remplacer les caractéristiques de base de la créature par une formule comprenant des informations du maitre via le mot clef : @master. Exemple @master.agi correspondra à l'agilité du maitre. chaque valeurs de 'abilities', 'combat' ainsi que .niv (niveau du maitre) sont disponibles.
 
 # 2.3.7
@@ -73,15 +73,15 @@
 
 ## Corrections
 
-- Les voies apportées par un trait restent affichées lorsque la feuille de personnage est verrouillée, dès qu'une capacité de la voie est apprise ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
-- Les notes des modificateurs d'un trait, ainsi que leur bénéficiaire (soi-même, les autres, les deux), sont conservées lorsque le trait est glissé sur un personnage ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
-- La suppression d'un trait, d'un profil ou d'une voie ne laisse plus de voies ni de capacités orphelines sur le personnage. Les capacités déjà orphelines des personnages existants réapparaissent dans _Capacités hors voie_ et peuvent y être supprimées ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
+- Les voies apportées par un trait restent affichées lorsque la feuille de personnage est verrouillée, dès qu'une capacité de la voie est apprise ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
+- Les notes des modificateurs d'un trait, ainsi que leur bénéficiaire (soi-même, les autres, les deux), sont conservées lorsque le trait est glissé sur un personnage ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
+- La suppression d'un trait, d'un profil ou d'une voie ne laisse plus de voies ni de capacités orphelines sur le personnage. Les capacités déjà orphelines des personnages existants réapparaissent dans _Capacités hors voie_ et peuvent y être supprimées ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
 
 # 2.3.2
 
 ## Corrections
 
-- Le modificateur de caractéristiques _Toutes les caractéristiques_ est désormais pris en compte sur les acteurs de type Rencontre (([#426](https://github.com/BlackBookEditions/foundry-co2/issues/426))
+- Le modificateur de caractéristiques _Toutes les caractéristiques_ est désormais pris en compte sur les acteurs de type Rencontre (([#426](https://github.com/BlackBookEditions/foundry-cog/issues/426))
 
 # 2.3.1
 
@@ -101,7 +101,7 @@
 ## Refactoring
 
 - Les postures défensives (défense partielle et défense totale) sont une manœuvre propre à Chroniques Oubliées Fantasy. **Le module cof2-base est désormais nécessaire pour en disposer.** Les effets restés sur les acteurs sont retirés automatiquement si plus aucun module ne déclare ces postures.
-- Les boutons de récupération rapide et de récupération complète sont eux aussi propres à Chroniques Oubliées Fantasy . **Le module cof2-base est désormais nécessaire pour en disposer.** La mécanique — dépense du dé de récupération, soin, recharge des capacités, hooks `co2.preUseRecovery` / `co2.postUseRecovery` — reste dans le système et est inchangée.
+- Les boutons de récupération rapide et de récupération complète sont eux aussi propres à Chroniques Oubliées Fantasy . **Le module cof2-base est désormais nécessaire pour en disposer.** La mécanique — dépense du dé de récupération, soin, recharge des capacités, hooks `cog.preUseRecovery` / `cog.postUseRecovery` — reste dans le système et est inchangée.
 - Trois règles propres à Chroniques Oubliées Fantasy — les points de chance, les dés de récupération et les dommages temporaires sont propres à Chroniques Oubliées Fantasy. **Le module cof2-base est désormais nécessaire pour en disposer.** Toutes les mécaniques restent dans le système : relance et mise à jour des cartes de chat, récupération, application des dommages.
 - Les trois tags d'équipement — DM temporaires, DM temporaires possibles, arme légère — sont propres à Chroniques Oubliées Fantasy et ne sont portés que par les compendiums de cof2-base : leur déclaration y est déplacée. `game.system.CONST.EQUIPMENT_TAGS` est désormais vide par défaut et complété par un module de contenu.
 - La palette du système est consolidée dans `styles/palette.less` : toutes les couleurs de thème y sont déclarées en un seul endroit, sur `.theme-light` / `.theme-dark`. Un module peut désormais rhabiller entièrement le système en redéclarant ces deux sélecteurs dans sa propre feuille de style. **Rupture** : les variables sont renommées en `--co-<domaine>-<rôle>` (par exemple `--color-characterSheet` devient `--co-sheet-accent`), un thème tiers doit être mis à jour. Les couleurs des fenêtres de jet et des résultats de jet, jusqu'ici écrites en dur, sont également variabilisées.
@@ -112,7 +112,7 @@
 ## Corrections
 
 - Envoie bien la capacité liée dans le chat et non la capacité mère
-- Corrige les dommages lancés malgré un échec critique ([#421](https://github.com/BlackBookEditions/foundry-co2/issues/421))
+- Corrige les dommages lancés malgré un échec critique ([#421](https://github.com/BlackBookEditions/foundry-cog/issues/421))
 
 ## Améliorations
 
@@ -278,7 +278,7 @@
 
 ## Améliorations
 
-- Tooltip des formules dans le chat : les messages d'attaque et de dégâts affichent maintenant un tooltip sur la ligne de formule dans le footer, permettant au MJ de vérifier les formules utilisées par les joueurs (bonus, malus, capacités activées). ([#395](https://github.com/BlackBookEditions/foundry-co2/issues/395))
+- Tooltip des formules dans le chat : les messages d'attaque et de dégâts affichent maintenant un tooltip sur la ligne de formule dans le footer, permettant au MJ de vérifier les formules utilisées par les joueurs (bonus, malus, capacités activées). ([#395](https://github.com/BlackBookEditions/foundry-cog/issues/395))
 
 ## Corrections
 
@@ -349,7 +349,7 @@
 ## Améliorations
 
 - Ajout d'une durée 'instantanée' sur les effets supplémentaires pour appliquer un effet supplémentaire sans durée qui s'applique tout de suite. Attention : il convient pour des dommages ou des soins, mais si vous l'utilisez sur des statuts (ex : empoisonné) la durée ne sera plus gérée. Cette durée peut être activée hors combat.
-- Effets supplémentaires : possibilité de choisir parmi les statuts à appliquer (issue [#163](https://github.com/BlackBookEditions/foundry-co2/issues/163))
+- Effets supplémentaires : possibilité de choisir parmi les statuts à appliquer (issue [#163](https://github.com/BlackBookEditions/foundry-cog/issues/163))
 
 ## Corrections
 
@@ -409,24 +409,24 @@
 - Refactoring global de la gestion des messages et de l'affichage dans le chat
 - CustomEffects : amélioration infobulle et changement de la génération du nom des CustomEffects
 - CustomEffects : Durée minimum à 1, cible aucune équivalente à cible unique, correction suppression
-- Ajout d'une option de durée "illimité" sur le seffets supplémentaire qui peux maintenant s'activer hors combat et devra donc se supprimer manuellement. Permet des effets qui n'ont pas de notions de durée (issue [#355](https://github.com/BlackBookEditions/foundry-co2/issues/355))
-- Ajout de l'affichage du résultat du jet opposé si on affiche la difficultée (issue [#329](https://github.com/BlackBookEditions/foundry-co2/issues/329))
+- Ajout d'une option de durée "illimité" sur le seffets supplémentaire qui peux maintenant s'activer hors combat et devra donc se supprimer manuellement. Permet des effets qui n'ont pas de notions de durée (issue [#355](https://github.com/BlackBookEditions/foundry-cog/issues/355))
+- Ajout de l'affichage du résultat du jet opposé si on affiche la difficultée (issue [#329](https://github.com/BlackBookEditions/foundry-cog/issues/329))
 - Ajout de la prise en charge d'un effet supplémentaire illimité et utilisable hors des combats
 - Attaque automatique : affichage des cibles
-- Ajout de l'affichage d'un message indiquant qui a lancé un buff/debuff sur quelles cibles (issue [#363](https://github.com/BlackBookEditions/foundry-co2/issues/363))
-- Ajout de l'affichage de la fenêtre de jet de compétences si une attaque opposée s'oppose à un attribut du personnage (issue [#179](https://github.com/BlackBookEditions/foundry-co2/issues/179))
+- Ajout de l'affichage d'un message indiquant qui a lancé un buff/debuff sur quelles cibles (issue [#363](https://github.com/BlackBookEditions/foundry-cog/issues/363))
+- Ajout de l'affichage de la fenêtre de jet de compétences si une attaque opposée s'oppose à un attribut du personnage (issue [#179](https://github.com/BlackBookEditions/foundry-cog/issues/179))
 - Rencontre : le clic sur l'icône d'une attaque ouvre l'objet correspondant
 - Rencontre : drag n drop des caractéristiques, des attaques et des actions dans la Hotbar
 - Résolution d'attaque : si la formule de dommage n'est pas définie, l'icône de poing n'apparait pas dans la liste des actions, les dommages ne sont pas lancés, et il n'y a pas de messages avec 0 DM
 
 ## Corrections
 
-- Correction d'un bug qui empêchait l'affichage de la fenêtre de jet de compétences en cas où le joueur avait été ciblé par un buff provenant d'un autre joueur et augmentant son jet de compétences (issue [#356](https://github.com/BlackBookEditions/foundry-co2/issues/356))
+- Correction d'un bug qui empêchait l'affichage de la fenêtre de jet de compétences en cas où le joueur avait été ciblé par un buff provenant d'un autre joueur et augmentant son jet de compétences (issue [#356](https://github.com/BlackBookEditions/foundry-cog/issues/356))
 - Correction du drop d'un item depuis une rencontre vers un personnage
 - Tooltip d'une action : Correction de l'affichage des modificateurs. Affiche la valeur au lieu de la formule
 - Seuls les Effets actifs sont pris en compte lors du transfert
 - Message d'attaque dans le chat : correction de l'affichage des options
-- Correction d'un bug permetttait de mettre une valeur courante de PV, Mana, points de chance, dé de recup supérieur au max sur les personnage et les rencontres (issue [#210](https://github.com/BlackBookEditions/foundry-co2/issues/210))
+- Correction d'un bug permetttait de mettre une valeur courante de PV, Mana, points de chance, dé de recup supérieur au max sur les personnage et les rencontres (issue [#210](https://github.com/BlackBookEditions/foundry-cog/issues/210))
 
 # 1.3.1
 
@@ -446,10 +446,10 @@
 
 ## Améliorations
 
-- Ajout d'une infobulle précisant le calcul du critique dans la fenêtre d'attaque (issue [#222](https://github.com/BlackBookEditions/foundry-co2/issues/222))
-- Ajout des compétences utilisées dans le message de tchat (issue [#257](https://github.com/BlackBookEditions/foundry-co2/issues/257))
+- Ajout d'une infobulle précisant le calcul du critique dans la fenêtre d'attaque (issue [#222](https://github.com/BlackBookEditions/foundry-cog/issues/222))
+- Ajout des compétences utilisées dans le message de tchat (issue [#257](https://github.com/BlackBookEditions/foundry-cog/issues/257))
 - Voie : pour désapprendre une capacité, il faut que les capacités de rang supérieur aient été désapprises
-- Capacité : le coût en charges peut être mis à 0 au niveau de l'action (issue [#339](https://github.com/BlackBookEditions/foundry-co2/issues/339))
+- Capacité : le coût en charges peut être mis à 0 au niveau de l'action (issue [#339](https://github.com/BlackBookEditions/foundry-cog/issues/339))
 - Prise en compte du dé bonus pour une caractéristique supérieure
 - Prise en compte du dé malus pour l'état préjudiciable Affaibli
 - Ajout des Effets d'état (statusEffects, visibles depuis le token) dans la partie Etats de la sidebar
@@ -459,11 +459,11 @@
 ## Corrections
 
 - Corrige un bug qui pouvait empêcher l'ouverture d'une fiche de personnage qui avait un effet lui infligeant des dommages périodiques en combat
-- Corrige un bug qui empêchait le calcul d'une difficulté s'il y avait une formule dedans (ex : 10 + 1) (issue [#335](https://github.com/BlackBookEditions/foundry-co2/issues/335))
-- Correction de la formule des dommages dans le cas du dé évolutif (issue [#341](https://github.com/BlackBookEditions/foundry-co2/issues/341))
+- Corrige un bug qui empêchait le calcul d'une difficulté s'il y avait une formule dedans (ex : 10 + 1) (issue [#335](https://github.com/BlackBookEditions/foundry-cog/issues/335))
+- Correction de la formule des dommages dans le cas du dé évolutif (issue [#341](https://github.com/BlackBookEditions/foundry-cog/issues/341))
 - Correction des statusEffects : Immobilisé, Paralysé et affaibli
-- Correction de la vision des rencontres qui à la création avaient la vision activée par défaut (issue [#347](https://github.com/BlackBookEditions/foundry-co2/issues/347))
-- Rencontre : correction de l'affichage de la portée de l'attaque (issue [#352](https://github.com/BlackBookEditions/foundry-co2/issues/352))
+- Correction de la vision des rencontres qui à la création avaient la vision activée par défaut (issue [#347](https://github.com/BlackBookEditions/foundry-cog/issues/347))
+- Rencontre : correction de l'affichage de la portée de l'attaque (issue [#352](https://github.com/BlackBookEditions/foundry-cog/issues/352))
 
 # 1.2.1
 
@@ -476,14 +476,14 @@
 ## Améliorations
 
 - Empêche la suppression dans le cas où l'objet est possédé par un acteur
-- La case Apprise d'une capacité est modifiable uniquement en mode Edition, par un MJ, et si l'option Debug est activée (issue [#325](https://github.com/BlackBookEditions/foundry-co2/issues/325))
+- La case Apprise d'une capacité est modifiable uniquement en mode Edition, par un MJ, et si l'option Debug est activée (issue [#325](https://github.com/BlackBookEditions/foundry-cog/issues/325))
 - La case Equipé d'un équipement est modifiable uniquement en mode Edition, par un MJ, et si l'option Debug est activée
 - Capacité et Equipement : pour le modifier d'une action, la saisie d'un dé (dx ou Dx) n'est possible que pour les dommages
 - Durée des effets supplémentaires : Ajout d'une option 'cobmat' qui fait durer l'effet tout le long du combat. Les effets sont dorénavant automatiquement supprimés lorsque le combat est terminé par le MJ.
 
 ## Corrections
 
-- Effets supplémentaires : correction de la gestion de la durée (issue [#320](https://github.com/BlackBookEditions/foundry-co2/issues/320))
+- Effets supplémentaires : correction de la gestion de la durée (issue [#320](https://github.com/BlackBookEditions/foundry-cog/issues/320))
 
 # 1.1.0
 
@@ -513,7 +513,7 @@
 # 1.0.7
 
 - Amélioration de la qualité de l'image du logo
-- Correction de la suppression des capacités liées (issue [#313](https://github.com/BlackBookEditions/foundry-co2/issues/313))
+- Correction de la suppression des capacités liées (issue [#313](https://github.com/BlackBookEditions/foundry-cog/issues/313))
 - Correction des settings (suite changement id)
 
 # 1.0.6

@@ -160,7 +160,7 @@ export default class COBaseItemSheet extends HandlebarsApplicationMixin(sheets.I
   async _prepareContext() {
     const context = await super._prepareContext()
 
-    const debugMode = game.settings.get("co2", "debugMode")
+    const debugMode = game.settings.get("cog", "debugMode")
     context.debugMode = debugMode
     context.notDebugMode = !debugMode
     context.fields = this.document.schema.fields
@@ -242,7 +242,7 @@ export default class COBaseItemSheet extends HandlebarsApplicationMixin(sheets.I
       }
     }
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`CoBaseItemSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoBaseItemSheet - context`), context)
     return context
   }
 

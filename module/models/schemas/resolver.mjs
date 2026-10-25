@@ -95,7 +95,7 @@ export class Resolver extends foundry.abstract.DataModel {
       const result = Utils.evaluateCoModifier(actor, formula, item?.uuid)
       return Math.max(0, Math.floor(result))
     } catch (e) {
-      console.warn(`CO2 | Unable to evaluate target number formula "${formula}":`, e)
+      console.warn(`cog | Unable to evaluate target number formula "${formula}":`, e)
       return 0
     }
   }
@@ -135,7 +135,7 @@ export class Resolver extends foundry.abstract.DataModel {
    * @param {("attack"|"damage")} type : type de resolver
    */
   async attack(actor, item, action, type) {
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver attack`), actor, item, action, type)
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log(`Resolver attack`), actor, item, action, type)
 
     let skillFormula = this.skill.formula
     skillFormula = Utils.evaluateFormulaCustomValues(actor, skillFormula, item.uuid)
@@ -176,7 +176,7 @@ export class Resolver extends foundry.abstract.DataModel {
 
     const effectiveTargetType = hasOptionalTargets ? (targets.length > 0 ? SYSTEM.RESOLVER_TARGET.single.id : SYSTEM.RESOLVER_TARGET.none.id) : this.target.type
 
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver attack - Targets", targets))
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log("Resolver attack - Targets", targets))
 
     const attack = await actor.rollAttack(item, {
       auto: false,
@@ -250,7 +250,7 @@ export class Resolver extends foundry.abstract.DataModel {
    * @param {Action} action : l'action
    */
   async auto(actor, item, action) {
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver auto`), actor, item, action)
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log(`Resolver auto`), actor, item, action)
 
     let damageFormula = this.dmg.formula
     damageFormula = Utils.evaluateFormulaCustomValues(actor, damageFormula, item.uuid)
@@ -270,7 +270,7 @@ export class Resolver extends foundry.abstract.DataModel {
         return false
       }
 
-      if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver auto - Targets", targets))
+      if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log("Resolver auto - Targets", targets))
 
       const attack = await actor.rollAttack(item, {
         auto: true,
@@ -302,7 +302,7 @@ export class Resolver extends foundry.abstract.DataModel {
    * @param {Action} action : l'action.
    */
   async heal(actor, item, action) {
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver heal`), actor, item, action)
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log(`Resolver heal`), actor, item, action)
 
     let healFormula = this.skill.formula
     healFormula = Utils.evaluateFormulaCustomValues(actor, healFormula, item.uuid)
@@ -324,7 +324,7 @@ export class Resolver extends foundry.abstract.DataModel {
       return false
     }
 
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver heal - Targets", targets))
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log("Resolver heal - Targets", targets))
 
     const heal = await actor.rollHeal(item, {
       actionName: action.label,
@@ -348,7 +348,7 @@ export class Resolver extends foundry.abstract.DataModel {
    * @param {Action} action : l'action.
    */
   async save(actor, item, action) {
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log(`Resolver save`), actor, item, action)
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log(`Resolver save`), actor, item, action)
 
     const saveAbility = this.saveAbility
 
@@ -359,7 +359,7 @@ export class Resolver extends foundry.abstract.DataModel {
     let difficultyFormulaEvaluated = Roll.replaceFormulaData(difficultyFormula, actor.getRollData())
 
     let showDifficulty = false
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
 
     // Jet de dommages si une formule est définie
@@ -402,7 +402,7 @@ export class Resolver extends foundry.abstract.DataModel {
       }
     }
 
-    if (CONFIG.debug.co2?.resolvers) console.debug(Utils.log("Resolver save - Targets", targets))
+    if (CONFIG.debug.cog?.resolvers) console.debug(Utils.log("Resolver save - Targets", targets))
 
     const save = await actor.rollAskSave(item, {
       actionName: action.label,
@@ -526,7 +526,7 @@ export class Resolver extends foundry.abstract.DataModel {
       // Appliquer l'effet aux cibles
       if (game.user.isGM) await Promise.all(targets.map((target) => target.actor.applyCustomEffect(ceOthers)))
       else {
-        await game.users.activeGM.query("co2.applyCustomEffect", { ce: ceOthers, targets: uuidList })
+        await game.users.activeGM.query("cog.applyCustomEffect", { ce: ceOthers, targets: uuidList })
       }
 
       // Vérifier si on a des modifiers avec apply="self" ou "both" qui doivent aussi s'appliquer au lanceur

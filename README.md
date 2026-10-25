@@ -6,9 +6,9 @@
 
 <p align="center">
     <img alt="Foundry Version 14 support" src="https://img.shields.io/badge/Foundry-v14-informational">
-    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/BlackBookEditions/foundry-co2"> 
-    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/BlackBookEditions/foundry-co2">
-    <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/BlackBookEditions/foundry-co2?label=latest%20release" /> 
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/BlackBookEditions/foundry-cog"> 
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/BlackBookEditions/foundry-cog">
+    <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/BlackBookEditions/foundry-cog?label=latest%20release" /> 
 </p>
 
 <h2>Contributeurs</h2>

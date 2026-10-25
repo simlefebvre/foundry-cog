@@ -103,7 +103,7 @@ export default class COReleaseNotes extends HandlebarsApplicationMixin(foundry.a
     const entries = await this.loadEntries()
     if (!entries.length) return
 
-    const seen = game.settings.get("co2", "lastReleaseNotesSeen")
+    const seen = game.settings.get("cog", "lastReleaseNotesSeen")
 
     // Tant que la case n'a jamais été cochée, on montre tout l'historique ; une fois cochée, seules
     // les versions publiées depuis apparaîtront.
@@ -137,7 +137,7 @@ export default class COReleaseNotes extends HandlebarsApplicationMixin(foundry.a
         version: entry.version,
         html: toHtml(entry.markdown),
       })),
-      dontShowAgain: game.settings.get("co2", "lastReleaseNotesSeen") === this.latestVersion,
+      dontShowAgain: game.settings.get("cog", "lastReleaseNotesSeen") === this.latestVersion,
     })
   }
 
@@ -147,7 +147,7 @@ export default class COReleaseNotes extends HandlebarsApplicationMixin(foundry.a
     // Le réglage est écrit dès le clic plutôt qu'à la fermeture : le choix est conservé même si la
     // fenêtre est fermée avec Échap ou si la page est rechargée.
     this.element.querySelector("input[name='dontShowAgain']")?.addEventListener("change", (event) => {
-      game.settings.set("co2", "lastReleaseNotesSeen", event.currentTarget.checked ? this.latestVersion : "")
+      game.settings.set("cog", "lastReleaseNotesSeen", event.currentTarget.checked ? this.latestVersion : "")
     })
   }
 }

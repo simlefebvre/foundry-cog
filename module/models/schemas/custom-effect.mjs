@@ -137,10 +137,10 @@ export default class CustomEffectData extends foundry.abstract.DataModel {
    */
   static async handle(data) {
     if (game.user.isGM) {
-      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`CustomEffectData - handle data`), data)
+      if (CONFIG.debug.cog?.actions) console.debug(Utils.log(`CustomEffectData - handle data`), data)
       // Création de l'effet
       const ce = CustomEffectData.createFromCE(data.ce)
-      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`CustomEffectData - handle ce`), ce)
+      if (CONFIG.debug.cog?.actions) console.debug(Utils.log(`CustomEffectData - handle ce`), ce)
       for (const target of data.targets) {
         const actor = fromUuidSync(target)
         await actor.applyCustomEffect(ce)

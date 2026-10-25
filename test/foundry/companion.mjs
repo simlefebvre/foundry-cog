@@ -1,5 +1,5 @@
 /**
- * Vérification d'intégration à exécuter comme MJ dans un monde de test CO2.
+ * Vérification d'intégration à exécuter comme MJ dans un monde de test cog.
  * Crée ses propres documents et les supprime à la fin.
  * await (await import('/systems/cog/test/foundry/companion.mjs')).checkCompanions()
  */

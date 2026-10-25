@@ -214,23 +214,23 @@ export default class CharacterData extends ActorData {
     if (foundry.utils.hasProperty(changes, "system.attributes.hp.value")) {
       // Cas des points de vie à 1 : statut affaibli
       if (changes.system.attributes.hp.value === 1 && !this.parent.statuses.has("weakened")) {
-        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("co2", "statuses.unconsciousFromZeroHP")) {
+        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("cog", "statuses.unconsciousFromZeroHP")) {
           await this.parent.toggleStatusEffect("unconscious", { active: false })
-          await this.parent.unsetFlag("co2", "statuses.unconsciousFromZeroHP")
+          await this.parent.unsetFlag("cog", "statuses.unconsciousFromZeroHP")
         }
         await this.parent.toggleStatusEffect("weakened", { active: true })
-        await this.parent.setFlag("co2", "statuses.weakenedFromOneHP", true)
+        await this.parent.setFlag("cog", "statuses.weakenedFromOneHP", true)
       }
 
       // Cas des points de vie > 1 : suppression des statuts affaibli et inconscient
       if (changes.system.attributes.hp.value > 1) {
-        if (this.parent.statuses.has("weakened") && this.parent.getFlag("co2", "statuses.weakenedFromOneHP")) {
+        if (this.parent.statuses.has("weakened") && this.parent.getFlag("cog", "statuses.weakenedFromOneHP")) {
           await this.parent.toggleStatusEffect("weakened", { active: false })
-          await this.parent.unsetFlag("co2", "statuses.weakenedFromOneHP")
+          await this.parent.unsetFlag("cog", "statuses.weakenedFromOneHP")
         }
-        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("co2", "statuses.unconsciousFromZeroHP")) {
+        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("cog", "statuses.unconsciousFromZeroHP")) {
           await this.parent.toggleStatusEffect("unconscious", { active: false })
-          await this.parent.unsetFlag("co2", "statuses.unconsciousFromZeroHP")
+          await this.parent.unsetFlag("cog", "statuses.unconsciousFromZeroHP")
         }
       }
 
@@ -722,8 +722,8 @@ export default class CharacterData extends ActorData {
   }
 
   /**
-   * Point d'extension asynchrone de la récupération. Émet le hook `co2.preUseRecovery` et attend les
-   * gardes enregistrées par d'éventuels modules (même mécanisme async que `co2.preActivateAction`).
+   * Point d'extension asynchrone de la récupération. Émet le hook `cog.preUseRecovery` et attend les
+   * gardes enregistrées par d'éventuels modules (même mécanisme async que `cog.preActivateAction`).
    *
    * Un module qui souhaite **remplacer** le soin du repos (son propre dialogue, son soin, d'éventuelles
    * ressources propres) enregistre une garde — via `guard(promise)` —
@@ -731,14 +731,14 @@ export default class CharacterData extends ActorData {
    * Toute autre valeur (ou aucune garde) laisse le repos standard s'exécuter.
    *
    * Pour seulement **ajouter** au soin, préférer le modificateur `recoveryFull` ;
-   * pour **réagir après** la récupération, écouter le hook `co2.postUseRecovery`.
+   * pour **réagir après** la récupération, écouter le hook `cog.postUseRecovery`.
    * (Ex. de consommateur : le module cof2-compagnon, fenêtre de récupération PV/PE.)
    *
    * @returns {Promise<boolean>} true si un module a pris en charge la récupération à la place du système.
    */
   async _isRecoveryHandledByModule() {
     const guards = []
-    Hooks.callAll("co2.preUseRecovery", this.parent, { isFullRest: true, guard: (p) => guards.push(Promise.resolve(p)) })
+    Hooks.callAll("cog.preUseRecovery", this.parent, { isFullRest: true, guard: (p) => guards.push(Promise.resolve(p)) })
     if (guards.length === 0) return false
     return (await Promise.all(guards)).some((v) => v === true)
   }
@@ -762,7 +762,7 @@ export default class CharacterData extends ActorData {
       targets: [this.parent],
     })
 
-    Hooks.callAll("co2.postUseRecovery", this.parent, { isFullRest: true })
+    Hooks.callAll("cog.postUseRecovery", this.parent, { isFullRest: true })
   }
 
   /**

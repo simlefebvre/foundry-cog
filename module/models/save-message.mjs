@@ -84,19 +84,19 @@ export default class SaveMessageData extends BaseMessageData {
   // ----------------------------------------------------------------
 
   _buildMultiTargetHTML(message, html) {
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     const showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
     const hasDmg = message.system.hasDmg
     const dmgTotal = message.system.dmgTotal ?? 0
     const halfDmgOnSave = message.system.halfDmgOnSave
-    const canModify = game.user.isGM || (game.settings.get("co2", "allowPlayersToModifyTargets") && message.isAuthor)
+    const canModify = game.user.isGM || (game.settings.get("cog", "allowPlayersToModifyTargets") && message.isAuthor)
 
     if (displayDifficulty === "gm" && !game.user.isGM) {
       html.querySelectorAll(".display-difficulty").forEach((el) => el.remove())
     }
 
     // Masquer le bouton Appliquer et la section DM pour les non-MJ (sauf si allowPlayersToModifyTargets)
-    if (hasDmg && !game.user.isGM && !game.settings.get("co2", "allowPlayersToModifyTargets")) {
+    if (hasDmg && !game.user.isGM && !game.settings.get("cog", "allowPlayersToModifyTargets")) {
       const applySection = html.querySelector(".save-apply-section")
       if (applySection) applySection.style.display = "none"
       const dmgOptions = html.querySelector(".save-dmg-options")
@@ -314,7 +314,7 @@ export default class SaveMessageData extends BaseMessageData {
     if (!hasDmg && hasCustomEffect && !message.system.effectsApplied) {
       const hasResolvedSave = targetResults.some((tr) => !tr.needsSaveRoll)
       if (hasResolvedSave) {
-        const canApply = game.user.isGM || (game.settings.get("co2", "allowPlayersToModifyTargets") && this.parent.isAuthor)
+        const canApply = game.user.isGM || (game.settings.get("cog", "allowPlayersToModifyTargets") && this.parent.isAuthor)
         if (canApply) {
           const section = document.createElement("section")
           section.classList.add("save-apply-section")
@@ -609,7 +609,7 @@ export default class SaveMessageData extends BaseMessageData {
         if (game.user.isGM) {
           await message.update({ "system.effectsApplied": true })
         } else {
-          await game.users.activeGM.query("co2.updateMessageAfterSavedRoll", {
+          await game.users.activeGM.query("cog.updateMessageAfterSavedRoll", {
             existingMessageId: message.id,
             targetResults: message.system.targetResults,
             effectsApplied: true,
@@ -619,7 +619,7 @@ export default class SaveMessageData extends BaseMessageData {
     }
 
     // --- Listeners DM : multiplicateurs, DR, bouton Appliquer ---
-    if (hasDmg && ((game.settings.get("co2", "allowPlayersToModifyTargets") && this.parent.isAuthor) || game.user.isGM)) {
+    if (hasDmg && ((game.settings.get("cog", "allowPlayersToModifyTargets") && this.parent.isAuthor) || game.user.isGM)) {
       // Boutons multiplicateurs (ligne 2) — met à jour l'affichage DM (ligne 1)
       html.querySelectorAll(".save-target-dmg-row .multiplier-btn").forEach((btn) => {
         btn.addEventListener("click", (event) => {
@@ -725,7 +725,7 @@ export default class SaveMessageData extends BaseMessageData {
               const targetActor = fromUuidSync(tr.uuid)
               if (targetActor) {
                 if (game.user.isGM) await targetActor.applyCustomEffect(customEffect)
-                else await game.users.activeGM.query("co2.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
+                else await game.users.activeGM.query("cog.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
               }
             }
           }
@@ -758,7 +758,7 @@ export default class SaveMessageData extends BaseMessageData {
           if (game.user.isGM) {
             await message.update(updateData)
           } else {
-            await game.users.activeGM.query("co2.updateMessageAfterSavedRoll", {
+            await game.users.activeGM.query("cog.updateMessageAfterSavedRoll", {
               existingMessageId: message.id,
               targetResults,
               dmgApplied: true,

@@ -87,7 +87,7 @@ export default class CoProfileSheet extends CoBaseItemSheet {
     context.choiceModifierApplies = SYSTEM.MODIFIERS.MODIFIERS_APPLY
     context.choiceModifierGroups = SYSTEM.MODIFIERS.MODIFIERS_CHOICE_GROUP
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`CoProfileSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoProfileSheet - context`), context)
     return context
   }
 }

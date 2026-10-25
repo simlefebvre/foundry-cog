@@ -58,7 +58,7 @@ export default class SkillMessageData extends BaseMessageData {
         }
         // Sinon on émet un message pour mettre à jour le message de chat
         else {
-          await game.users.activeGM.query("co2.updateMessageAfterLuck", { existingMessageId: message.id, rolls: rolls, result: newResult })
+          await game.users.activeGM.query("cog.updateMessageAfterLuck", { existingMessageId: message.id, rolls: rolls, result: newResult })
         }
       })
     }
@@ -91,7 +91,7 @@ export default class SkillMessageData extends BaseMessageData {
         if (game.user.isGM) {
           await message.update({ rolls: rolls, "system.result": currentResult })
         } else {
-          await game.users.activeGM.query("co2.updateMessageAfterLuck", { existingMessageId: message.id, rolls: rolls, result: currentResult })
+          await game.users.activeGM.query("cog.updateMessageAfterLuck", { existingMessageId: message.id, rolls: rolls, result: currentResult })
         }
       })
     }

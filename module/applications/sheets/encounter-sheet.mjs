@@ -130,7 +130,7 @@ export default class COEncounterSheet extends COBaseActorSheet {
       }
     }
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`COEncounterSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`COEncounterSheet - context`), context)
     return context
   }
 

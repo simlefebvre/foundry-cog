@@ -46,7 +46,7 @@ export default class CoPathSheet extends CoBaseItemSheet {
     // Select options
     context.choicePathSubtypes = SYSTEM.PATH_TYPES
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`CoPathSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoPathSheet - context`), context)
     return context
   }
 }

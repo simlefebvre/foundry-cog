@@ -118,7 +118,7 @@ export default class COCharacterSheet extends COBaseActorSheet {
       .map((actor) => ({ uuid: actor.uuid, name: actor.name, img: actor.img }))
     context.hasCompanions = context.companions.length > 0
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`COCharacterSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`COCharacterSheet - context`), context)
 
     return context
   }

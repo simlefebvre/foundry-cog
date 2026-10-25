@@ -35,11 +35,11 @@
 - Une famille de personnage inconnue ou renommée par un module de contenu pouvait faire planter entièrement la fiche.
 - Une durée d'effet mal formée pouvait se propager comme une valeur invalide au lieu d'être ramenée à 1.
 - Fiabilisation de la détection du type de jet (attaque/compétence) pour les modules tiers.
-- Un modificateur ciblant « Soi-même » posé via un effet personnalisé (buff/debuff sur le lanceur) était ignoré à la lecture des statistiques ([#429](https://github.com/BlackBookEditions/foundry-co2/issues/429))
+- Un modificateur ciblant « Soi-même » posé via un effet personnalisé (buff/debuff sur le lanceur) était ignoré à la lecture des statistiques ([#429](https://github.com/BlackBookEditions/foundry-cog/issues/429))
 
 ## Améliorations
 
-- Le malus d'armure peut désormais être modifié par un modificateur (ex. capacité), en plus de la valeur de base de l'armure équipée ([#342](https://github.com/BlackBookEditions/foundry-co2/issues/342))
+- Le malus d'armure peut désormais être modifié par un modificateur (ex. capacité), en plus de la valeur de base de l'armure équipée ([#342](https://github.com/BlackBookEditions/foundry-cog/issues/342))
 - Ajout du système de Compagnon. Les compagnons sont les créatures (rencontre) qui suivent un joueur et dont certaines caractéristiques sont liées à ce joueur. On parle de 'master' et de 'companion'. Cocher la case 'Est un compagnon' sur une fiche de rencontre, fera s'afficher l'onglet 'Compagnon'. Glisser déposer un joueur sur une fiche de rencontre le rendra alors 'master' et vous pourrez remplacer les caractéristiques de base de la créature par une formule comprenant des informations du maitre via le mot clef : @master. Exemple @master.agi correspondra à l'agilité du maitre. chaque valeurs de 'abilities', 'combat' ainsi que .niv (niveau du maitre) sont disponibles.
 
 # 2.3.7
@@ -65,9 +65,9 @@
 
 ## Corrections
 
-- Les voies apportées par un trait restent affichées lorsque la feuille de personnage est verrouillée, dès qu'une capacité de la voie est apprise ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
-- Les notes des modificateurs d'un trait, ainsi que leur bénéficiaire (soi-même, les autres, les deux), sont conservées lorsque le trait est glissé sur un personnage ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
-- La suppression d'un trait, d'un profil ou d'une voie ne laisse plus de voies ni de capacités orphelines sur le personnage. Les capacités déjà orphelines des personnages existants réapparaissent dans _Capacités hors voie_ et peuvent y être supprimées ([#427](https://github.com/BlackBookEditions/foundry-co2/issues/427))
+- Les voies apportées par un trait restent affichées lorsque la feuille de personnage est verrouillée, dès qu'une capacité de la voie est apprise ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
+- Les notes des modificateurs d'un trait, ainsi que leur bénéficiaire (soi-même, les autres, les deux), sont conservées lorsque le trait est glissé sur un personnage ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
+- La suppression d'un trait, d'un profil ou d'une voie ne laisse plus de voies ni de capacités orphelines sur le personnage. Les capacités déjà orphelines des personnages existants réapparaissent dans _Capacités hors voie_ et peuvent y être supprimées ([#427](https://github.com/BlackBookEditions/foundry-cog/issues/427))
 
 # 2.3.2
 

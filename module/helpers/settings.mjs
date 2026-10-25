@@ -5,7 +5,7 @@ export function registerSystemSettings() {
   /**
    * Mode DEBUG
    */
-  game.settings.register("co2", "debugMode", {
+  game.settings.register("cog", "debugMode", {
     name: "CO.settings.debugMode.name",
     hint: "CO.settings.debugMode.hint",
     scope: "world",
@@ -15,7 +15,7 @@ export function registerSystemSettings() {
     requiresReload: true,
   })
 
-  game.settings.register("co2", "usevarInit", {
+  game.settings.register("cog", "usevarInit", {
     name: "CO.settings.varInit.name",
     hint: "CO.settings.varInit.hint",
     scope: "world",
@@ -25,7 +25,7 @@ export function registerSystemSettings() {
     requiresReload: true,
   })
 
-  game.settings.register("co2", "displayDifficulty", {
+  game.settings.register("cog", "displayDifficulty", {
     name: "CO.settings.displayDifficulty.name",
     hint: "CO.settings.displayDifficulty.hint",
     scope: "world",
@@ -38,7 +38,7 @@ export function registerSystemSettings() {
     },
   })
 
-  game.settings.register("co2", "useComboRolls", {
+  game.settings.register("cog", "useComboRolls", {
     name: "CO.settings.useComboRolls.name",
     hint: "CO.settings.useComboRolls.hint",
     scope: "world",
@@ -47,7 +47,7 @@ export function registerSystemSettings() {
     type: Boolean,
   })
 
-  game.settings.register("co2", "allowPlayersToModifyTargets", {
+  game.settings.register("cog", "allowPlayersToModifyTargets", {
     name: "CO.settings.allowPlayersToModifyTargets.name",
     hint: "CO.settings.allowPlayersToModifyTargets.hint",
     scope: "world",
@@ -56,7 +56,7 @@ export function registerSystemSettings() {
     type: Boolean,
   })
 
-  game.settings.register("co2", "checkFreeHandsBeforeEquip", {
+  game.settings.register("cog", "checkFreeHandsBeforeEquip", {
     name: "CO.settings.checkFreeHandsBeforeEquip.name",
     hint: "CO.settings.checkFreeHandsBeforeEquip.hint",
     scope: "world",
@@ -74,7 +74,7 @@ export function registerSystemSettings() {
    * Dernière version dont l'utilisateur a marqué les notes comme lues, via la case à cocher de la
    * fenêtre des notes de version. Portée utilisateur : chaque MJ décide pour lui-même.
    */
-  game.settings.register("co2", "lastReleaseNotesSeen", {
+  game.settings.register("cog", "lastReleaseNotesSeen", {
     scope: "user",
     config: false,
     type: String,
@@ -84,7 +84,7 @@ export function registerSystemSettings() {
   /**
    * World key used for statistics
    */
-  game.settings.register("co2", "worldKey", {
+  game.settings.register("cog", "worldKey", {
     name: "Unique world key",
     scope: "world",
     config: false,

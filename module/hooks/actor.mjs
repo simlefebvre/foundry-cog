@@ -32,10 +32,10 @@ export function updateActor(actor, updateData, options, userId) {
     // Si déjà affaibli le statut est supprimé
     if (actor.statuses.has("weakened")) {
       actor.toggleStatusEffect("weakened", { active: false })
-      actor.unsetFlag("co2", "statuses.weakenedFromOneHP")
+      actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
     }
     actor.toggleStatusEffect("unconscious", { active: true })
-    actor.setFlag("co2", "statuses.unconsciousFromZeroHP", true)
+    actor.setFlag("cog", "statuses.unconsciousFromZeroHP", true)
   }
 
   // Une rencontre est morte à 0 PV
@@ -45,7 +45,7 @@ export function updateActor(actor, updateData, options, userId) {
 }
 
 /**
- * Hook callback function `co2.companionMasterDeleted`, émis quand un Compagnon
+ * Hook callback function `cog.companionMasterDeleted`, émis quand un Compagnon
  * (Rencontre) perd son maitre (`EncounterData.deleteMaster()`/`toggleCompanion(false)`).
  * Retire le compagnon délié du tableau `system.companions` de son ancien maitre.
  *

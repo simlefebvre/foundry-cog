@@ -83,15 +83,15 @@ Hooks.once("init", async function () {
   CONFIG.Dice.rolls.push(documents.CORoll, documents.COSkillRoll, documents.COAttackRoll, documents.COHealRoll)
 
   // Queries
-  CONFIG.queries["co2.updateMessageAfterLuck"] = documents.COChatMessage._handleQueryUpdateMessageAfterLuck
-  CONFIG.queries["co2.updateMessageAfterOpposedRoll"] = documents.COChatMessage._handleQueryUpdateMessageAfterOpposedRoll
-  CONFIG.queries["co2.updateMessageAfterSavedRoll"] = documents.COChatMessage._handleQueryUpdateMessageAfterSavedRoll
-  CONFIG.queries["co2.updateTargetResults"] = documents.COChatMessage._handleQueryUpdateTargetResults
-  CONFIG.queries["co2.applyCustomEffect"] = models.CustomEffectData._handleQueryApplyCustomEffect
-  CONFIG.queries["co2.actorHeal"] = documents.COActor._handleQueryHeal
-  CONFIG.queries["co2.actorHealSingleTarget"] = documents.COActor._handleQueryHealSingleTarget
-  CONFIG.queries["co2.actorDamage"] = documents.COActor._handleQueryDamage
-  CONFIG.queries["co2.actorDamageSingleTarget"] = documents.COActor._handleQueryDamageSingleTarget
+  CONFIG.queries["cog.updateMessageAfterLuck"] = documents.COChatMessage._handleQueryUpdateMessageAfterLuck
+  CONFIG.queries["cog.updateMessageAfterOpposedRoll"] = documents.COChatMessage._handleQueryUpdateMessageAfterOpposedRoll
+  CONFIG.queries["cog.updateMessageAfterSavedRoll"] = documents.COChatMessage._handleQueryUpdateMessageAfterSavedRoll
+  CONFIG.queries["cog.updateTargetResults"] = documents.COChatMessage._handleQueryUpdateTargetResults
+  CONFIG.queries["cog.applyCustomEffect"] = models.CustomEffectData._handleQueryApplyCustomEffect
+  CONFIG.queries["cog.actorHeal"] = documents.COActor._handleQueryHeal
+  CONFIG.queries["cog.actorHealSingleTarget"] = documents.COActor._handleQueryHealSingleTarget
+  CONFIG.queries["cog.actorDamage"] = documents.COActor._handleQueryDamage
+  CONFIG.queries["cog.actorDamageSingleTarget"] = documents.COActor._handleQueryDamageSingleTarget
 
   helpers.registerHandlebarsHelpers()
   helpers.registerSystemSettings()
@@ -139,7 +139,7 @@ Hooks.once("init", async function () {
   game.system.CONST.rules = Object.assign({ luckPoints: true, tempDamage: true }, game.system.CONST.rules)
 
   // Combat tracker
-  if (game.settings.get("co2", "usevarInit")) {
+  if (game.settings.get("cog", "usevarInit")) {
     CONFIG.Combat.initiative = {
       formula: "1d6x + @combat.init.value",
       decimals: 0,
@@ -184,7 +184,7 @@ Hooks.on("createActor", applications.hooks.createActor)
 Hooks.on("updateActor", applications.hooks.updateActor)
 Hooks.on("deleteCombat", applications.hooks.deleteCombat)
 Hooks.on("hotbarDrop", applications.hooks.hotbarDrop)
-Hooks.on("co2.companionMasterDeleted", applications.hooks.companionMasterDeleted)
+Hooks.on("cog.companionMasterDeleted", applications.hooks.companionMasterDeleted)
 
 /**
  * Register world usage statistics
@@ -220,9 +220,9 @@ function registerWorldCount(registerKey) {
 }
 
 Hooks.once("ready", async function () {
-  if (!CONFIG.debug.co2) {
-    if (game.settings.get("co2", "debugMode")) {
-      CONFIG.debug.co2 = {
+  if (!CONFIG.debug.cog) {
+    if (game.settings.get("cog", "debugMode")) {
+      CONFIG.debug.cog = {
         hooks: true,
         resolvers: true,
         rolls: true,
@@ -232,7 +232,7 @@ Hooks.once("ready", async function () {
         combat: true,
       }
     } else
-      CONFIG.debug.co2 = {
+      CONFIG.debug.cog = {
         hooks: false,
         resolvers: false,
         rolls: false,
@@ -244,8 +244,8 @@ Hooks.once("ready", async function () {
   }
 
   // Migration : suppression de l'option "none" pour displayDifficulty
-  if (game.user.isGM && game.settings.get("co2", "displayDifficulty") === "none") {
-    await game.settings.set("co2", "displayDifficulty", "gm")
+  if (game.user.isGM && game.settings.get("cog", "displayDifficulty") === "none") {
+    await game.settings.set("cog", "displayDifficulty", "gm")
   }
 
   // Migration : les postures défensives sont passées du système à un module de contenu.
@@ -253,7 +253,7 @@ Hooks.once("ready", async function () {
   if (game.user.isGM) await helpers.Utils.removeOrphanDefenseStances()
 
   // Statistics
-  registerWorldCount("co2")
+  registerWorldCount("cog")
 
   // Party Sheet
   game.system.partySheet = new applications.COPartySheet()

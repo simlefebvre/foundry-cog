@@ -830,10 +830,10 @@ export default class COActor extends Actor {
     // Point d'extension asynchrone : un module (ex. cof2-compagnon / Points d'Ego) peut enregistrer une promesse-garde
     // via la fonction `guard`. Si l'une des gardes résout sur false, l'activation est annulée.
     const coActivateGuards = []
-    Hooks.callAll("co2.preActivateAction", this, { item, indice, state, type, shiftKey, guard: (p) => coActivateGuards.push(Promise.resolve(p)) })
+    Hooks.callAll("cog.preActivateAction", this, { item, indice, state, type, shiftKey, guard: (p) => coActivateGuards.push(Promise.resolve(p)) })
     if (coActivateGuards.length > 0 && (await Promise.all(coActivateGuards)).some((v) => v === false)) return false
 
-    if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction`), state, source, indice, type, item)
+    if (CONFIG.debug.cog?.actions) console.debug(Utils.log(`COActor - activateAction`), state, source, indice, type, item)
 
     // Si l'arme a la propriété "reloadable", on vérifie si l'arme a encore des munitions
     if (state && item.type === SYSTEM.ITEM_TYPE.equipment.id && item.system.properties.reloadable && !item.system.hasCharges) {
@@ -855,7 +855,7 @@ export default class COActor extends Actor {
     const action = foundry.utils.deepClone(item.system.actions[indice])
     // Action avec une durée : changement de l'état de l'action
     if (action.properties.temporary) {
-      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction - Action avec une durée`), state, source, indice, type, shiftKey, item)
+      if (CONFIG.debug.cog?.actions) console.debug(Utils.log(`COActor - activateAction - Action avec une durée`), state, source, indice, type, shiftKey, item)
 
       // L'activation de l'action déclenche tous les resolvers
       if (state) {
@@ -872,7 +872,7 @@ export default class COActor extends Actor {
     }
     // Action instantanée
     else {
-      if (CONFIG.debug.co2?.actions) console.debug(Utils.log(`COActor - activateAction - Action instantanée`), state, source, indice, type, shiftKey, item)
+      if (CONFIG.debug.cog?.actions) console.debug(Utils.log(`COActor - activateAction - Action instantanée`), state, source, indice, type, shiftKey, item)
 
       // Recherche des resolvers de l'action
       let resolvers = Object.values(action.resolvers).map((r) => foundry.utils.deepClone(r))
@@ -891,7 +891,7 @@ export default class COActor extends Actor {
     }
 
     // Hook d'extension : notifie un module (ex. cof2-compagnon / Points d'Ego) après une activation (success = resolvers OK)
-    Hooks.callAll("co2.postActivateAction", this, { item, indice, state, type, shiftKey, success: results.length === 0 || allResolversTrue })
+    Hooks.callAll("cog.postActivateAction", this, { item, indice, state, type, shiftKey, success: results.length === 0 || allResolversTrue })
 
     return true
   }
@@ -1157,7 +1157,7 @@ export default class COActor extends Actor {
    */
   _hasEnoughFreeHands(item, bypassChecks) {
     // Si le contrôle de mains libres n'est pas demandé, renvoi true
-    let checkFreehands = game.settings.get("co2", "checkFreeHandsBeforeEquip")
+    let checkFreehands = game.settings.get("cog", "checkFreeHandsBeforeEquip")
     if (!checkFreehands || checkFreehands === "none") return true
 
     // Si le contrôle est ignoré ponctuellement avec la touche MAJ, on renvoi Vrai
@@ -1844,7 +1844,7 @@ export default class COActor extends Actor {
 
     // Gestion de la difficulté
     const difficultyTooltip = difficulty
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     if (useDifficulty === undefined) useDifficulty = true
     if (showDifficulty === undefined) {
       showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
@@ -2036,7 +2036,7 @@ export default class COActor extends Actor {
       rollMode = undefined,
       auto = false,
       type = "attack",
-      useComboRolls = game.settings.get("co2", "useComboRolls"),
+      useComboRolls = game.settings.get("cog", "useComboRolls"),
       actionName = "",
       actionType = SYSTEM.ACTION_TYPES.melee.id,
       chatFlavor = "",
@@ -2148,7 +2148,7 @@ export default class COActor extends Actor {
     // Gestion de la difficulté
     const difficultyTooltip = difficulty
     let oppositeRoll = false
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     if (!auto && useDifficulty === undefined) useDifficulty = true
     if (!auto && showDifficulty === undefined) {
       showDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
@@ -2499,8 +2499,8 @@ export default class COActor extends Actor {
 
       // Affichage du jet de dommages dans le cas d'un jet combiné, si ce n'est pas un jet opposé
       // Si la difficulté n'est visible que par le MJ, on affiche systématiquement les dommages pour ne pas révéler le résultat au joueur
-      if (game.settings.get("co2", "useComboRolls")) {
-        const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+      if (game.settings.get("cog", "useComboRolls")) {
+        const displayDifficulty = game.settings.get("cog", "displayDifficulty")
         const anyTargetHit = results[0].isSuccess || targetResults.some((tr) => tr.isSuccess)
         if (!rolls[0].options.oppositeRoll && (displayDifficulty === "gm" || anyTargetHit)) {
           if (rolls[1]) {
@@ -2607,8 +2607,8 @@ export default class COActor extends Actor {
           target.actor.applyHeal({ heal: healAmount, source: flavor })
         }
       } else {
-        if (game.settings.get("co2", "allowPlayersToModifyTargets"))
-          await game.users.activeGM.query("co2.actorHeal", { fromSource: actionName, fromActor: this.name, targets: targetUuids, healAmount: healAmount })
+        if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("cog.actorHeal", { fromSource: actionName, fromActor: this.name, targets: targetUuids, healAmount: healAmount })
       }
     }
 

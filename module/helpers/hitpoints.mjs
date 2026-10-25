@@ -35,8 +35,8 @@ export default class Hitpoints {
         const amountTempDamage = Math.max(0, finalAmount - targetFor)
         let newTempDamage = Math.min(currentTempDamage + amountTempDamage, currentMaxHp)
         if (game.user.isGM) await targetActor.update({ "system.attributes.tempDm": newTempDamage })
-        else if (game.settings.get("co2", "allowPlayersToModifyTargets"))
-          await game.users.activeGM.query("co2.actorDamageSingleTarget", {
+        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("cog.actorDamageSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,
@@ -47,8 +47,8 @@ export default class Hitpoints {
       } else {
         const newHp = Math.max(0, currentHp - finalAmount)
         if (game.user.isGM) await targetActor.update({ "system.attributes.hp.value": newHp })
-        else if (game.settings.get("co2", "allowPlayersToModifyTargets"))
-          await game.users.activeGM.query("co2.actorDamageSingleTarget", {
+        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("cog.actorDamageSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,
@@ -66,8 +66,8 @@ export default class Hitpoints {
         const amountTempDamage = Math.max(0, finalAmount - targetFor)
         let newTempDamage = Math.max(currentTempDamage - amountTempDamage, 0)
         if (game.user.isGM) await targetActor.update({ "system.attributes.tempDm": newTempDamage })
-        else if (game.settings.get("co2", "allowPlayersToModifyTargets"))
-          await game.users.activeGM.query("co2.actorHealSingleTarget", {
+        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("cog.actorHealSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,
@@ -78,8 +78,8 @@ export default class Hitpoints {
       } else {
         const newHp = Math.min(currentHp + finalAmount, currentMaxHp)
         if (game.user.isGM) await targetActor.update({ "system.attributes.hp.value": newHp })
-        else if (game.settings.get("co2", "allowPlayersToModifyTargets"))
-          await game.users.activeGM.query("co2.actorHealSingleTarget", {
+        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+          await game.users.activeGM.query("cog.actorHealSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,

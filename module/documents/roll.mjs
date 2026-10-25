@@ -109,7 +109,7 @@ export class COSkillRoll extends CORoll {
             icon: "fas fa-check",
             default: true,
             callback: (event, button, dialog) => {
-              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Callback`), event, button, dialog)
+              if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Callback`), event, button, dialog)
               const output = Array.from(button.form.elements).reduce((obj, input) => {
                 if (input.name) obj[input.name] = input.value
                 return obj
@@ -119,7 +119,7 @@ export class COSkillRoll extends CORoll {
               if (oppositeCheckbox?.checked) {
                 output.difficulty = `@oppose.${output.oppositeAbility}`
               }
-              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Output`), output)
+              if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll prompt - Output`), output)
               // Récupère tous les éléments bonus-item checked pour l'afficher en chat message apres
               const checkedBonuses = dialog.element.querySelectorAll(".bonus-item.checked")
               const skillUsed = Array.from(checkedBonuses).map((item) => {
@@ -198,7 +198,7 @@ export class COSkillRoll extends CORoll {
 
       if (!rollContext) return
       rollContext.label = dialogContext.label
-      if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll - rollContext`), rollContext)
+      if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll - rollContext`), rollContext)
 
       formula = `${rollContext.formula}`
       if (parseInt(rollContext.bonus) > 0) formula += `+${parseInt(rollContext.bonus)}`
@@ -247,7 +247,7 @@ export class COSkillRoll extends CORoll {
       ...options,
     }
 
-    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COSkillRoll - roll`), roll)
+    if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll - roll`), roll)
     return roll
   }
 
@@ -270,7 +270,7 @@ export class COSkillRoll extends CORoll {
     const rollResults = CORoll.analyseRollResult(this)
     // On peut utiliser un point de chance si on en a et que ce n'est pas déjà un critique
     // Si la difficulté est visible par tous, on n'affiche le bouton que sur un échec
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     const canUseLuckyPoints = this.options.hasLuckyPoints && !rollResults.isCritical && (displayDifficulty === "gm" || rollResults.isFailure)
     // Libellé de la caractéristique opposée (ex : "Constitution", "Attaque de contact")
     const oppositeAbilityId = this.options.oppositeValue?.startsWith("@oppose.") ? this.options.oppositeValue.replace("@oppose.", "") : null
@@ -372,7 +372,7 @@ export class COAttackRoll extends CORoll {
             icon: "fas fa-check",
             default: true,
             callback: (event, button, dialog) => {
-              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Callback`), event, button, dialog)
+              if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Callback`), event, button, dialog)
               const output = Array.from(button.form.elements).reduce((obj, input) => {
                 if (input.name) {
                   // Gestion spéciale pour les checkboxes multi-sélection (selectedStatuses)
@@ -392,7 +392,7 @@ export class COAttackRoll extends CORoll {
                 }
                 return obj
               }, {})
-              if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Output`), output)
+              if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COAttackRoll prompt - Output`), output)
               /* Output exemple
                 {
                     "rollMode": "publicroll",
@@ -512,7 +512,7 @@ export class COAttackRoll extends CORoll {
       if (!rollContext) return
 
       rollContext.flavor = dialogContext.flavor
-      if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll - rollContext`), rollContext)
+      if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COAttackRoll - rollContext`), rollContext)
     }
 
     if (dialogContext.type === "attack") {
@@ -619,7 +619,7 @@ export class COAttackRoll extends CORoll {
       rolls.push(roll)
     }
 
-    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`COAttackRoll - rolls`), rolls)
+    if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COAttackRoll - rolls`), rolls)
     return rolls
   }
 
@@ -656,7 +656,7 @@ export class COAttackRoll extends CORoll {
    */
   _getAttackChatCardData(flavor, isPrivate) {
     const rollResults = CORoll.analyseRollResult(this, this.options.hasAttackSuccessThreshold, this.options.attackSuccessThreshold)
-    if (CONFIG.debug.co2?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
+    if (CONFIG.debug.cog?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
     const oppositeAbilityId = this.options.difficulty?.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
     const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atm: "magic" }
     const oppositeAbilityLabel = oppositeAbilityId
@@ -697,7 +697,7 @@ export class COAttackRoll extends CORoll {
     }
 
     // Affichage de la difficulté
-    const displayDifficulty = game.settings.get("co2", "displayDifficulty")
+    const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     const viewerCanSeeDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
     const showDifficulty = !!this.options.useDifficulty && viewerCanSeeDifficulty
 
@@ -758,7 +758,7 @@ export class COAttackRoll extends CORoll {
    * @private
    */
   _getDamageChatCardData(flavor, isPrivate) {
-    if (CONFIG.debug.co2?.chat) console.debug(Utils.log(`COAttackRoll - _getDamageChatCardData options`), this.options)
+    if (CONFIG.debug.cog?.chat) console.debug(Utils.log(`COAttackRoll - _getDamageChatCardData options`), this.options)
 
     return {
       formula: isPrivate ? "???" : this.formula,

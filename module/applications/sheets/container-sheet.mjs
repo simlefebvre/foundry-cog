@@ -71,7 +71,7 @@ export default class CoContainerSheet extends CoBaseItemSheet {
         context.subtabs = this._prepareActionsTabs()
         break
     }
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`CoContainerSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoContainerSheet - context`), context)
     return context
   }
 

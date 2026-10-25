@@ -141,7 +141,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
   async _prepareContext() {
     const context = await super._prepareContext()
 
-    const debugMode = game.settings.get("co2", "debugMode")
+    const debugMode = game.settings.get("cog", "debugMode")
     context.debugMode = debugMode
     context.fields = this.document.schema.fields
     context.systemFields = this.document.system.schema.fields
@@ -283,7 +283,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
     // Select options
     context.choiceMoveUnit = SYSTEM.MOVEMENT_UNIT
 
-    if (CONFIG.debug.co2?.sheets) console.debug(Utils.log(`CoBaseActorSheet - context`), context)
+    if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoBaseActorSheet - context`), context)
     return context
   }
 

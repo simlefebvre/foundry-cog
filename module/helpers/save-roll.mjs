@@ -98,7 +98,7 @@ export default class SaveRollHandler {
     if (!Resolver.shouldManageAdditionalEffect(result, additionalEffect)) return
     if (game.user.isGM) await targetActor.applyCustomEffect(customEffect)
     else {
-      await game.users.activeGM.query("co2.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
+      await game.users.activeGM.query("cog.applyCustomEffect", { ce: customEffect, targets: [targetActor.uuid] })
     }
   }
 
@@ -112,7 +112,7 @@ export default class SaveRollHandler {
     if (game.user.isGM) {
       await message.update(updateData)
     } else {
-      await game.users.activeGM.query("co2.updateMessageAfterSavedRoll", {
+      await game.users.activeGM.query("cog.updateMessageAfterSavedRoll", {
         existingMessageId: message.id,
         rolls: updateData.rolls,
         targetResults: updateData["system.targetResults"],

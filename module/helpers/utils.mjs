@@ -360,7 +360,7 @@ export default class Utils {
    * @param {UUID} source The item source's UUID : used for the #rank Actor.primaryId.Item.id
    */
   static _replaceRank(actor, content, source) {
-    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`Utils - _replaceRank `), actor, content, source)
+    if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`Utils - _replaceRank `), actor, content, source)
     const id = foundry.utils.parseUuid(source)?.id
 
     let itemSource = actor.items.get(id)
@@ -438,7 +438,7 @@ export default class Utils {
    * @param {UUID} source The item source's UUID : used for the #rank
    */
   static _replaceAllRank(actor, content, source) {
-    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`Utils - _replaceAllRank `), actor, content, source)
+    if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`Utils - _replaceAllRank `), actor, content, source)
     const id = foundry.utils.parseUuid(source)?.id
 
     let itemSource = actor.items.get(id)
@@ -480,7 +480,7 @@ export default class Utils {
    * @param {*} content : le texte contenant une référence à un rang
    */
   static _replaceLevelModValue(actor, content) {
-    if (CONFIG.debug.co2?.rolls) console.debug(Utils.log(`Utils - _replaceLevelModValue `), actor, content)
+    if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`Utils - _replaceLevelModValue `), actor, content)
     if (content === "" || content.match("@nivmod'[[0-9]{1,},[0-9]{1,}']")) {
       return content // Vérifie le formatage de la variable on sort si pas bien formaté
     }

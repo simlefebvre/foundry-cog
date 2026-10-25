@@ -15,7 +15,7 @@ import Macros from "./macros.mjs"
 export function setupTextEnrichers() {
   CONFIG.TextEditor.enrichers = CONFIG.TextEditor.enrichers.concat([
     {
-      id: "co2-test",
+      id: "cog-test",
       pattern: /@Test\[([^\]]+)\]/gi,
       onRender: (element) => {
         const anchor = element.querySelector(".roll-check-enricher")

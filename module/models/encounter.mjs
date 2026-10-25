@@ -364,21 +364,21 @@ export default class EncounterData extends ActorData {
     const update = { "system.companion.isCompanion": active }
     if (!active) update["system.companion.master"] = null
     await this.parent.update(update)
-    if (!active && masterUuid) Hooks.callAll("co2.companionMasterDeleted", masterUuid, this.parent.uuid)
+    if (!active && masterUuid) Hooks.callAll("cog.companionMasterDeleted", masterUuid, this.parent.uuid)
   }
 
   /**
    * Délie le maître du compagnon, sans toucher aux formules (celles qui en dépendent
    * laissent place aux bases saisies, et redeviennent actives dès qu'un nouveau
    * maître est déposé, sans ressaisie de la part du GM). Notifie l'ancien maître
-   * via le hook `co2.companionMasterDeleted` pour qu'il se retire de son tableau
+   * via le hook `cog.companionMasterDeleted` pour qu'il se retire de son tableau
    * `system.companions`.
    * @returns ne retourne rien
    */
   async deleteMaster() {
     const masterUuid = this.companion.master
     await this.parent.update({ "system.companion.master": null })
-    if (masterUuid) Hooks.callAll("co2.companionMasterDeleted", masterUuid, this.parent.uuid)
+    if (masterUuid) Hooks.callAll("cog.companionMasterDeleted", masterUuid, this.parent.uuid)
   }
 
   /**

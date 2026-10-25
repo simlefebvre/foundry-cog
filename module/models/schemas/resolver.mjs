@@ -275,6 +275,7 @@ export class Resolver extends foundry.abstract.DataModel {
       const attack = await actor.rollAttack(item, {
         auto: true,
         type: "damage",
+        actionType: action.type,
         actionName: action.label,
         damageFormula: damageFormulaEvaluated,
         damageFormulaTooltip,

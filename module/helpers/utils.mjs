@@ -1,5 +1,6 @@
 import { SYSTEM } from "../config/system.mjs"
-import { findAutomaticCriticalStatus } from "./status-rules.mjs"
+import { REMOVED_STATUS_EFFECT_IDS } from "../config/effects.mjs"
+import { findAutomaticCriticalStatus, findCriticalOnHitStatus } from "./status-rules.mjs"
 import { prepareEncounterAttack } from "./encounter-attack.mjs"
 
 export default class Utils {
@@ -624,11 +625,13 @@ export default class Utils {
             forcedByStatus,
           }
         }
+        const criticalOnHitStatus = findCriticalOnHitStatus(target.actor?.statuses, actionType, game.system.CONST.statusRules?.incomingAttack)
         if (rawDifficulty && rawDifficulty.includes("@oppose")) {
           return {
             uuid,
             name,
             img,
+            ...(criticalOnHitStatus ? { criticalOnHitStatus } : {}),
             difficulty: null,
             isSuccess: false,
             isFailure: false,
@@ -649,11 +652,13 @@ export default class Utils {
             evaluatedDifficulty = null
           }
         }
+        const outcome = Utils._computeOutcome(evaluatedDifficulty, rollTotal, attackResult)
         return {
           uuid,
           name,
           img,
-          ...Utils._computeOutcome(evaluatedDifficulty, rollTotal, attackResult),
+          ...outcome,
+          ...(criticalOnHitStatus ? { criticalOnHitStatus, isCritical: outcome.isSuccess || outcome.isCritical } : {}),
           needsOppositeRoll: false,
         }
       })
@@ -676,9 +681,11 @@ export default class Utils {
         return { ...tr, isSuccess: true, isFailure: false, isCritical: true, isFumble: false, needsOppositeRoll: false }
       }
       if (tr.needsOppositeRoll) return tr
+      const outcome = Utils._computeOutcome(tr.difficulty, rollTotal, attackResult)
       return {
         ...tr,
-        ...Utils._computeOutcome(tr.difficulty, rollTotal, attackResult),
+        ...outcome,
+        ...(tr.criticalOnHitStatus && outcome.isSuccess ? { isCritical: true } : {}),
       }
     })
   }
@@ -742,5 +749,34 @@ export default class Utils {
     }
 
     if (removed > 0) ui.notifications.info(game.i18n.format("CO.notif.orphanDefenseStancesRemoved", { count: removed }))
+  }
+
+  /**
+   * Retire des acteurs les anciens statuts supprimés du système.
+   * À appeler par le MJ au démarrage du monde.
+   *
+   * @returns {Promise<number>} Nombre d'effets supprimés.
+   */
+  static async removeRemovedStatusEffects() {
+    const removedStatuses = new Set(REMOVED_STATUS_EFFECT_IDS)
+    const actors = new Map()
+    for (const actor of game.actors) actors.set(actor.uuid, actor)
+    for (const scene of game.scenes) {
+      for (const token of scene.tokens) {
+        const actor = token.actor
+        if (actor) actors.set(actor.uuid, actor)
+      }
+    }
+
+    let removed = 0
+    for (const actor of actors.values()) {
+      const effectIds = actor.effects.filter((effect) => Array.from(effect.statuses).some((status) => removedStatuses.has(status))).map((effect) => effect.id)
+      if (effectIds.length === 0) continue
+      await actor.deleteEmbeddedDocuments("ActiveEffect", effectIds)
+      removed += effectIds.length
+    }
+
+    if (removed > 0) ui.notifications.info(game.i18n.format("CO.notif.removedStatusEffects", { count: removed }))
+    return removed
   }
 }

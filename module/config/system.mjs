@@ -79,7 +79,9 @@ export const PV = { 3: "3", 4: "4", 5: "5" }
  */
 export const STATUS_RULES = {
   replacements: {},
-  incomingAttack: {},
+  incomingAttack: {
+    unconscious: { criticalOnHit: "all" },
+  },
 }
 
 /**

@@ -33,3 +33,30 @@ export function findAutomaticCriticalStatus(statuses, actionType, rules = {}) {
   }
   return null
 }
+
+/**
+ * Cherche si l'un des statuts de la cible transforme une attaque réussie en critique.
+ *
+ * @param {Iterable<string>} statuses Statuts actifs de la cible.
+ * @param {string} actionType Type d'action.
+ * @param {Record<string, {criticalOnHit: "all"|string[]}>} rules Règles par statut.
+ * @returns {string|null} Statut appliquant le critique, ou null.
+ */
+export function findCriticalOnHitStatus(statuses, actionType, rules = {}) {
+  for (const statusId of statuses ?? []) {
+    const selector = rules[statusId]?.criticalOnHit
+    if (selector === "all" || (Array.isArray(selector) && selector.includes(actionType))) return statusId
+  }
+  return null
+}
+
+/**
+ * Indique si la cécité interdit une attaque à distance.
+ *
+ * @param {Iterable<string>} statuses Statuts actifs de l'attaquant.
+ * @param {string} actionType Type d'action.
+ * @returns {boolean} true si l'attaque à distance est interdite.
+ */
+export function isRangedAttackBlockedByBlindness(statuses, actionType) {
+  return actionType === "ranged" && new Set(statuses ?? []).has("blind")
+}

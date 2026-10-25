@@ -1,6 +1,7 @@
 import { CORoll } from "../documents/roll.mjs"
 import { Resolver } from "../models/schemas/resolver.mjs"
 import Utils from "./utils.mjs"
+import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "./dice-formula.mjs"
 
 export default class OpposedRollHandler {
   /**
@@ -34,22 +35,26 @@ export default class OpposedRollHandler {
     } else {
       const value = Utils.evaluateOppositeFormula(oppositeValue, targetActor)
 
-      let dice = "1d20"
+      let dice = "standard"
+      let testAbilityId = abilityId
       if (abilityId) {
-        const attackType = Utils.getAttackTypeFromFormula("@" + abilityId)
+        const attackType = Utils.getAttackTypeFromFormula(`@${abilityId}`)
         if (attackType) {
+          testAbilityId = getAttackAbilityId(attackType) ?? abilityId
           let bonusDices = 0
           let malusDices = 0
           if (targetActor.system.hasBonusDiceForAttack(attackType)) bonusDices += 1
           if (targetActor.system.hasMalusDiceForAttack(attackType)) malusDices += 1
           if (targetActor.isImmobilized) malusDices += 1
-          if (targetActor.isWeakened) malusDices += 1
           const totalDices = bonusDices - malusDices
-          if (totalDices > 0) dice = "2d20kh"
-          if (totalDices < 0) dice = "2d20kl"
+          if (totalDices > 0) dice = "bonus"
+          if (totalDices < 0) dice = "malus"
         }
       }
-      const formula = value ? `${dice} + ${value}` : dice
+      const dieFaces = getTestDieFaces(targetActor.statuses, testAbilityId)
+      const rollPenalty = getTestRollPenalty(targetActor.statuses)
+      const baseFormula = value ? `${getDiceFormula(dice, dieFaces)} + ${value}` : getDiceFormula(dice, dieFaces)
+      const formula = rollPenalty ? `${baseFormula} - ${rollPenalty}` : baseFormula
       roll = await new Roll(formula).roll()
       resultAnalysis = CORoll.analyseRollResult(roll)
       resultStr = roll.result

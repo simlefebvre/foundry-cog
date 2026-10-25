@@ -268,9 +268,17 @@ export const RESOLVER_ADDITIONAL_EFFECT_STATUS = {
     id: "weakened",
     label: "CO.customStatus.weakened",
   },
-  enslaved: {
-    id: "enslaved",
-    label: "CO.customStatus.enslaved",
+  wounded: {
+    id: "wounded",
+    label: "CO.customStatus.wounded",
+  },
+  exhausted: {
+    id: "exhausted",
+    label: "CO.customStatus.exhausted",
+  },
+  tired: {
+    id: "tired",
+    label: "CO.customStatus.tired",
   },
   blind: {
     id: "blind",
@@ -279,18 +287,6 @@ export const RESOLVER_ADDITIONAL_EFFECT_STATUS = {
   confused: {
     id: "confused",
     label: "CO.customStatus.confused",
-  },
-  poison: {
-    id: "poison",
-    label: "CO.customStatus.poison",
-  },
-  bleeding: {
-    id: "bleeding",
-    label: "CO.customStatus.bleeding",
-  },
-  outOfBreath: {
-    id: "outOfBreath",
-    label: "CO.customStatus.outOfBreath",
   },
   stun: {
     id: "stun",
@@ -308,26 +304,13 @@ export const RESOLVER_ADDITIONAL_EFFECT_STATUS = {
     id: "invalid",
     label: "CO.customStatus.invalid",
   },
-  invisible: {
-    id: "invisible",
-    label: "CO.customStatus.invisible",
-  },
   dead: {
     id: "dead",
     label: "CO.customStatus.dead",
   },
-  paralysis: {
-    id: "paralysis",
-    label: "CO.customStatus.paralysis",
-  },
   slowed: {
     id: "slowed",
     label: "CO.customStatus.slowed",
-  },
-  silence: {
-    id: "silence",
-    label: "CO.customStatus.silence",
-    img: "icons/svg/silenced.svg",
   },
   overturned: {
     id: "overturned",
@@ -336,9 +319,5 @@ export const RESOLVER_ADDITIONAL_EFFECT_STATUS = {
   surprised: {
     id: "surprised",
     label: "CO.customStatus.surprised",
-  },
-  other: {
-    id: "other",
-    label: "CO.customStatus.other",
   },
 }

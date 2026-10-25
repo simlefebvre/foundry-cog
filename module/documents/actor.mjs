@@ -1,12 +1,14 @@
 import { SYSTEM } from "../config/system.mjs"
+import { REMOVED_STATUS_EFFECT_IDS } from "../config/effects.mjs"
 import { PROFILE_FAMILY_ALIASES } from "../config/profile.mjs"
 import CustomEffectData from "../models/schemas/custom-effect.mjs"
 import { CORoll, COSkillRoll, COAttackRoll, COHealRoll } from "./roll.mjs"
 import { CoFeatureModifierChoiceDialog } from "../dialogs/feature-modifier-choice-dialog.mjs"
 import CoChat from "../chat.mjs"
 import Utils from "../helpers/utils.mjs"
-import { resolveStatusId } from "../helpers/status-rules.mjs"
+import { isRangedAttackBlockedByBlindness, resolveStatusId } from "../helpers/status-rules.mjs"
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
+import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
 
 /**
@@ -369,7 +371,7 @@ export default class COActor extends Actor {
    */
   get isIncapacitated() {
     if (this.system.attributes.hp.value === 0) return true
-    if (this.hasEffect("immobilized") || this.hasEffect("paralysis") || this.hasEffect("stun") || this.hasEffect("unconscious") || this.hasEffect("dead")) return true
+    if (this.hasEffect("immobilized") || this.hasEffect("stun") || this.hasEffect("unconscious") || this.hasEffect("dead")) return true
     return false
   }
 
@@ -769,6 +771,10 @@ export default class COActor extends Actor {
     if (effectid === "") return false
 
     effectid = resolveStatusId(effectid, game.system.CONST.statusRules?.replacements ?? {})
+    if (state && REMOVED_STATUS_EFFECT_IDS.includes(effectid)) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.removedStatusEffect"))
+      return false
+    }
 
     // On ne peut pas cumuler deux postures défensives
     if (state && !this.canActivateDefenseStance(effectid)) return false
@@ -776,16 +782,6 @@ export default class COActor extends Actor {
     if (state) {
       // Si on doit activer un effet, on vérifie les immunités
       switch (effectid) {
-        case "poison":
-          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.poisonImmunity.id, "CO.label.long.poisonImmunity")) {
-            return false // Bloqué par l'immunité
-          }
-          break
-        case "bleeding":
-          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.bleedingImmunity.id, "CO.label.long.bleedingImmunity")) {
-            return false // Bloqué par l'immunité
-          }
-          break
         case "stun":
           if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.stunImmunity.id, "CO.label.long.stunImmunity")) {
             return false // Bloqué par l'immunité
@@ -795,11 +791,6 @@ export default class COActor extends Actor {
           }
           break
         case "immobilized":
-          if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.movementAlterationImmunity.id, "CO.label.long.movementAlterationImmunity")) {
-            return false // Bloqué par l'immunité
-          }
-          break
-        case "paralysis":
           if (!this.checkImmunity(SYSTEM.MODIFIERS_TARGET.movementAlterationImmunity.id, "CO.label.long.movementAlterationImmunity")) {
             return false // Bloqué par l'immunité
           }
@@ -1892,9 +1883,6 @@ export default class COActor extends Actor {
     const isSuperior = this.system.abilities[skillId].superior
     if (isSuperior) bonusDices += 1
 
-    // Prise en compte de l'état affaibli
-    if (this.isWeakened) malusDices += 1
-
     // Gestion des dés bonus et malus
     if (bonusDice) bonusDices += bonusDice
     if (malusDice) malusDices += malusDice
@@ -1911,19 +1899,22 @@ export default class COActor extends Actor {
 
     const totalDices = bonusDices - malusDices
 
-    let formula = "1d20"
+    const dieFaces = getTestDieFaces(this.statuses, skillId)
+    let formula = getDiceFormula("standard", dieFaces)
     let dice = "standard"
     if (totalDices > 0) {
-      formula = "2d20kh"
+      formula = getDiceFormula("bonus", dieFaces)
       dice = "bonus"
     } else if (totalDices < 0) {
-      formula = "2d20kl"
+      formula = getDiceFormula("malus", dieFaces)
       dice = "malus"
     }
 
     const skillValue = foundry.utils.getProperty(this, `system.abilities.${skillId}`).value
     if (skillValue > 0) formula += `+${Math.abs(skillValue)}`
     if (skillValue < 0) formula += `-${Math.abs(skillValue)}`
+    const rollPenalty = getTestRollPenalty(this.statuses)
+    if (rollPenalty) formula += `-${rollPenalty}`
 
     // Construction du message de chat
     if (!chatFlavor) chatFlavor = `${game.i18n.localize(`CO.abilities.long.${skillId}`)}`
@@ -1947,6 +1938,8 @@ export default class COActor extends Actor {
       rollMode,
       rollModes: CONFIG.ChatMessage.modes,
       dice,
+      dieFaces,
+      rollPenalty,
       formula,
       skillValue,
       actor: this,
@@ -2116,6 +2109,11 @@ export default class COActor extends Actor {
      */
     if (Hooks.call("co.preRollAttack", item, options) === false) return
 
+    if (isRangedAttackBlockedByBlindness(this.statuses, actionType)) {
+      ui.notifications.warn(game.i18n.localize("CO.notif.warningBlindRangedAttack"))
+      return false
+    }
+
     // Si l'arme a la propriété "reloadable", on vérifie si l'arme assez de munitions
     if (item.system.properties.reloadable && item.system.charges.current <= 0) {
       return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoAmmo"))
@@ -2252,20 +2250,23 @@ export default class COActor extends Actor {
     // Immobilisé : dé malus aux tests d'attaque
     if (this.isImmobilized) malusDices += 1
 
-    // Affaibli : dé malus à tous les tests (y compris attaque)
-    if (this.isWeakened) malusDices += 1
-
     if (bonusDice) bonusDices += bonusDice
     if (malusDice) malusDices += malusDice
 
     const totalDices = bonusDices - malusDices
-    let formula = "1d20"
+    const attackFormula = originalSkillFormula || skillFormulaSource || skillFormula || ""
+    const testAbilityId = Object.keys(SYSTEM.ABILITIES).find((abilityId) => new RegExp(`@${abilityId}(?![a-z])`).test(attackFormula))
+    const attackType = Utils.getAttackTypeFromFormula(attackFormula, actionType)
+    const attackAbilityId = getAttackAbilityId(attackType)
+    const dieFaces = getTestDieFaces(this.statuses, testAbilityId ?? attackAbilityId)
+    const rollPenalty = type === "attack" ? getTestRollPenalty(this.statuses) : 0
+    let formula = getDiceFormula("standard", dieFaces)
     let dice = "standard"
     if (totalDices > 0) {
-      formula = "2d20kh"
+      formula = getDiceFormula("bonus", dieFaces)
       dice = "bonus"
     } else if (totalDices < 0) {
-      formula = "2d20kl"
+      formula = getDiceFormula("malus", dieFaces)
       dice = "malus"
     }
 
@@ -2373,6 +2374,7 @@ export default class COActor extends Actor {
       auto,
       type,
       dice,
+      dieFaces,
       useComboRolls,
       itemName: item.name,
       itemImg: item.img,
@@ -2393,7 +2395,8 @@ export default class COActor extends Actor {
       showDifficulty,
       oppositeRoll,
       initialSkillFormula: skillFormula,
-      formulaAttack: `${formula} + ${skillFormula}`,
+      formulaAttack: `${formula} + ${skillFormula}${rollPenalty ? ` - ${rollPenalty}` : ""}`,
+      rollPenalty,
       formulaAttackTooltip: skillFormulaTooltip,
       formulaDamage: damageFormula,
       formulaDamageTooltip: damageFormulaTooltip,
@@ -2973,11 +2976,6 @@ export default class COActor extends Actor {
     }
     const remaining = this.toObject().system.currentEffects.filter((ce) => ce.slug !== customEffect.slug)
     await this.update({ "system.currentEffects": remaining })
-
-    // Si il n'y a plus d'effet custom, on enlève l'icône
-    if (remaining.length === 0) {
-      await this.activateCOStatusEffect({ state: false, effectid: "customEffect" })
-    }
   }
 
   /**
@@ -3004,9 +3002,6 @@ export default class COActor extends Actor {
         newCurrentEffects[existingEffectIndex].startedAt = effect.startedAt
         newCurrentEffects[existingEffectIndex].remainingTurn = effect.remainingTurn
       } else newCurrentEffects.push(effect)
-
-      // Affichage de l'icône
-      await this.activateCOStatusEffect({ state: true, effectid: "customEffect" })
 
       await this.update({ "system.currentEffects": newCurrentEffects })
     }

@@ -252,6 +252,9 @@ Hooks.once("ready", async function () {
   // Si plus aucun module ne les déclare, on retire les effets restés sur les acteurs.
   if (game.user.isGM) await helpers.Utils.removeOrphanDefenseStances()
 
+  // Migration : retirer les statuts qui ne sont plus proposés par le système.
+  if (game.user.isGM) await helpers.Utils.removeRemovedStatusEffects()
+
   // Statistics
   registerWorldCount("cog")
 

@@ -2,24 +2,27 @@
 ACTIVE_EFFECT_MODES : CUSTOM = 0, MULTIPLY = 1, ADD = 2, DOWNGRADE = 3, UPGRADE = 4, OVERRIDE = 5
 
 États préjudiciables
-  Aveuglé : -5 en Init., attaque et DEF, -10 en attaque à distance. Les attaques magiques nécessitant de voir la cible sont impossibles.
-  Affaibli : Dé malus à tous les tests.
-  Essoufflé : Le déplacement est limité à 5 m par action de mouvement.
+  Aveuglé : -5 en Init., aux attaques de mêlée et en DEF. Les attaques à distance et les attaques magiques nécessitant de voir la cible sont impossibles.
+  Affaibli : utilise un d12 à la place d'un d20 pour tous les tests.
+  Épuisé : -5 à tous les jets.
+  Fatigué : -2 à tous les jets.
+  Blessé : utilise un d12 à la place d'un d20 pour les tests de FOR, DEX et CON.
+  Confus : utilise un d12 à la place d'un d20 pour les tests d'INT, PER et CHA.
   Étourdi : Aucune action possible et -5 en DEF.
-  Immobilisé : Pas de déplacement et dé malus aux tests d’attaque.
+  Immobilisé : pas de déplacement, dé malus aux tests d’attaque et d12 à la place du d20 pour tous les tests.
   Invalide : Le déplacement est limité à 5 m par action de mouvement.
-  Paralysé : Aucune action possible, en cas d’attaque touché automatiquement et subit un critique.
   Ralenti : Une seule action par round (action d’attaque ou de mouvement).
   Renversé : -5 en attaque et DEF, nécessite une action d’attaque pour se relever.
   Surpris : Pas d’action et ‑5 en DEF au premier round de combat.
 
   Aveuglé : blind
   Affaibli : weakened
-  Essoufflé : outOfBreath
+  Épuisé : exhausted
+  Fatigué : tired
+  Blessé : wounded
   Étourdi : stun
   Immobilisé : immobilized
   Invalide : invalid
-  Paralysé : paralysis
   Ralenti : slowed
   Renversé : overturned
   Surpris : surprised
@@ -27,15 +30,11 @@ ACTIVE_EFFECT_MODES : CUSTOM = 0, MULTIPLY = 1, ADD = 2, DOWNGRADE = 3, UPGRADE 
 Autres états
   dead : Mort
   confused : Confus
-  silence : Réduit au silence
-  bleeding : En train de saigner
-  poison : Empoisonné
-  invisible : Invisible
   unconscious : Inconscient
-  customEffect : Subit des effets additionnels
 
 */
 
+export const REMOVED_STATUS_EFFECT_IDS = ["outOfBreath", "paralysis", "invisible", "poison", "bleeding", "silence", "enslaved", "other", "customEffect"]
 
 export const CUSTOM_STATUS_EFFECT = [
   {
@@ -58,10 +57,22 @@ export const CUSTOM_STATUS_EFFECT = [
     description: "CO.customStatus.confusedDescription",
   },
   {
-    id: "enslaved",
-    name: "CO.customStatus.enslaved",
-    img: "icons/svg/stoned.svg",
-    description: "CO.customStatus.enslavedDescription",
+    id: "wounded",
+    name: "CO.customStatus.wounded",
+    img: "icons/svg/blood.svg",
+    description: "CO.customStatus.woundedDescription",
+  },
+  {
+    id: "exhausted",
+    name: "CO.customStatus.exhausted",
+    img: "icons/svg/downgrade.svg",
+    description: "CO.customStatus.exhaustedDescription",
+  },
+  {
+    id: "tired",
+    name: "CO.customStatus.tired",
+    img: "icons/svg/downgrade.svg",
+    description: "CO.customStatus.tiredDescription",
   },
   {
     id: "immobilized",
@@ -100,29 +111,6 @@ export const CUSTOM_STATUS_EFFECT = [
     description: "CO.customStatus.stunDescription",
   },
   {
-    id: "paralysis",
-    name: "CO.customStatus.paralysis",
-    img: "icons/svg/paralysis.svg",
-    changes: [
-      {
-        key: "system.attributes.movement.base",
-        mode: 5,
-        value: 0,
-      },
-      {
-        key: "system.attributes.movement.bonuses.sheet",
-        mode: 5,
-        value: 0,
-      },
-      {
-        key: "system.attributes.movement.bonuses.effects",
-        mode: 5,
-        value: 0,
-      },
-    ],
-    description: "CO.customStatus.paralysisDescription",
-  },
-  {
     id: "blind",
     name: "CO.customStatus.blind",
     img: "icons/svg/blind.svg",
@@ -131,11 +119,6 @@ export const CUSTOM_STATUS_EFFECT = [
         key: "system.combat.melee.bonuses.effects",
         mode: 2,
         value: -5,
-      },
-      {
-        key: "system.combat.ranged.bonuses.effects",
-        mode: 2,
-        value: -10,
       },
       {
         key: "system.combat.init.bonuses.effects",
@@ -151,39 +134,6 @@ export const CUSTOM_STATUS_EFFECT = [
     description: "CO.customStatus.blindDescription",
   },
   {
-    id: "silence",
-    name: "CO.customStatus.silence",
-    img: "icons/svg/silenced.svg",
-  },
-  {
-    id: "outOfBreath",
-    name: "CO.customStatus.outOfBreath",
-    img: "systems/cog/ui/effects/breath.webp",
-    changes: [
-      {
-        key: "system.attributes.movement.base",
-        mode: 5,
-        value: 5,
-      },
-      {
-        key: "system.attributes.movement.bonuses.sheet",
-        mode: 5,
-        value: 0,
-      },
-      {
-        key: "system.attributes.movement.bonuses.effects",
-        mode: 5,
-        value: 0,
-      },
-    ],
-    description: "CO.customStatus.outOfBreathDescription",
-  },
-  {
-    id: "bleeding",
-    name: "CO.customStatus.bleeding",
-    img: "icons/svg/blood.svg",
-  },
-  {
     id: "invalid",
     name: "CO.customStatus.invalid",
     img: "systems/cog/ui/effects/disably.webp",
@@ -195,11 +145,6 @@ export const CUSTOM_STATUS_EFFECT = [
       },
     ],
     description: "CO.customStatus.invalidDescription",
-  },
-  {
-    id: "poison",
-    name: "CO.customStatus.poison",
-    img: "icons/svg/poison.svg",
   },
   {
     id: "slowed",
@@ -261,29 +206,13 @@ export const CUSTOM_STATUS_EFFECT = [
     description: "CO.customStatus.seriousWoundDescription",
   },
   {
-    id: "invisible",
-    name: "CO.customStatus.invisible",
-    img: "icons/svg/invisible.svg",
-  },
-  {
     id: "unconscious",
     name: "CO.customStatus.unconscious",
     img: "icons/svg/unconscious.svg",
+    description: "CO.customStatus.unconsciousDescription",
   },
   // Les postures défensives (défense partielle et totale) sont une manœuvre propre à COF2 :
   // elles sont fournies par un module de contenu via game.system.CONST.defenseStances
-  {
-    id: "customEffect",
-    name: "CO.customStatus.customEffect",
-    img: "icons/svg/aura.svg",
-    description: "CO.customStatus.customEffectDescription",
-  },
-  {
-    id: "other",
-    name: "CO.customStatus.other",
-    img: "icons/svg/hazard.svg",
-    description: "CO.customStatus.otherDescription",
-  },
 ]
 
 export const CUSTOM_EFFECT = {

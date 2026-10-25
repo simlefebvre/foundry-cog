@@ -1,4 +1,5 @@
 import Utils from "../helpers/utils.mjs"
+import { getDiceFormula } from "../helpers/dice-formula.mjs"
 export class CORoll extends Roll {
   static ROLL_TYPE = "standard"
 
@@ -181,13 +182,13 @@ export class COSkillRoll extends CORoll {
               let newFormula
               switch (event.target.value) {
                 case "standard":
-                  newFormula = `1d20+${dialogContext.skillValue}`
+                  newFormula = `${getDiceFormula("standard", dialogContext.dieFaces)}+${dialogContext.skillValue}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
                 case "bonus":
-                  newFormula = `2d20kh+${dialogContext.skillValue}`
+                  newFormula = `${getDiceFormula("bonus", dialogContext.dieFaces)}+${dialogContext.skillValue}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
                 case "malus":
-                  newFormula = `2d20kl+${dialogContext.skillValue}`
+                  newFormula = `${getDiceFormula("malus", dialogContext.dieFaces)}+${dialogContext.skillValue}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
               }
               dialog.element.querySelector('input[name="formula"]').value = newFormula
@@ -209,10 +210,9 @@ export class COSkillRoll extends CORoll {
     // Pas de prompt
     else {
       let dice = dialogContext.dice // Valeurs possibles : standard, bonus, malus
-      let diceFormula = "1d20"
-      if (dice === "bonus") diceFormula = "2d20kh"
-      else if (dice === "malus") diceFormula = "2d20kl"
+      let diceFormula = getDiceFormula(dice, dialogContext.dieFaces)
       formula = `${diceFormula}+${parseInt(dialogContext.skillValue)}`
+      if (dialogContext.rollPenalty) formula += `-${dialogContext.rollPenalty}`
       if (parseInt(dialogContext.bonus) !== 0) formula += `+${parseInt(dialogContext.bonus)}`
       if (parseInt(dialogContext.malus) !== 0) formula += `-${parseInt(Math.abs(dialogContext.malus))}`
       const totalSkillBonuses = parseInt(dialogContext.totalSkillBonuses)
@@ -433,13 +433,13 @@ export class COAttackRoll extends CORoll {
               let newFormula
               switch (event.target.value) {
                 case "standard":
-                  newFormula = `1d20+${dialogContext.initialSkillFormula}`
+                  newFormula = `${getDiceFormula("standard", dialogContext.dieFaces)}+${dialogContext.initialSkillFormula}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
                 case "bonus":
-                  newFormula = `2d20kh+${dialogContext.initialSkillFormula}`
+                  newFormula = `${getDiceFormula("bonus", dialogContext.dieFaces)}+${dialogContext.initialSkillFormula}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
                 case "malus":
-                  newFormula = `2d20kl+${dialogContext.initialSkillFormula}`
+                  newFormula = `${getDiceFormula("malus", dialogContext.dieFaces)}+${dialogContext.initialSkillFormula}${dialogContext.rollPenalty ? `-${dialogContext.rollPenalty}` : ""}`
                   break
               }
               dialog.element.querySelector('input[name="formulaAttack"]').value = newFormula

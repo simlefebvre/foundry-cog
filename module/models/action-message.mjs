@@ -6,6 +6,7 @@ import { Resolver } from "./schemas/resolver.mjs"
 import Utils from "../helpers/utils.mjs"
 import OpposedRollHandler from "../helpers/opposed-roll.mjs"
 import COChatMessage from "../documents/chat-message.mjs"
+import { findCriticalOnHitStatus } from "../helpers/status-rules.mjs"
 
 export default class ActionMessageData extends BaseMessageData {
   static defineSchema() {
@@ -31,6 +32,7 @@ export default class ActionMessageData extends BaseMessageData {
           opposeActorId: new fields.StringField({ required: false, nullable: true, blank: true }),
           opposeHasLuckyPoints: new fields.BooleanField({ initial: false }),
           opposeRollFormula: new fields.StringField({ required: false, nullable: true, blank: true }),
+          criticalOnHitStatus: new fields.StringField({ required: false, nullable: true, blank: true }),
           appliedMultiplier: new fields.NumberField({ required: false, nullable: true, initial: null }),
           appliedDrChecked: new fields.BooleanField({ initial: true }),
           forcedDamage: new fields.NumberField({ required: false, nullable: true, initial: null }),
@@ -396,14 +398,16 @@ export default class ActionMessageData extends BaseMessageData {
             if (hasTargetResults) {
               newTargetResults = currentTargetResults.map((tr) => {
                 if (tr.uuid !== oppositeTarget) return tr
+                const criticalOnHitStatus = tr.criticalOnHitStatus ?? findCriticalOnHitStatus(targetActor.statuses, rolls[0].options.actionType, game.system.CONST.statusRules?.incomingAttack)
                 return {
                   ...tr,
                   difficulty: opposed.total,
                   isSuccess: outcome.isSuccess,
                   isFailure: outcome.isFailure,
-                  isCritical: attackerResult.isCritical,
+                  isCritical: attackerResult.isCritical || (!!criticalOnHitStatus && outcome.isSuccess),
                   isFumble: attackerResult.isFumble,
                   needsOppositeRoll: false,
+                  criticalOnHitStatus,
                   opposeActorId: opposed.actorId,
                   opposeHasLuckyPoints: opposed.hasLuckyPoints,
                   opposeRollFormula: opposed.roll.formula,

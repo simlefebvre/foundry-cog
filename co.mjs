@@ -257,12 +257,6 @@ Hooks.once("ready", async function () {
 
   // Party Sheet
   game.system.partySheet = new applications.COPartySheet()
-  if (game.user.isGM) {
-    game.system.partySheet.render({ force: true })
-  }
-
-  // Notes de version : affichées au MJ après une mise à jour du système
-  await applications.COReleaseNotes.displayIfNeeded()
 
   console.info(helpers.Utils.log(game.i18n.localize("CO.notif.ready")))
 })

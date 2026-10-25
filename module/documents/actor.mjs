@@ -10,6 +10,7 @@ import { isRangedAttackBlockedByBlindness, resolveStatusId } from "../helpers/st
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
 import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
+import { DEFAULT_CHARACTER_ACTION_SLUGS } from "../config/default-character-actions.mjs"
 
 /**
  * @class COActor
@@ -541,7 +542,7 @@ export default class COActor extends Actor {
         allActions.push(...itemActions)
       }
       // Action des capacités : une armure non maîtrisée empêche leur utilisation
-      if (SYSTEM.ITEM_TYPE.capacity.id === item.type && this.canUseCapacities) {
+      if (SYSTEM.ITEM_TYPE.capacity.id === item.type && (this.canUseCapacities || DEFAULT_CHARACTER_ACTION_SLUGS.has(item.system.slug))) {
         const itemActions = await item.getVisibleActions(this)
         allActions.push(...itemActions)
       }
@@ -3109,7 +3110,7 @@ export default class COActor extends Actor {
     const item = this.items.get(itemId)
     if (!item) return
 
-    let itemChatData = item.getChatData(item, this, chatType, indice)
+    const itemChatData = await item.getChatData(item, this, chatType, indice)
     const chat = new CoChat(this)
       .withTemplate("systems/cog/templates/chat/item-card.hbs")
       .withData({
@@ -3129,7 +3130,7 @@ export default class COActor extends Actor {
       chat.withWhisper(ChatMessage.getWhisperRecipients("GM").map((u) => u.id))
     }
 
-    chat.create()
+    await chat.create()
   }
 
   // #endregion

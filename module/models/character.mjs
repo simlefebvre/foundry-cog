@@ -9,6 +9,7 @@ import CoChat from "../chat.mjs"
 
 import DefaultConfiguration from "../config/configuration.mjs"
 import { Modifier } from "./schemas/modifier.mjs"
+import { DEFAULT_CHARACTER_ACTIONS } from "../config/default-character-actions.mjs"
 export default class CharacterData extends ActorData {
   /** @override */
   static LOCALIZATION_PREFIXES = ["CO.Character"]
@@ -200,12 +201,44 @@ export default class CharacterData extends ActorData {
       })
 
       // Objets de départ déclarés par un module de contenu (game.system.CONST.baseItems).
-      // Registre vide : aucun objet n'est ajouté, ce qui est le cas nominal d'un monde sans module.
       if (game.system.CONST.baseItems.length > 0) {
         const items = await Promise.all(game.system.CONST.baseItems.map((uuid) => fromUuid(uuid)))
         // The method updateSource will merge the arrays for embedded collections
         updates.items = items.filter((i) => i).map((i) => game.items.fromCompendium(i, { keepId: true, clearFolder: true }))
       }
+
+      const baseItems = updates.items ?? []
+      updates.items = [
+        ...baseItems,
+        ...DEFAULT_CHARACTER_ACTIONS.map(({ name, slug, type, actionType, description }) => ({
+          name,
+          type: SYSTEM.ITEM_TYPE.capacity.id,
+          img: SYSTEM.ITEM_ICONS.capacity,
+          system: {
+            source: "Chroniques Oubliées 2e édition",
+            origin: "Actions de base",
+            slug,
+            description,
+            learned: true,
+            actionType,
+            cost: 0,
+            actions: [
+              {
+                indice: 0,
+                type,
+                actionType,
+                properties: {
+                  visible: true,
+                  activable: true,
+                  enabled: true,
+                  temporary: false,
+                  noChargesUsed: true,
+                },
+              },
+            ],
+          },
+        })),
+      ]
     }
 
     this.parent.updateSource(updates)
@@ -921,8 +954,11 @@ export default class CharacterData extends ActorData {
         }
         const actions = item.toObject().system.actions
         for (const action of actions) {
-          const { primaryType, primaryId, type, id } = foundry.utils.parseUuid(action.source)
-          const newSource = [primaryType, actorId, type, id].flat().filterJoin(".")
+          let newSource = item.uuid
+          if (action.source) {
+            const { primaryType, type, id } = foundry.utils.parseUuid(action.source)
+            newSource = [primaryType, actorId, type, id].flat().filterJoin(".")
+          }
           action.source = newSource
           if (action.modifiers.length > 0) {
             for (const modifier of action.modifiers) {

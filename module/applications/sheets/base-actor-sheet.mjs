@@ -444,8 +444,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
     if (chatType === "item" || chatType === "loot") {
       itemId = target.closest(".item")?.dataset.itemId
     } else if (chatType === "action") {
-      const { id } = foundry.utils.parseUuid(dataset.source)
-      itemId = id
+      itemId = dataset.source ? foundry.utils.parseUuid(dataset.source).id : target.closest(".item")?.dataset.itemId
       indice = dataset.indice
     }
 

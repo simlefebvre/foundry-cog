@@ -344,8 +344,11 @@ export default class EncounterData extends ActorData {
         }
         const actions = item.toObject().system.actions
         for (const action of actions) {
-          const { primaryType, primaryId, type, id } = foundry.utils.parseUuid(action.source)
-          const newSource = [primaryType, actorId, type, id].flat().filterJoin(".")
+          let newSource = item.uuid
+          if (action.source) {
+            const { primaryType, type, id } = foundry.utils.parseUuid(action.source)
+            newSource = [primaryType, actorId, type, id].flat().filterJoin(".")
+          }
           action.source = newSource
           if (action.modifiers.length > 0) {
             for (const modifier of action.modifiers) {

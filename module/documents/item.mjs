@@ -153,17 +153,17 @@ export default class COItem extends Item {
    * @param {number|null} [indice=null] The optional index of the action to retrieve chat data for.
    * @returns {Object} An object containing the item's id, name, image, description, and actions.
    */
-  getChatData(item, actor, chatType, indice = null) {
+  async getChatData(item, actor, chatType, indice = null) {
     if (this.type === SYSTEM.ITEM_TYPE.capacity.id || this.type === SYSTEM.ITEM_TYPE.equipment.id || this.type === SYSTEM.ITEM_TYPE.attack.id) {
       let actions = []
       // All actions
       if (chatType === "item" && indice === null) {
         for (const action of this.actions) {
-          actions.push(...action.getChatData(item, actor))
+          actions.push(...(await action.getChatData(item, actor)))
         }
       } else if (chatType === "action") {
         const action = this.actions.find((a) => a.indice === parseInt(indice))
-        actions.push(...action.getChatData(item, actor))
+        if (action) actions.push(...(await action.getChatData(item, actor)))
       }
       return {
         id: this.id,

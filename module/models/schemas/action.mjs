@@ -377,19 +377,34 @@ export class Action extends foundry.abstract.DataModel {
    *   {string} [type] The type of action (e.g., "attack", "damage") if applicable.
    *   {number} indice The index or identifier for the action.
    */
-  getChatData(item, actor) {
-    if (this.isVisible(item, actor) && this.properties.activable) {
+  async getChatData(item, actor) {
+    if ((await this.isVisible(item, actor)) && this.properties.activable) {
+      const actionName = this.actionName
       if (this.properties.temporary) {
-        if (this.properties.enabled) return [{ label: `${game.i18n.localize("CO.ui.deactivate")} ${this.label}`, action: "unactivate", indice: this.indice }]
-        else return [{ label: `${game.i18n.localize("CO.ui.activate")} ${this.label}`, action: "activate", indice: this.indice }]
+        if (this.properties.enabled) return [{ label: `${game.i18n.localize("CO.ui.deactivate")} ${actionName}`, action: "unactivate", indice: this.indice }]
+        else return [{ label: `${game.i18n.localize("CO.ui.activate")} ${actionName}`, action: "activate", indice: this.indice }]
       } else {
-        if (this.type === "melee" || this.type === "ranged" || this.type === "magical") {
-          return [
-            { label: `${this.label} ${game.i18n.localize("CO.label.long.attack")}`, action: "activate", type: "attack", indice: this.indice },
-            { label: `${this.label} ${game.i18n.localize("CO.label.long.damage")}`, action: "activate", type: "damage", indice: this.indice },
-          ]
+        if (["melee", "ranged", "magical"].includes(this.type) && this.hasResolvers) {
+          const actions = []
+          if (!this.autoAttack) {
+            actions.push({
+              label: `${actionName} ${game.i18n.localize("CO.label.long.attack")}`,
+              action: "activate",
+              type: "attack",
+              indice: this.indice,
+            })
+          }
+          if (this.hasResolversWithDomage) {
+            actions.push({
+              label: `${actionName} ${game.i18n.localize("CO.label.long.damage")}`,
+              action: "activate",
+              type: "damage",
+              indice: this.indice,
+            })
+          }
+          return actions
         } else {
-          return [{ label: `${this.label} ${game.i18n.localize("CO.ui.use")}`, action: "activate", indice: this.indice }]
+          return [{ label: `${actionName} ${game.i18n.localize("CO.ui.use")}`, action: "activate", indice: this.indice }]
         }
       }
     }

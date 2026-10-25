@@ -54,9 +54,9 @@ export const COMBAT = {
     label: "CO.combat.long.ranged",
     ability: "dex",
   },
-  magic: {
-    id: "magic",
-    label: "CO.combat.long.magic",
+  psychic: {
+    id: "psychic",
+    label: "CO.combat.long.psychic",
     ability: "int",
   },
   crit: {
@@ -84,7 +84,7 @@ export const ATTACK_TYPE = {
   },
   magic: {
     id: "magic",
-    label: "CO.combat.long.magic",
+    label: "CO.combat.long.psychic",
     ability: "int",
   },
 }

@@ -45,12 +45,13 @@ test("les opérations explicites sur un score sont respectées", () => {
   assert.equal(prepare("@atc - @atc", "8 - 8").formula, "0")
 })
 
-test("la magie conserve @atm (VOL + NC) augmenté de combat.magic.value", () => {
-  assert.equal(prepare("@atm", "7", 3, "magic").formula, "10")
-  assert.equal(prepare("@atm", "7", -2, "magic").formula, "5")
-  assert.equal(prepare("0", "0", 6, "magic").formula, "6")
-  assert.equal(prepare("@combat.magic.value", "3", 3, "magic").formula, "3")
-  assert.equal(prepare("@atm + @combat.magic.value", "7 + 3", 3, "magic").formula, "10")
+test("l'attaque psychique conserve @atm (VOL + NC) et ajoute combat.psychic.value", () => {
+  assert.equal(prepare("@atm", "7", 3, "psychic").formula, "10")
+  assert.equal(prepare("@atm", "7", -2, "psychic").formula, "5")
+  assert.equal(prepare("0", "0", 6, "psychic").formula, "6")
+  assert.equal(prepare("@combat.psychic.value", "3", 3, "psychic").formula, "3")
+  assert.equal(prepare("@combat.magic.value", "3", 3, "psychic").formula, "3")
+  assert.equal(prepare("@atm + @combat.psychic.value", "7 + 3", 3, "psychic").formula, "10")
 })
 
 test("un aperçu avec dés ou cible reste une expression", () => {

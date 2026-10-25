@@ -110,51 +110,49 @@
         </div>
       {{/if}}
     </div>
-    <!-- MAGIC -->
-    <div class="sidebar-section magic-section">
+    <!-- PSYCHIC -->
+    <div class="sidebar-section psychic-section">
       <div class="sidebar-section-header">
-        <div class="sidebar-label magic-label">
-          <h4>{{localize "CO.label.short.magic"}}</h4>
-          <!--                <a class="roll-icon roll-magic"><i class="fas fa-dice-d20"></i><i class="fas fa-fw fa-plus"></i><div>{{!combat.magic.value}}</div></a>-->
-          <!--                <a class="roll-icon roll-magic"><i class="fas fa-dice-d20"></i><i class="fas fa-fw fa-plus"></i><div>{{!combat.magic.value}}</div></a>-->
+        <div class="sidebar-label psychic-label">
+          <h4>{{localize "CO.label.short.psychic"}}</h4>
         </div>
         {{#if viewLimited}}
-          <div class="magic-value labelled-field">
+          <div class="psychic-value labelled-field">
             <i class="fas fa-fw fa-wand-magic-sparkles"></i>??
           </div>
         {{else}}
-          <div class="magic-value labelled-field" data-tooltip="{{combat.magic.tooltipValue}}">
+          <div class="psychic-value labelled-field" data-tooltip="{{combat.psychic.tooltipValue}}">
             <i class="fas fa-fw fa-wand-magic-sparkles"></i>
-            {{numberFormat combat.magic.value decimals=0 sign=true}}
+            {{numberFormat combat.psychic.value decimals=0 sign=true}}
           </div>
         {{/if}}
       </div>
       {{#if unlocked}}
         <div class="sidebar-section-content">
           <div class="field">
-            <select name="system.combat.magic.ability" data-type="String">
-              {{selectOptions choiceAbilities selected=combat.magic.ability localize=true}}
+            <select name="system.combat.psychic.ability" data-type="String">
+              {{selectOptions choiceAbilities selected=combat.psychic.ability localize=true}}
             </select>
           </div>
         </div>
         <div class="sidebar-section-content">
           <div class="field">
             <input
-              class="magic-base"
+              class="psychic-base"
               type="number"
-              name="system.combat.magic.base"
-              value="{{combat.magic.base}}"
+              name="system.combat.psychic.base"
+              value="{{combat.psychic.base}}"
               data-dtype="Number"
               placeholder="0"
-              data-tooltip="{{combat.magic.tooltipBase}}"
+              data-tooltip="{{combat.psychic.tooltipBase}}"
               readonly
             />
             <span class="slash">/</span>
             <input
-              class="magic-bonus"
+              class="psychic-bonus"
               type="text"
-              name="system.combat.magic.bonuses.sheet"
-              value="{{numberFormat combat.magic.bonuses.sheet decimals=0 sign=true}}"
+              name="system.combat.psychic.bonuses.sheet"
+              value="{{numberFormat combat.psychic.bonuses.sheet decimals=0 sign=true}}"
               data-dtype="Number"
               data-tooltip="{{localize 'CO.label.long.bonus'}}"
               placeholder="0"

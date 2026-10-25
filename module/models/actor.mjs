@@ -1,7 +1,14 @@
 import CustomEffectData from "./schemas/custom-effect.mjs"
 import Utils from "../helpers/utils.mjs"
+import { migratePsychicScore } from "../helpers/psychic-migration.mjs"
 
 export default class ActorData extends foundry.abstract.TypeDataModel {
+  /** @override */
+  static migrateData(source) {
+    migratePsychicScore(source)
+    return super.migrateData(source)
+  }
+
   static defineSchema() {
     const fields = foundry.data.fields
 
@@ -170,7 +177,7 @@ export default class ActorData extends foundry.abstract.TypeDataModel {
    */
   hasBonusDiceForAttack(attackType) {
     if (!attackType) return false
-    const target = attackType === "magical" ? "magic" : attackType
+    const target = attackType === "magical" ? "psychic" : attackType
     const modifiers = this.bonusDiceModifiers.filter((m) => m.target === target)
     return modifiers.length > 0
   }
@@ -183,7 +190,7 @@ export default class ActorData extends foundry.abstract.TypeDataModel {
    */
   hasMalusDiceForAttack(attackType) {
     if (!attackType) return false
-    const target = attackType === "magical" ? "magic" : attackType
+    const target = attackType === "magical" ? "psychic" : attackType
     const modifiers = this.malusDiceModifiers.filter((m) => m.target === target)
     return modifiers.length > 0
   }

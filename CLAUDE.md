@@ -79,7 +79,7 @@ Each modifier has these fields:
 
 Constants defined in `config/modifier.mjs`. Formula evaluation via `Utils.evaluateCoModifier()` (`helpers/utils.mjs`).
 
-**Formula variables:** `@rank`/`@rang` (capacity rank in path), `@arme.dmg`/`@arme.skill` (equipped weapon), `d4°` (evolving die by level), `@nivmod[niv, mod]` (level threshold), and all actor roll data (`@for`, `@niv`, `@atc`, etc.).
+**Formula variables:** `@rank`/`@rang` (capacity rank in path), `@arme.dmg`/`@arme.skill` (equipped weapon), `d4°` (evolving die by level), `@nivmod[niv, mod]` (level threshold), and all actor roll data (`@for`, `@niv`, `@atc`, `@atp`, etc.). `@atm` remains a supported legacy alias for `@atp`.
 
 ### Where Modifiers Are Stored
 
@@ -117,7 +117,7 @@ Typed accessors: `abilityModifiers`, `combatModifiers`, `attributeModifiers`, `r
 | Stat | Modifier subtype/target | Application |
 |------|------------------------|-------------|
 | Ability scores | `ability` / `for`, `agi`, etc. | `ability.value = base + bonuses + abilityModifiers.total` |
-| Attack (melee/ranged/magic) | `combat` / `melee`, `ranged`, `magic` | Added to attack skill value |
+| Attack (melee/ranged/psychic) | `combat` / `melee`, `ranged`, `psychic` | Added to attack skill value |
 | Defense | `combat` / `def` | Added to defense value |
 | Critical threshold | `combat` / `crit` | `crit.value = max(16, 20 - critModifiers.total)` |
 | Damage reduction | `combat` / `dr` | Added to DR value |

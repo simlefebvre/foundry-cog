@@ -295,7 +295,7 @@ export default class CharacterData extends ActorData {
 
     this._prepareMovement()
 
-    // Préparation des données de combat : Attaque de contact, attaque à distance, attaque magique, initiative, défense
+    // Préparation des données de combat : contact, distance, attaque psychique, initiative, défense
     for (const [key, skill] of Object.entries(this.combat)) {
       if (key === SYSTEM.COMBAT.crit.id || key === SYSTEM.COMBAT.dr.id) {
         continue
@@ -304,7 +304,7 @@ export default class CharacterData extends ActorData {
       const bonuses = Object.values(skill.bonuses).reduce((prev, curr) => prev + curr)
       const abilityBonus = this.abilities[skill.ability].value
 
-      if ([SYSTEM.COMBAT.melee.id, SYSTEM.COMBAT.ranged.id, SYSTEM.COMBAT.magic.id].includes(key)) {
+      if ([SYSTEM.COMBAT.melee.id, SYSTEM.COMBAT.ranged.id, SYSTEM.COMBAT.psychic.id].includes(key)) {
         this._prepareAttack(key, skill, abilityBonus, bonuses)
       }
 
@@ -500,9 +500,9 @@ export default class CharacterData extends ActorData {
   }
 
   /**
-   * Calcul les scores de combat melee/distance/magique
-   * @param {*} key clef dans la table des attributs : 'melee', 'ranged', 'magic'
-   * @param {*} skill Element pour lequel on calcul la valeur et le tooltip (ex : combat.melee combat.ranged, combat.magic)
+   * Calcule les scores de combat de contact, à distance et psychique.
+   * @param {*} key clef dans la table des attributs : 'melee', 'ranged', 'psychic'
+   * @param {*} skill Element pour lequel on calcule la valeur et l'info-bulle (ex : combat.melee, combat.ranged, combat.psychic)
    * @param {*} abilityBonus Bonus accordé par l'attribut (ex : bonus d'agilité)
    * @param {*} bonuses Autres bonus (customeffect par ex)
    */

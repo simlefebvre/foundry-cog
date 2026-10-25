@@ -4,8 +4,15 @@ import { BaseValue } from "./schemas/base-value.mjs"
 import ActorData from "./actor.mjs"
 import Utils from "../helpers/utils.mjs"
 import { resolveCompanionFormula } from "../helpers/companion-formula.mjs"
+import { migrateEncounterPsychicScore } from "../helpers/psychic-migration.mjs"
 
 export default class EncounterData extends ActorData {
+  /** @override */
+  static migrateData(source) {
+    migrateEncounterPsychicScore(source)
+    return super.migrateData(source)
+  }
+
   static defineSchema() {
     const fields = foundry.data.fields
     const requiredInteger = { required: true, nullable: false, integer: true }
@@ -60,10 +67,10 @@ export default class EncounterData extends ActorData {
       crit: new fields.EmbeddedDataField(CompanionCombatValue),
       melee: new fields.EmbeddedDataField(CompanionCombatValue), // Va servir à stocker les modifiers
       ranged: new fields.EmbeddedDataField(CompanionCombatValue), // Va servir à stocker les modifiers
-      magic: new fields.EmbeddedDataField(CompanionCombatValue), // Va servir à stocker les modifiers
+      psychic: new fields.EmbeddedDataField(CompanionCombatValue), // Va servir à stocker les modifiers
     })
 
-    schema.magic = new fields.NumberField({ ...requiredInteger, initial: 0 })
+    schema.psychic = new fields.NumberField({ ...requiredInteger, initial: 0 })
 
     schema.pasteData = new fields.HTMLField()
 

@@ -223,7 +223,7 @@ export const CUSTOM_STATUS_EFFECT = [
         value: -5,
       },
       {
-        key: "system.combat.magic.bonuses.effects",
+        key: "system.combat.psychic.bonuses.effects",
         mode: 2,
         value: -5,
       },

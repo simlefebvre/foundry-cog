@@ -103,9 +103,9 @@ export const MODIFIERS_TARGET = {
     label: "CO.combat.long.ranged",
     subtype: "attack",
   },
-  magic: {
-    id: "magic",
-    label: "CO.combat.long.magic",
+  psychic: {
+    id: "psychic",
+    label: "CO.combat.long.psychic",
     subtype: "attack",
   },
   init: {

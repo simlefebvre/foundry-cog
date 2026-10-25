@@ -72,6 +72,9 @@ export default class COActor extends Actor {
 
   getRollData() {
     const rollData = { ...this.system }
+    if (rollData.combat?.psychic) {
+      rollData.combat = { ...rollData.combat, magic: rollData.combat.psychic }
+    }
 
     if (!["character", "encounter"].includes(this.type)) {
       return rollData
@@ -90,7 +93,8 @@ export default class COActor extends Actor {
       rollData.niv = this.system.attributes.level
       rollData.atc = this.system.combat.melee.value
       rollData.atd = this.system.combat.ranged.value
-      rollData.atm = this.system.combat.magic.value
+      rollData.atp = this.system.combat.psychic.value
+      rollData.atm = rollData.atp
     }
     if (this.type === "encounter") {
       rollData.niv = this.system.attributes.nc
@@ -99,7 +103,8 @@ export default class COActor extends Actor {
       // Même source que celle utilisée par rollAttack pour une rencontre (system.combat.melee/ranged.value).
       rollData.atc = this.system.combat.melee.value
       rollData.atd = this.system.combat.ranged.value
-      rollData.atm = this.system.magic
+      rollData.atp = this.system.psychic
+      rollData.atm = rollData.atp
     }
 
     rollData.malusArmure = this.equippedArmors[0]?.system.overloadMalus ?? 0
@@ -2208,7 +2213,7 @@ export default class COActor extends Actor {
     if (this.type === "character") {
       const attackType = Utils.getAttackTypeFromFormula(originalSkillFormula, actionType)
       if (attackType) {
-        const attackSkillKey = actionType === SYSTEM.ACTION_TYPES.spell.id || actionType === SYSTEM.ACTION_TYPES.magical.id ? "magic" : actionType
+        const attackSkillKey = actionType === SYSTEM.ACTION_TYPES.spell.id || actionType === SYSTEM.ACTION_TYPES.magical.id ? "psychic" : actionType
         const attackSkill = this.system.combat[attackSkillKey]
         if (attackSkill?.tooltipValue) skillFormulaTooltip = attackSkill.tooltipValue
       } else {

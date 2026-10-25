@@ -274,7 +274,7 @@ export class COSkillRoll extends CORoll {
     const canUseLuckyPoints = this.options.hasLuckyPoints && !rollResults.isCritical && (displayDifficulty === "gm" || rollResults.isFailure)
     // Libellé de la caractéristique opposée (ex : "Constitution", "Attaque de contact")
     const oppositeAbilityId = this.options.oppositeValue?.startsWith("@oppose.") ? this.options.oppositeValue.replace("@oppose.", "") : null
-    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atm: "magic" }
+    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atp: "psychic", atm: "psychic" }
     const oppositeAbilityLabel = oppositeAbilityId
       ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
       : null
@@ -658,7 +658,7 @@ export class COAttackRoll extends CORoll {
     const rollResults = CORoll.analyseRollResult(this, this.options.hasAttackSuccessThreshold, this.options.attackSuccessThreshold)
     if (CONFIG.debug.cog?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
     const oppositeAbilityId = this.options.difficulty?.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
-    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atm: "magic" }
+    const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atp: "psychic", atm: "psychic" }
     const oppositeAbilityLabel = oppositeAbilityId
       ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
       : null

@@ -3269,15 +3269,15 @@ a.roll-check-enricher:hover {
 }
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.melee-section,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.ranged-section,
-.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.magic-section {
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.psychic-section {
   background-color: var(--co-stat-attack);
 }
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.melee-section .field,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.ranged-section .field,
-.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.magic-section .field,
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.psychic-section .field,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.melee-section .labelled-field,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.ranged-section .labelled-field,
-.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.magic-section .labelled-field {
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.psychic-section .labelled-field {
   color: var(--co-stat-attack);
 }
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section:nth-child(8) .labelled-field i {

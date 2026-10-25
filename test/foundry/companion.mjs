@@ -20,8 +20,9 @@ export async function checkCompanions() {
   }
   try {
     const master = await createActor({ name: "__test_companion_master", type: "character" })
-    await master.update({ "system.combat.magic.bonuses.sheet": 6 })
-    const masterMagic = master.getRollData().atm
+    await master.update({ "system.combat.psychic.bonuses.sheet": 6 })
+    const masterPsychic = master.getRollData().atp
+    equal(master.getRollData().atm, masterPsychic, "@atm reste un alias du score psychique")
     const companion = await createActor({
       name: "__test_companion",
       type: "encounter",
@@ -32,15 +33,15 @@ export async function checkCompanions() {
         combat: {
           melee: { base: 1, formula: "@master.atm", bonuses: { sheet: 2 } },
           ranged: { base: 0, formula: "@master.atm", bonuses: { sheet: -2 } },
-          magic: { base: 0, formula: "@master.atm" },
+          psychic: { base: 0, formula: "@master.atm" },
         },
       },
     })
     equal(companion.system.abilities.dex.base, 3, "la base saisie reste disponible")
-    equal(companion.system.abilities.dex.value, masterMagic, "la caractéristique utilise le maître")
-    equal(companion.system.attributes.hp.max, 2 * masterMagic, "les PV utilisent le maître")
+    equal(companion.system.abilities.dex.value, masterPsychic, "la caractéristique utilise le maître")
+    equal(companion.system.attributes.hp.max, 2 * masterPsychic, "les PV utilisent le maître")
     equal(companion.getRollData().atm, 5, "@atm reste VOL + NC")
-    equal(companion.system.combat.magic.value, masterMagic, "l'ajustement magique du compagnon reste distinct")
+    equal(companion.system.combat.psychic.value, masterPsychic, "l'ajustement psychique du compagnon reste distinct")
 
     const [attack] = await companion.createEmbeddedDocuments("Item", [
       {
@@ -77,13 +78,13 @@ export async function checkCompanions() {
       equal(dialog.skillBonus, 0, `${subtype} ${formula} : bonus ponctuel libre`)
       equal(dialog.skillMalus, 0, `${subtype} ${formula} : malus ponctuel libre`)
     }
-    await attackCase("melee", "0", masterMagic + 2)
-    await attackCase("melee", "@atc", masterMagic + 2)
-    await attackCase("melee", "@atc + 2", masterMagic + 4)
-    await attackCase("melee", "@combat.melee.value", masterMagic + 2)
-    await attackCase("ranged", "@atd", masterMagic - 2)
-    await attackCase("magic", "0", masterMagic)
-    await attackCase("magic", "@atm", 5 + masterMagic)
+    await attackCase("melee", "0", masterPsychic + 2)
+    await attackCase("melee", "@atc", masterPsychic + 2)
+    await attackCase("melee", "@atc + 2", masterPsychic + 4)
+    await attackCase("melee", "@combat.melee.value", masterPsychic + 2)
+    await attackCase("ranged", "@atd", masterPsychic - 2)
+    await attackCase("magic", "0", masterPsychic)
+    await attackCase("magic", "@atm", 5 + masterPsychic)
 
     // Ouvrir le vrai dialogue, changer le dé, puis lancer le jet.
     const pendingRolls = originalPrompt.call(COAttackRoll, dialog, { withDialog: true })
@@ -93,19 +94,19 @@ export async function checkCompanions() {
       if (formulaInput) break
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
-    equal(formulaInput?.value, `1d20 + ${5 + masterMagic}`, "le dialogue rendu affiche le score effectif")
+    equal(formulaInput?.value, `1d20 + ${5 + masterPsychic}`, "le dialogue rendu affiche le score effectif")
     const dialogElement = formulaInput.closest(".application")
     const bonusDie = dialogElement.querySelector('input[name="dice"][value="bonus"]')
     bonusDie.checked = true
     bonusDie.dispatchEvent(new Event("change", { bubbles: true }))
-    equal(formulaInput.value, `2d20kh+${5 + masterMagic}`, "changer le dé conserve le score")
+    equal(formulaInput.value, `2d20kh+${5 + masterPsychic}`, "changer le dé conserve le score")
     dialogElement.querySelector('button[data-action="ok"]').click()
     const rolls = await pendingRolls
-    equal(rolls[0].total - rolls[0].dice[0].total, 5 + masterMagic, "le jet réel reçoit le score une fois")
+    equal(rolls[0].total - rolls[0].dice[0].total, 5 + masterPsychic, "le jet réel reçoit le score une fois")
 
     await companion.sheet.render(true)
     const rendered = companion.sheet.element.querySelector(".attack-button")
-    equal(rendered?.textContent.includes(`+${5 + masterMagic}`), true, "le bouton rendu affiche la valeur effective")
+    equal(rendered?.textContent.includes(`+${5 + masterPsychic}`), true, "le bouton rendu affiche la valeur effective")
     await companion.sheet.close()
 
     await companion.update({ "system.abilities.dex.formula": "0" })

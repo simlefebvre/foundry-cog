@@ -1,3 +1,5 @@
+import { migratePsychicScore } from "../helpers/psychic-migration.mjs"
+
 /**
  * Define the data schema for an Item
  * source : the uuid of the item or actor where the item comes from
@@ -6,6 +8,12 @@
  * tags : a set of tags to categorize the item
  */
 export default class ItemData extends foundry.abstract.TypeDataModel {
+  /** @override */
+  static migrateData(source) {
+    migratePsychicScore(source)
+    return super.migrateData(source)
+  }
+
   static defineSchema() {
     const fields = foundry.data.fields
     return {

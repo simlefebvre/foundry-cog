@@ -518,9 +518,6 @@
         "hd": "Dé de vie",
         "hp": "Points de vie",
         "fp": "Points de chance",
-        "rp": "Dés de récupération",
-        "recoveryFast": "Récupération rapide",
-        "recoveryFull": "Récupération complète",
         "type": "Type",
         "subtype": "Sous-type",
         "actionType": "Type d'action",
@@ -603,7 +600,6 @@
         "def": "DEF",
         "init": "Init.",
         "hd": "DV",
-        "rp": "PR",
         "type": "Tpe",
         "subtype": "Ss-tpe",
         "category": "Cat.",
@@ -795,11 +791,8 @@
       "capacitiesNotLearned": "Capacités non-acquises",
       "buy": "Apprendre",
       "unbuy": "Ne plus apprendre",
-      "recovery": "Dé de Récupération",
-      "fastRest": "Récupération rapide",
-      "fastRestLabelTooltip": "Un repos de 30 minutes vous permet de récupérer [1 DR + ½ NIV] ({formula}) PV",
-      "fullRest": "Récupération complète",
-      "fullRestLabelTooltip": "Un repos de 8 heures vous permet de récupérer [Valeur DR + NIV] ({formula}) PV",
+      "recovery": "Dé de soins",
+      "rest": "Repos",
       "noTarget": "Vous n'avez ciblé personne",
       "critTooltip": "Laisser vide pour utiliser la valeur par défaut du personnage",
       "formulaTooltip": "Vous pouvez utiliser : @agi, @con, @for, @per, @cha, @int, @vol, @atc, @atd, @atm, @def, @ini, @niv, d4°, @toutrang[x], @rang, @rang[x,x,x,x,x], @cible, @oppose",
@@ -939,21 +932,18 @@
     "resources": {
       "long": {
         "fortune": "Points de chance",
-        "recovery": "Dés de récupération",
         "primary": "Primaire",
         "secondary": "Secondaire",
         "tertiary": "Tertiaire"
       },
       "medium": {
         "fortune": "Chance",
-        "recovery": "Récupération",
         "primary": "Primaire",
         "secondary": "Secondaire",
         "tertiary": "Tertiaire"
       },
       "short": {
         "fortune": "PC",
-        "recovery": "PR",
         "primary": "Prim.",
         "secondary": "Sec.",
         "tertiary": "Ter."
@@ -1017,21 +1007,9 @@
     },
     "dialogs": {
       "skillCheck": "Test de compétence",
-      "spendRecoveryPoint": {
-        "title": "Dépenser un point de récupération",
-        "content": "<p>Souhaitez-vous dépenser 1 point de récupération ?",
-        "rollTitle": "Point de récupération"
-      },
       "spendLuckyPoint": "Utiliser un point de chance",
       "acceptResult": "Accepter le résultat",
-      "fastRest": {
-        "title": "Récupération rapide",
-        "content": "Souhaitez-vous effectuer une récupération rapide ?"
-      },
-      "fullRest": {
-        "title": "Récupération complète",
-        "content": "Souhaitez-vous effectuer une récupération complète ?"
-      },
+      "restConfirm": "Souhaitez-vous effectuer un repos et récupérer vos points de vie ?",
       "editYourAbilities": {
         "title": "Éditez vos Caractéristiques",
         "mode": "Type de personnage",
@@ -1151,7 +1129,6 @@
         "init": "Initiative",
         "def": "Défense",
         "hp": "Points de vie",
-        "rp": "Dés de récupération",
         "fp": "Points de chance"
       },
       "apply": {

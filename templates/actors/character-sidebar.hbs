@@ -428,60 +428,6 @@
       {{/if}}
     </div>
     {{/if}}
-    {{#if rules.recoveryPoints}}
-    <!-- RP -->
-    <div class="sidebar-section resource-section">
-      <div class="sidebar-section-header">
-        <div class="sidebar-label">
-          <h4 data-tooltip="{{localize 'CO.resources.long.recovery'}}">{{localize "CO.resources.medium.recovery"}}</h4>
-        </div>
-        <div class="resource-points labelled-field">
-          {{#if viewLimited}}
-            <i class="fas fa-fw fa-heart-pulse use-recovery"></i>??
-          {{else}}
-            <i class="fas fa-fw fa-heart-pulse use-recovery"></i>
-            <input class="current" name="system.resources.recovery.value" value="{{resources.recovery.value}}" type="number" data-dtype="Number" placeholder="0" />
-            <span class="slash">/</span>
-            <span class="max" data-tooltip="{{resources.recovery.tooltip}}">{{resources.recovery.max}}</span>
-          {{/if}}
-        </div>
-      </div>
-      {{#if unlocked}}
-        <div class="sidebar-section-content">
-          <div class="field">
-            {{!--<label>{{localize "CO.label.short.ability"}}</label>--}}
-            <select name="system.resources.recovery.ability" data-type="String">
-              {{selectOptions choiceAbilities selected=resources.recovery.ability localize=true}}
-            </select>
-          </div>
-        </div>
-        <div class="sidebar-section-content">
-          <div class="field">
-            <input
-              class="hp-base"
-              type="number"
-              name="system.resources.recovery.base"
-              value="{{resources.recovery.base}}"
-              data-dtype="Number"
-              placeholder="0"
-              readonly
-              data-tooltip="{{localize 'CO.label.long.base'}}"
-            />
-            <span class="slash">/</span>
-            <input
-              class="hp-bonus"
-              type="text"
-              name="system.resources.recovery.bonuses.sheet"
-              value="{{numberFormat resources.recovery.bonuses.sheet decimals=0 sign=true}}"
-              data-dtype="Number"
-              data-tooltip="{{localize 'CO.label.long.bonus'}}"
-              placeholder="0"
-            />
-          </div>
-        </div>
-      {{/if}}
-    </div>
-    {{/if}}
     <!-- MOVEMENT -->
     <div class="sidebar-section speed-section">
       <div class="sidebar-section-header">
@@ -557,6 +503,10 @@
             </li>
           {{/each}}
         </ul>
+        <button type="button" class="rest-button" data-action="useRecovery" data-tooltip="{{localize 'CO.ui.rest'}}">
+          <i class="fa-solid fa-bed"></i>
+          {{localize "CO.ui.rest"}}
+        </button>
       </div>
     </div>
     {{/unless}}

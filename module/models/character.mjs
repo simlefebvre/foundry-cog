@@ -329,11 +329,6 @@ export default class CharacterData extends ActorData {
       if (key === SYSTEM.RESOURCES.fortune.id) {
         this._prepareFP(skill, bonuses)
       }
-
-      // Dés de récupération - Recovery Points - RP
-      if (key === SYSTEM.RESOURCES.recovery.id) {
-        this._prepareRP(skill, bonuses)
-      }
     }
 
     // XP dépensés dans les capacités des voies
@@ -655,40 +650,6 @@ export default class CharacterData extends ActorData {
     return { value, tooltip }
   }
 
-  /**
-   * Prepares the RP (Resource Points) for a given skill by computing its base value,
-   * applying resource modifiers, and adding any additional bonuses.
-   *
-   * @param {Object} skill The skill object to prepare RP for.
-   * @param {number} bonuses Additional bonuses to be added to the skill's RP.
-   */
-  _prepareRP(skill, bonuses) {
-    const baseRP = this._computeBaseRP()
-    skill.base = baseRP.value
-    skill.tooltipBase = baseRP.tooltip
-
-    const resourceModifiers = this.computeTotalModifiersByTarget(this.resourceModifiers, SYSTEM.MODIFIERS_TARGET.rp.id)
-    skill.max = skill.base + bonuses + resourceModifiers.total
-    skill.value = Math.min(skill.max, skill.value) // On ne depasse pas le max
-    skill.tooltip = skill.tooltipBase.concat(resourceModifiers.tooltip, Utils.getTooltip("Bonus", bonuses))
-  }
-
-  /**
-   * Calcule la base des dés de récupération du personnage.
-   *
-   * Elle correspond à la valeur de base et au score de Constitution.
-   *
-   * @returns {number,string} The computed base RP value and tooltip
-   */
-  _computeBaseRP() {
-    const baseRP = DefaultConfiguration.baseRecovery()
-    const baseValue = this.abilities[this.resources.recovery.ability].value
-    const value = baseRP + baseValue
-    let tooltip = Utils.getTooltip("Base", baseRP)
-    tooltip = tooltip.concat(Utils.getTooltip(Utils.getAbilityName(this.resources.recovery.ability), baseValue))
-    return { value, tooltip }
-  }
-
   // #region accesseurs
 
   /**
@@ -744,24 +705,16 @@ export default class CharacterData extends ActorData {
   // #endregion
 
   /**
-   * Construit la formule de soin d'une récupération (rapide ou complète) : dé de récupération + demi-niveau
-   * + modificateurs de récupération. Extrait ici pour être réutilisé à la fois par le flux par défaut et par
-   * les extensions (ex. cof2-compagnon, qui soigne les PV dans sa propre fenêtre de récupération).
+   * Construit la formule de soin d'un repos : un dé de vie lancé, la Constitution, le niveau et les modificateurs.
    *
-   * @param {boolean} isFullRest true pour une récupération complète (résultat maximal du dé), false pour rapide.
-   * @returns {string} La formule de soin (ex. "d8 + 3").
+   * @returns {string} La formule de soin (ex. "1d8 + 2 + 3").
    */
-  getRecoveryHealFormula(isFullRest) {
+  getRecoveryHealFormula() {
     const hd = this.hd
-    const level = Math.round(this.attributes.level / 2) // +1/2 niveau
-    let formula
-    if (!isFullRest) {
-      formula = `${hd} + ${level}`
-    } else {
-      // Récupération complète : résultat maximal du dé (sauf s'il n'y a pas de DR max, on lance alors le dé)
-      formula = this.resources.recovery.max === 0 ? `${hd} + ${level}` : `${hd.replace("d", "")} + ${level}`
-    }
-    const recoveryModifiers = this.computeTotalModifiersByTarget(this.attributeModifiers, isFullRest ? "recoveryFull" : "recoveryFast", true)
+    const constitution = this.abilities.con.value
+    const level = this.attributes.level
+    let formula = `${hd} + ${constitution} + ${level}`
+    const recoveryModifiers = this.computeTotalModifiersByTarget(this.attributeModifiers, "recoveryFull", true)
     if (recoveryModifiers.total !== 0 && recoveryModifiers.total !== "") {
       formula = `${formula} + ${recoveryModifiers.total}`
     }
@@ -772,122 +725,55 @@ export default class CharacterData extends ActorData {
    * Point d'extension asynchrone de la récupération. Émet le hook `co2.preUseRecovery` et attend les
    * gardes enregistrées par d'éventuels modules (même mécanisme async que `co2.preActivateAction`).
    *
-   * Un module qui souhaite **remplacer** la récupération liée à un DR (son propre dialogue, la dépense
-   * du DR, le soin, d'éventuelles ressources propres) enregistre une garde — via `guard(promise)` —
-   * dont la promesse résout sur `true` : le système saute alors son flux par défaut (dialogue + dépense
-   * de DR + soin). Toute autre valeur (ou aucune garde) laisse la récupération standard s'exécuter.
+   * Un module qui souhaite **remplacer** le soin du repos (son propre dialogue, son soin, d'éventuelles
+   * ressources propres) enregistre une garde — via `guard(promise)` —
+   * dont la promesse résout sur `true` : le système saute alors son flux par défaut (repos + soin).
+   * Toute autre valeur (ou aucune garde) laisse le repos standard s'exécuter.
    *
-   * Pour seulement **ajouter** au soin, préférer les modificateurs `recoveryFast`/`recoveryFull` ;
+   * Pour seulement **ajouter** au soin, préférer le modificateur `recoveryFull` ;
    * pour **réagir après** la récupération, écouter le hook `co2.postUseRecovery`.
    * (Ex. de consommateur : le module cof2-compagnon, fenêtre de récupération PV/PE.)
    *
-   * @param {boolean} isFullRest true pour une récupération complète, false pour une rapide.
    * @returns {Promise<boolean>} true si un module a pris en charge la récupération à la place du système.
    */
-  async _isRecoveryHandledByModule(isFullRest) {
+  async _isRecoveryHandledByModule() {
     const guards = []
-    Hooks.callAll("co2.preUseRecovery", this.parent, { isFullRest, guard: (p) => guards.push(Promise.resolve(p)) })
+    Hooks.callAll("co2.preUseRecovery", this.parent, { isFullRest: true, guard: (p) => guards.push(Promise.resolve(p)) })
     if (guards.length === 0) return false
     return (await Promise.all(guards)).some((v) => v === true)
   }
 
   /**
-   * Gère le processus de récupération pour un personnage, soit par un repos rapide, soit par un repos complet.
+   * Gère le repos d'un personnage et applique systématiquement la récupération complète.
    *
-   * @param {boolean} isFullRest Indique si la récupération est un repos complet (true) ou un repos rapide (false).
    * @returns {Promise<void>} Une promesse qui se résout lorsque le processus de récupération est terminé.
    */
-  async useRecovery(isFullRest) {
-    let hp = this.attributes.hp
-    let rp = this.resources.recovery
-    const newRp = foundry.utils.duplicate(rp)
-
-    // Récupération des charges des capacités
-    await this.recoverCapacityCharges(isFullRest)
-
-    // Dans les deux cas je remet les points de vies temporaires à 0
+  async useRecovery() {
+    await this.recoverCapacityCharges()
     await this.parent.update({ "system.attributes.tempDm": 0 })
 
-    // Récupération rapide
-    if (!isFullRest) {
-      if (rp.value <= 0) return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoMoreRecoveryPoints"))
+    if (await this._isRecoveryHandledByModule()) return
 
-      // Un module peut prendre en charge lui-même la récupération à la place du système (voir co2.preUseRecovery)
-      if (await this._isRecoveryHandledByModule(isFullRest)) return
+    const formula = this.getRecoveryHealFormula()
+    await this.parent.rollHeal(null, {
+      actionName: game.i18n.format("CO.ui.rest"),
+      healFormula: formula,
+      targetType: SYSTEM.RESOLVER_TARGET.self.id,
+      targets: [this.parent],
+    })
 
-      // On propose d'utiliser un point de DR
-      const proceedFastRest = await foundry.applications.api.DialogV2.confirm({
-        window: { title: game.i18n.localize("CO.dialogs.fastRest.title") },
-        content: game.i18n.localize("CO.dialogs.fastRest.content"),
-        rejectClose: false,
-        modal: true,
-      })
-      // Si on refuse, on sort
-      if (!proceedFastRest) return
-
-      // Si on accepte on dépense d'un DR et récupération de PV
-      const formula = this.getRecoveryHealFormula(isFullRest)
-
-      const labelTooltip = game.i18n.format("CO.ui.fastRestLabelTooltip", { formula: formula })
-
-      // Await this._applyRecovery(hp, formula, game.i18n.localize("CO.dialogs.fastRest.title"), labelTooltip)
-      await this.parent.rollHeal(null, { actionName: game.i18n.format("CO.ui.fastRest"), healFormula: formula, targetType: SYSTEM.RESOLVER_TARGET.self.id, targets: [this.parent] })
-
-      // Récupération des charges des capacités
-      await this.recoverCapacityCharges(isFullRest)
-
-      // Dépense du DR
-      newRp.value = rp.value - 1
-      await this.parent.update({ "system.resources.recovery.value": newRp.value })
-    }
-    // Récupération complète
-    else {
-      // Un module peut prendre en charge lui-même la récupération à la place du système (voir co2.preUseRecovery)
-      if (await this._isRecoveryHandledByModule(isFullRest)) return
-
-      const proceedFullRestRollDice = await foundry.applications.api.DialogV2.confirm({
-        window: { title: game.i18n.localize("CO.dialogs.spendRecoveryPoint.title") },
-        content: game.i18n.localize("CO.dialogs.spendRecoveryPoint.content"),
-        rejectClose: false,
-        modal: true,
-      })
-
-      if (proceedFullRestRollDice) {
-        const formula = this.getRecoveryHealFormula(isFullRest)
-
-        const labelTooltip = game.i18n.format("CO.ui.fullRestLabelTooltip", { formula: formula })
-        // Await this._applyRecovery(hp, formula, game.i18n.localize("CO.dialogs.fullRest.title"), labelTooltip)
-        await this.parent.rollHeal(null, {
-          actionName: game.i18n.format("CO.ui.fullRest"),
-          healFormula: formula,
-          targetType: SYSTEM.RESOLVER_TARGET.self.id,
-          targets: [this.parent],
-        })
-        // On aurait dû gagner 1 DR mais si on l'utilise pour la récup on va pas faire +1 et -1.
-      } else {
-        // Récupération d'un DR puisqu'on en dépense pas
-        if (rp.value < rp.max) {
-          newRp.value = rp.value + 1
-          await this.parent.update({ "system.resources.recovery.value": newRp.value })
-        }
-      }
-    }
-
-    // Hook d'extension : récupération des Points d'Ego (ex. cof2-compagnon) après un repos
-    Hooks.callAll("co2.postUseRecovery", this.parent, { isFullRest })
+    Hooks.callAll("co2.postUseRecovery", this.parent, { isFullRest: true })
   }
 
   /**
-   * Recharge les charges d'utilisation des capacités lors des récupérations
-   * @param {boolean} fullRest Indique s'il s'agit d'une récupération rapide (false) ou longue (true)
+   * Recharge les charges d'utilisation des capacités lors d'un repos.
    */
-  async recoverCapacityCharges(fullRest) {
+  async recoverCapacityCharges() {
     const capacities = this.parent.capacities
     if (capacities.length !== 0) {
       // TODO Optimiser pour faire un seul update à la fin
       for (const capacity of capacities) {
-        // Une fréquence journalière a besoin d'une récupération complète pour recharger les charges
-        if (capacity.system.frequency === SYSTEM.CAPACITY_FREQUENCY.daily.id && fullRest) {
+        if (capacity.system.frequency === SYSTEM.CAPACITY_FREQUENCY.daily.id) {
           capacity.system.charges.current = capacity.system.charges.max
           await capacity.update({ "system.charges.current": capacity.system.charges.current })
         }
@@ -944,14 +830,6 @@ export default class CharacterData extends ActorData {
   async getAvailableXP() {
     const spentXP = await this.getSpentXP()
     return this.attributes.xp.max - spentXP
-  }
-
-  async spendDR(nbDices, heal = false) {
-    const current = this.resources.recovery.value
-    if (current > 0) {
-      let newValue = Math.max(current - nbDices, 0)
-      await this.parent.update({ "system.resources.recovery.value": newValue })
-    }
   }
 
   // Parcourt toutes les actions de tous les items du personnage et met à jour la source des actions

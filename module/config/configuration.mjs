@@ -11,10 +11,6 @@ export default class DefaultConfiguration {
     return game.system.CONST.BASE_FORTUNE
   }
 
-  static baseRecovery() {
-    return game.system.CONST.BASE_RECOVERY
-  }
-
   static baseCritique() {
     return game.system.CONST.BASE_CRITICAL
   }

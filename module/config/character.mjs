@@ -31,11 +31,6 @@ export const RESOURCES = {
     label: "CO.resources.long.fortune",
     ability: "cha",
   },
-  recovery: {
-    id: "recovery",
-    label: "CO.resources.long.recovery",
-    ability: "con",
-  },
 }
 
 export const COMBAT = {
@@ -109,7 +104,6 @@ export const LIVING_STANDARD_RANK = {
 }
 
 export const BASE_FORTUNE = 2
-export const BASE_RECOVERY = 2
 export const BASE_INITIATIVE = 10
 export const BASE_DEFENSE = 10
 export const BASE_CRITICAL = 20

@@ -90,7 +90,7 @@ export default class Utils {
   }
 
   static isRecoveryType(target) {
-    return [SYSTEM.MODIFIERS_TARGET.recoveryFast.id, SYSTEM.MODIFIERS_TARGET.recoveryFull.id].includes(target)
+    return SYSTEM.MODIFIERS_TARGET.recoveryFull.id === target
   }
 
   /**

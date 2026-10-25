@@ -163,20 +163,21 @@ export const MODIFIERS_TARGET = {
     label: "CO.label.long.armorMalus",
     subtype: "attribute",
   },
-  recoveryFast: {
-    id: "recoveryFast",
-    label: "CO.label.long.recoveryFast",
-    subtype: "attribute",
-  },
   recoveryFull: {
     id: "recoveryFull",
-    label: "CO.label.long.recoveryFull",
+    label: "CO.ui.rest",
     subtype: "attribute",
+  },
+  // Garde les anciens modificateurs lisibles, sans les proposer dans les feuilles ni les appliquer.
+  recoveryFast: {
+    id: "recoveryFast",
+    label: "CO.ui.rest",
+    subtype: "legacy",
   },
   rp: {
     id: "rp",
-    label: "CO.label.long.rp",
-    subtype: "resource",
+    label: "CO.ui.recovery",
+    subtype: "legacy",
   },
   fp: {
     id: "fp",

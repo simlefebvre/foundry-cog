@@ -16,7 +16,7 @@ export function createActor(document, options, userId) {
 /**
  * Hook function called when an actor is updated.
  * Handles automatic status effects based on HP changes:
- * - For characters: applies unconscious status and spends 1 DR when HP reaches 0
+ * - For characters: applies unconscious status when HP reaches 0
  * - For encounters: applies dead status when HP reaches 0
  *
  * @param {Actor} actor The actor being updated
@@ -36,7 +36,6 @@ export function updateActor(actor, updateData, options, userId) {
     }
     actor.toggleStatusEffect("unconscious", { active: true })
     actor.setFlag("co2", "statuses.unconsciousFromZeroHP", true)
-    actor.system.spendDR(1)
   }
 
   // Une rencontre est morte à 0 PV

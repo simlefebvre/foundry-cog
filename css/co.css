@@ -3297,6 +3297,14 @@ a.roll-check-enricher:hover {
   margin-left: 5px;
   margin-right: 5px;
 }
+.co.application.sheet.actor.character .window-content .sheet-sidebar .rest-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px auto 0;
+  padding: 2px 8px;
+  font-size: 0.85em;
+}
 .co.application.sheet.actor.character .window-content .sheet-sidebar input.vision-slider:not(:checked)::before {
   color: var(--co-surface);
 }

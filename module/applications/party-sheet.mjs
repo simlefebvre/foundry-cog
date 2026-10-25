@@ -50,7 +50,6 @@ export default class COPartySheet extends HandlebarsApplicationMixin(foundry.app
           combat: c.system.combat,
           hp: c.system.attributes.hp,
           fortune: c.system.resources.fortune,
-          recovery: c.system.resources.recovery,
         }
       })
 

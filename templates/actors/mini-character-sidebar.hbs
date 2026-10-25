@@ -49,20 +49,6 @@
   </div>
   {{/if}}
 
-  {{#if rules.recoveryPoints}}
-  <!-- RP -->
-  <div class="sidebar-section resource-section mini-section">
-    <div class="sidebar-section-header">
-      <div class="resource-points labelled-field">
-        <i class="fas fa-fw fa-heart-pulse use-recovery"></i>
-        <input class="current" name="system.resources.recovery.value" value="{{resources.recovery.value}}" type="number" data-dtype="Number" placeholder="0" />
-        <span class="slash">/</span>
-        <span class="max" data-tooltip="{{resources.recovery.tooltip}}">{{resources.recovery.max}}</span>
-      </div>
-    </div>
-  </div>
-
-  {{/if}}
   <!-- DR -->
   <div class="sidebar-section dr-section">
     <div class="sidebar-section-header">

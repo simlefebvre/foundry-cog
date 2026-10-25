@@ -31,6 +31,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
       activateDef: COBaseActorSheet.#onActivateDef,
       deactivateDef: COBaseActorSheet.#onDeactivateDef,
       useRest: COBaseActorSheet.#onUseRest,
+      useRecovery: COBaseActorSheet.#onUseRecovery,
       toggleSection: COBaseActorSheet.#onSectionToggle,
       sendToChat: COBaseActorSheet.#onSendToChat,
       createItem: COBaseActorSheet.#onCreateItem,
@@ -811,6 +812,23 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
     if (!this.isEditable) return
     const rest = game.system.CONST.restActions.find((action) => action.id === target.dataset.rest)
     if (rest) return rest.handler(this.document)
+  }
+
+  /**
+   * Déclenche un repos et sa récupération complète.
+   * @param {PointerEvent} event L'événement déclencheur.
+   */
+  static async #onUseRecovery(event) {
+    if (!this.isEditable) return
+    const shouldRest = await foundry.applications.api.DialogV2.confirm({
+      window: { title: game.i18n.localize("CO.ui.rest") },
+      content: game.i18n.localize("CO.dialogs.restConfirm"),
+      rejectClose: false,
+      modal: true,
+    })
+    if (!shouldRest) return
+
+    await this.document.system.useRecovery()
   }
 
   async _handleDef(effect, state) {

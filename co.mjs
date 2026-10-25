@@ -136,7 +136,7 @@ Hooks.once("init", async function () {
 
   // Règles propres à un univers, activées par un module de contenu (cf. cof2-base). Les mécaniques restent dans le système — relance des jets, application des dommages, récupération — seule leur
   // disponibilité est conditionnée. L'ordre de l'Object.assign préserve les valeurs qu'un module chargé avant le système aurait déjà posées.
-  game.system.CONST.rules = Object.assign({ luckPoints: false, recoveryPoints: false, tempDamage: false }, game.system.CONST.rules)
+  game.system.CONST.rules = Object.assign({ luckPoints: true, tempDamage: true }, game.system.CONST.rules)
 
   // Combat tracker
   if (game.settings.get("co2", "usevarInit")) {

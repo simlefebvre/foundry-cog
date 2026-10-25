@@ -45,6 +45,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
       toggleAction: COBaseActorSheet._onUseAction,
       toggleEffect: COBaseActorSheet.#onUseEffect,
       toggleDarkVision: COBaseActorSheet.#onToggleDarkVision,
+      toggleSeriousWound: COBaseActorSheet.#onToggleSeriousWound,
       sortActionsByDefault: COBaseActorSheet.#onSortActionsByDefault,
       sortActionsByName: COBaseActorSheet.#onSortActionsByName,
       sortActionsByRank: COBaseActorSheet.#onSortActionsByRank,
@@ -164,6 +165,9 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
     context.abilities = this.document.system.abilities
     context.combat = this.document.system.combat
     context.attributes = this.document.system.attributes
+    if (this.document.type === "character") context.woundThreshold = this.document.system.woundThresholdValue
+    context.isGM = game.user.isGM
+    context.hasSeriousWound = this.document.statuses.has("seriousWound")
     context.resources = this.document.system.resources
     context.details = this.document.system.details
     context.paths = this.document.paths
@@ -336,6 +340,11 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
   static async #onToggleDarkVision(event, target) {
     event.preventDefault()
     await this.document.system.toggleDarkVision(target.checked)
+  }
+
+  static async #onToggleSeriousWound(event, target) {
+    if (!game.user.isGM) return
+    await this.document.toggleStatusEffect("seriousWound", { active: target.checked })
     this.render()
   }
 

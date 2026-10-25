@@ -14,6 +14,7 @@ export default class Hitpoints {
     if (!targetActor) return
     const sourceActor = game.actors.get(fromActor)
     const sourceActorName = sourceActor?.name ?? ""
+    const damageSource = source ? (sourceActorName ? `${source} (${sourceActorName})` : source) : sourceActorName || null
 
     const currentHp = targetActor.system.attributes.hp.value
     const currentMaxHp = targetActor.system.attributes.hp.max
@@ -27,34 +28,39 @@ export default class Hitpoints {
       } else if (type === "double") {
         finalAmount = finalAmount * 2
       }
-      if (drChecked) finalAmount -= targetActor.system.combat.dr.value
-      if (finalAmount <= 0) finalAmount = 1
 
       if (tempDamage) {
-        const targetFor = targetActor.system.abilities.for.value
-        const amountTempDamage = Math.max(0, finalAmount - targetFor)
-        let newTempDamage = Math.min(currentTempDamage + amountTempDamage, currentMaxHp)
-        if (game.user.isGM) await targetActor.update({ "system.attributes.tempDm": newTempDamage })
-        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+        if (game.user.isGM) {
+          await targetActor.applyDamage({
+            source: damageSource,
+            damage: finalAmount,
+            isTemporaryDamage: true,
+            ignoreDR: !drChecked,
+          })
+        } else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
           await game.users.activeGM.query("cog.actorDamageSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,
             damageAmount: finalAmount,
             isTemporaryDamage: true,
-            ignoreDR: drChecked,
+            ignoreDR: !drChecked,
           })
       } else {
-        const newHp = Math.max(0, currentHp - finalAmount)
-        if (game.user.isGM) await targetActor.update({ "system.attributes.hp.value": newHp })
-        else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
+        if (game.user.isGM) {
+          await targetActor.applyDamage({
+            source: damageSource,
+            damage: finalAmount,
+            ignoreDR: !drChecked,
+          })
+        } else if (game.settings.get("cog", "allowPlayersToModifyTargets"))
           await game.users.activeGM.query("cog.actorDamageSingleTarget", {
             fromActor: sourceActorName,
             fromSource: source,
             targetUuid: targetActor.uuid,
             damageAmount: finalAmount,
             isTemporaryDamage: false,
-            ignoreDR: drChecked,
+            ignoreDR: !drChecked,
           })
       }
     }

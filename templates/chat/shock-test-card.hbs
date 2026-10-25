@@ -1,0 +1,21 @@
+<div class="co chat-card roll-card check-card">
+  <header class="card-header flexcol">
+    <div class="action-name">{{title}}</div>
+  </header>
+  <div class="card-content">
+    <p>{{description}}</p>
+    <section class="result-sentence {{buttonClass}}">
+      {{#if (eq stage "recover")}}
+        <button class="remove-unconscious" data-actor-uuid="{{actorUuid}}" data-tooltip="{{buttonLabel}}" data-tooltip-direction="UP">
+          <i class="fa-solid fa-heart"></i>
+          {{buttonLabel}}
+        </button>
+      {{else}}
+        <button class="roll-shock-test" data-actor-uuid="{{actorUuid}}" data-stage="{{stage}}" data-tooltip="{{buttonLabel}}" data-tooltip-direction="UP">
+          <i class="fa-solid fa-dice-d20"></i>
+          {{buttonLabel}}
+        </button>
+      {{/if}}
+    </section>
+  </div>
+</div>

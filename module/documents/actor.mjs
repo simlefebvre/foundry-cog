@@ -7,6 +7,7 @@ import CoChat from "../chat.mjs"
 import Utils from "../helpers/utils.mjs"
 import { resolveStatusId } from "../helpers/status-rules.mjs"
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
+import { createShockTestRequest } from "../helpers/serious-wound.mjs"
 
 /**
  * @class COActor
@@ -2793,7 +2794,14 @@ export default class COActor extends Actor {
    */
   async applyDamage({ source = null, damage, isTemporaryDamage = false, ignoreDR = false } = {}) {
     if (!Number.isFinite(damage) || damage === 0) return
-    const finalDamage = Math.max(1, ignoreDR ? damage : damage - this.system.combat.dr.value)
+    const hpBefore = this.system.attributes.hp.value
+    const damageReduction = ignoreDR ? 0 : this.system.combat.dr.value
+    const finalDamage = Math.max(1, damage - damageReduction)
+    const woundThreshold = this.system.woundThresholdValue
+    const hasSeriousWoundBefore = this.statuses.has("seriousWound")
+    const thresholdReached = finalDamage >= woundThreshold
+    const hpReachedZero = !isTemporaryDamage && hpBefore - finalDamage <= 0
+    const shouldApplySeriousWound = this.type === "character" && !hasSeriousWoundBefore && (thresholdReached || hpReachedZero)
     // Gestion des dommages temporaires
     if (isTemporaryDamage) {
       const currentMaxHp = this.system.attributes.hp.max
@@ -2812,6 +2820,12 @@ export default class COActor extends Actor {
       }
       await this.update({ "system.attributes.hp.value": newValue })
     }
+    if (shouldApplySeriousWound) {
+      await this.toggleStatusEffect("seriousWound", { active: true })
+      await this.activateCOStatusEffect({ state: true, effectid: "weakened" })
+      await createShockTestRequest(this, "initial")
+    }
+    const hasSeriousWoundAfter = this.statuses.has("seriousWound")
 
     let message
     if (!source) {
@@ -2821,7 +2835,16 @@ export default class COActor extends Actor {
       if (isTemporaryDamage) message = game.i18n.format("CO.notif.tmpDamagedBy", { actorName: this.name, amount: damage, source: source })
       else message = game.i18n.format("CO.notif.damagedBy", { actorName: this.name, amount: damage, source: source })
     }
-    new CoChat(this)
+    if (this.type === "character") {
+      const yesNo = (value) => (value ? "oui" : "non")
+      const damageCheck = game.i18n.format("CO.notif.seriousWoundCheck", {
+        finalDamage: finalDamage,
+        threshold: woundThreshold,
+        hasSeriousWoundAfter: yesNo(hasSeriousWoundAfter),
+      })
+      message = `${message} — ${damageCheck}`
+    }
+    await new CoChat(this)
       .withTemplate(SYSTEM.TEMPLATE.MESSAGE)
       .withData({ message: message })
       .withWhisper(ChatMessage.getWhisperRecipients("GM").map((u) => u.id))

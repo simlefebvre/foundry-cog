@@ -1,5 +1,6 @@
 import BaseMessageData from "./base-message.mjs"
 import Macros from "../helpers/macros.mjs"
+import { createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
 
 /**
  * Data model for check messages created by the @Test enricher.
@@ -31,6 +32,122 @@ export default class CheckMessageData extends BaseMessageData {
    * @param {HTMLElement} html Élément HTML représentant le message à modifier.
    */
   async addListeners(html) {
+    const recoverButton = html.querySelector(".remove-unconscious")
+    if (recoverButton) {
+      const actor = fromUuidSync(recoverButton.dataset.actorUuid)
+      if (!actor || !game.user.isGM) {
+        recoverButton.remove()
+        return
+      }
+
+      recoverButton.addEventListener("click", async (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        recoverButton.disabled = true
+        await actor.toggleStatusEffect("unconscious", { active: false })
+        await ChatMessage.create({
+          content: game.i18n.format("CO.notif.shockTest.wakesUp", { actorName: actor.name }),
+          speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
+          whisper: [],
+          blind: false,
+        })
+      })
+      return
+    }
+
+    const shockButton = html.querySelector(".roll-shock-test")
+    if (shockButton) {
+      const actor = fromUuidSync(shockButton.dataset.actorUuid)
+      const stage = shockButton.dataset.stage
+      const isAuthorized = game.user.isGM || (stage !== "repeat" && actor?.isOwner)
+      if (!actor || !isAuthorized) {
+        shockButton.remove()
+        return
+      }
+
+      shockButton.addEventListener("click", async (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        shockButton.disabled = true
+        if (stage === "repeat") {
+          try {
+            await createShockTestRequest(actor, "repeatRoll")
+          } catch (error) {
+            console.error("Erreur lors de la demande du test de choc", error)
+            ui.notifications.error(
+              game.i18n.format("CO.notif.shockTest.error", {
+                error: error instanceof Error ? error.message : String(error),
+              }),
+            )
+            shockButton.disabled = false
+          }
+          return
+        }
+
+        const rollStage = stage === "repeatRoll" ? "repeat" : stage
+        let rollWasPosted = false
+        try {
+          if (stage === "minutes" || stage === "hours") {
+            await resolveShockTest({}, stage, actor)
+            rollWasPosted = true
+            return
+          }
+
+          const rollResult = await actor.rollSkill("con", {
+            rollMode: "publicroll",
+            difficulty: 10,
+            useDifficulty: true,
+            showDifficulty: true,
+            withDialog: false,
+            showResult: false,
+            chatFlavor: game.i18n.localize("CO.notif.shockTest.rollFlavor"),
+          })
+          if (!rollResult) return
+
+          const analysis = rollResult.result
+          const hasLuckyPoints = actor.hasLuckyPoints
+          const couldSucceedWithLuck = !analysis.difficulty || analysis.total + 10 >= analysis.difficulty
+          const shouldDefer = hasLuckyPoints && analysis.isFailure && couldSucceedWithLuck
+          const consequences = { shockStage: rollStage }
+
+          if (shouldDefer) {
+            rollResult.roll.options.hasPendingConsequences = true
+          } else {
+            rollResult.roll.options.hasLuckyPoints = false
+          }
+          rollResult.roll.options.shockTest = true
+
+          await rollResult.roll.toMessage(
+            {
+              speaker: ChatMessage.getSpeaker({ actor }),
+              style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+              type: "skill",
+              whisper: [],
+              blind: false,
+              system: {
+                result: analysis,
+                ...(shouldDefer ? { pendingConsequences: consequences } : {}),
+              },
+            },
+            { messageMode: "publicroll" },
+          )
+          rollWasPosted = true
+
+          if (!shouldDefer) await resolveShockTest(analysis, rollStage, actor)
+        } catch (error) {
+          console.error("Erreur lors du test de choc", error)
+          ui.notifications.error(
+            game.i18n.format("CO.notif.shockTest.error", {
+              error: error instanceof Error ? error.message : String(error),
+            }),
+          )
+        } finally {
+          shockButton.disabled = rollWasPosted
+        }
+      })
+      return
+    }
+
     const checkButton = html.querySelector(".roll-check-chat")
     if (!checkButton) return
 
@@ -129,6 +246,11 @@ export default class CheckMessageData extends BaseMessageData {
  * @param {Actor} actor L'acteur sur lequel appliquer les conséquences
  */
 export async function applyCheckConsequences(result, consequences, actor) {
+  if (consequences.shockStage) {
+    await resolveShockTest(result, consequences.shockStage, actor)
+    return
+  }
+
   const { ability, successDamage, failureDamage, successStatuses, failureStatuses } = consequences
 
   // Determine which damage formula to use based on success/failure

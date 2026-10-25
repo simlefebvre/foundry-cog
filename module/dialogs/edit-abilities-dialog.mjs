@@ -53,6 +53,14 @@ export class CoEditAbilitiesDialog extends foundry.applications.api.DialogV2 {
     return options
   }
 
+  /** @override */
+  async _onClose(options) {
+    if (this.actor.system.attributes.woundThreshold === null) {
+      await this.actor.update({ "system.attributes.woundThreshold": this.actor.system.woundThresholdValue })
+    }
+    return super._onClose(options)
+  }
+
   /**
    * Construit le HTML à partir du template Handlebars.
    * @param {object} context

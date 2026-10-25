@@ -312,7 +312,7 @@
       {{/if}}
     </div>
     <!-- HP -->
-    <div class="sidebar-section health-section">
+    <div class="sidebar-section health-section hp-section">
       <div class="sidebar-section-header">
         <div class="sidebar-label">
           <h4 data-tooltip="{{localize 'CO.label.long.hp'}}">{{localize "CO.label.short.hp"}}</h4>
@@ -356,7 +356,7 @@
     </div>
     {{#if rules.tempDamage}}
     <!-- Temp HP -->
-    <div class="sidebar-section health-section">
+    <div class="sidebar-section health-section temp-dm-section">
       <div class="sidebar-section-header">
         <div class="sidebar-label">
           <h4 data-tooltip="{{localize 'CO.label.long.tempDm'}}">{{localize "CO.label.short.tempDm"}}</h4>
@@ -372,6 +372,21 @@
       </div>
     </div>
     {{/if}}
+    <!-- Wound threshold -->
+    <div class="sidebar-section health-section wound-threshold-section">
+      <div class="sidebar-section-header">
+        <div class="sidebar-label">
+          <h4 data-tooltip="{{localize 'CO.label.long.woundThreshold'}}">{{localize "CO.label.short.woundThreshold"}}</h4>
+        </div>
+        <div class="hit-points labelled-field">
+          {{#if viewLimited}}
+            ??
+          {{else}}
+            <input name="system.attributes.woundThreshold" value="{{woundThreshold}}" type="number" data-dtype="Number" {{#if (eq attributes.woundThreshold null)}}disabled{{/if}} />
+          {{/if}}
+        </div>
+      </div>
+    </div>
     {{#if rules.luckPoints}}
     <!-- FP -->
     <div class="sidebar-section resource-section">
@@ -508,6 +523,10 @@
       </div>
     </div>
     {{/unless}}
+    <label class="serious-wound-indicator">
+      <span>{{localize "CO.label.long.seriousWound"}}</span>
+      <input class="serious-wound-checkbox" type="checkbox" data-action="toggleSeriousWound" {{checked hasSeriousWound}} {{#unless isGM}}disabled{{/unless}} />
+    </label>
     {{#unless viewLimited}}
       {{#if hasCompanions}}
         <!-- MASTER AND COMPANIONS -->

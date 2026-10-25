@@ -1,7 +1,31 @@
 .sheet-sidebar {
   background-color: var(--co-sheet-accent);
+
+  .serious-wound-checkbox {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+  }
+
+  .serious-wound-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    grid-column: 1 / -1;
+    margin: 4px 8px;
+    color: var(--co-surface);
+    font-size: 14px;
+  }
+
   .scrollable {
     .sidebar-section {
+      &.hp-section,
+      &.temp-dm-section,
+      &.wound-threshold-section {
+        grid-column: auto / span 2;
+      }
+
       &.melee-section,
       &.ranged-section,
       &.psychic-section {

@@ -73,6 +73,7 @@ export default class CharacterData extends ActorData {
         dice: new fields.StringField({ required: true, blank: true }),
       }),
       tempDm: new fields.NumberField({ ...requiredInteger, initial: 0, min: 0 }),
+      woundThreshold: new fields.NumberField({ required: false, nullable: true, initial: null, integer: true }),
     })
 
     schema.combat = new fields.SchemaField(
@@ -251,6 +252,14 @@ export default class CharacterData extends ActorData {
 
   get currentLevel() {
     return this.attributes.level
+  }
+
+  /**
+   * Seuil de blessure enregistré, ou valeur initiale tant qu'il n'a pas encore été figé.
+   * @returns {number}
+   */
+  get woundThresholdValue() {
+    return this.attributes.woundThreshold ?? 10 + this.abilities.con.value + this.abilities.for.value
   }
 
   /**

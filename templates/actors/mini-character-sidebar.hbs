@@ -13,18 +13,48 @@
     </div>
   </div>
 
-  {{#if rules.tempDamage}}
   <!-- Temp HP -->
+  {{#if rules.tempDamage}}
   <div class="sidebar-section health-section">
     <div class="sidebar-section-header">
+      <div class="sidebar-label">
+        <h4 data-tooltip="{{localize 'CO.label.long.tempDm'}}">{{localize "CO.label.short.tempDm"}}</h4>
+      </div>
       <div class="hit-points labelled-field">
         <i class="fas fa-fw fa-heart-broken"></i>
         <input class="temp-dm" name="system.attributes.tempDm" value="{{attributes.tempDm}}" type="number" data-dtype="Number" />
       </div>
     </div>
   </div>
-
   {{/if}}
+  <div class="sidebar-section health-section">
+    <div class="sidebar-section-header">
+      <div class="sidebar-label">
+        <h4 data-tooltip="{{localize 'CO.label.long.woundThreshold'}}">{{localize "CO.label.short.woundThreshold"}}</h4>
+      </div>
+      <div class="hit-points labelled-field">
+        {{#if viewLimited}}
+          ??
+        {{else}}
+          <input name="system.attributes.woundThreshold" value="{{woundThreshold}}" type="number" data-dtype="Number" {{#if (eq attributes.woundThreshold null)}}disabled{{/if}} />
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-section health-section serious-wound-section">
+    <div class="sidebar-section-header">
+      <div class="sidebar-label">
+        <h4>{{localize "CO.label.long.seriousWound"}}</h4>
+      </div>
+      <div class="hit-points labelled-field">
+        {{#if viewLimited}}
+          ??
+        {{else}}
+          <input class="serious-wound-checkbox" type="checkbox" data-action="toggleSeriousWound" {{checked hasSeriousWound}} {{#unless isGM}}disabled{{/unless}} />
+        {{/if}}
+      </div>
+    </div>
+  </div>
   <!-- DEF -->
   <div class="sidebar-section armor-section">
     <div class="sidebar-section-header">

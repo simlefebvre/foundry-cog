@@ -255,6 +255,12 @@ export const CUSTOM_STATUS_EFFECT = [
     description: "CO.customStatus.weakenedDescription",
   },
   {
+    id: "seriousWound",
+    name: "CO.customStatus.seriousWound",
+    img: "icons/svg/blood.svg",
+    description: "CO.customStatus.seriousWoundDescription",
+  },
+  {
     id: "invisible",
     name: "CO.customStatus.invisible",
     img: "icons/svg/invisible.svg",

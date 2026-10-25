@@ -3267,6 +3267,26 @@ a.roll-check-enricher:hover {
 .co.application.sheet.actor.character .window-content .sheet-sidebar {
   background-color: var(--co-sheet-accent);
 }
+.co.application.sheet.actor.character .window-content .sheet-sidebar .serious-wound-checkbox {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+.co.application.sheet.actor.character .window-content .sheet-sidebar .serious-wound-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  grid-column: 1 / -1;
+  margin: 4px 8px;
+  color: var(--co-surface);
+  font-size: 14px;
+}
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.hp-section,
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.temp-dm-section,
+.co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.wound-threshold-section {
+  grid-column: auto / span 2;
+}
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.melee-section,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.ranged-section,
 .co.application.sheet.actor.character .window-content .sheet-sidebar .scrollable .sidebar-section.psychic-section {
@@ -3783,7 +3803,7 @@ a.roll-check-enricher:hover {
   color: var(--co-stat-health);
 }
 .co.application.sheet.actor.character-mini .window-content .mini-sidebar .hp-section {
-  grid-column: 1 / 3;
+  grid-column: auto;
 }
 .co.application.sheet.actor.character-mini .window-content .mini-sidebar .resource-section.mini-section {
   grid-column: auto;

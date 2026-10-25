@@ -233,7 +233,9 @@ export class COSkillRoll extends CORoll {
       bonus: withDialog ? rollContext.bonus : dialogContext.bonus,
       malus: withDialog ? rollContext.malus : dialogContext.malus,
       critical: withDialog ? rollContext.critical : dialogContext.critical,
-      oppositeRoll: withDialog ? rollContext.difficulty?.includes("@oppose") : dialogContext.difficulty?.includes("@oppose"),
+      oppositeRoll: withDialog
+        ? typeof rollContext.difficulty === "string" && rollContext.difficulty.includes("@oppose")
+        : typeof dialogContext.difficulty === "string" && dialogContext.difficulty.includes("@oppose"),
       oppositeTarget: dialogContext.targets?.length > 0 ? dialogContext.targets[0].uuid : null,
       targetInfos: dialogContext.targets?.map((t) => ({ name: t.name, img: t.token?.document?.texture?.src || t.actor?.img })) || [],
       oppositeValue: withDialog ? rollContext.difficulty : dialogContext.difficulty,
@@ -273,7 +275,8 @@ export class COSkillRoll extends CORoll {
     const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     const canUseLuckyPoints = this.options.hasLuckyPoints && !rollResults.isCritical && (displayDifficulty === "gm" || rollResults.isFailure)
     // Libellé de la caractéristique opposée (ex : "Constitution", "Attaque de contact")
-    const oppositeAbilityId = this.options.oppositeValue?.startsWith("@oppose.") ? this.options.oppositeValue.replace("@oppose.", "") : null
+    const oppositeAbilityId =
+      typeof this.options.oppositeValue === "string" && this.options.oppositeValue.startsWith("@oppose.") ? this.options.oppositeValue.replace("@oppose.", "") : null
     const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atp: "psychic", atm: "psychic" }
     const oppositeAbilityLabel = oppositeAbilityId
       ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
@@ -302,6 +305,7 @@ export class COSkillRoll extends CORoll {
       hasLuckyPoints: this.options.hasLuckyPoints,
       canUseLuckyPoints,
       hasPendingConsequences: this.options.hasPendingConsequences || false,
+      shockTest: this.options.shockTest || false,
       skills: this.options.skills,
       skillUsed: this.options.skillUsed,
       opposeResult: this.options.opposeResult,
@@ -544,7 +548,9 @@ export class COAttackRoll extends CORoll {
         damageBonus: withDialog ? rollContext.damageBonus : dialogContext.damageBonus,
         damageMalus: withDialog ? rollContext.damageMalus : dialogContext.damageMalus,
         critical: withDialog ? rollContext.critical : dialogContext.critical,
-        oppositeRoll: withDialog ? rollContext.difficulty?.includes("@oppose") : dialogContext.oppositeRoll.includes("@oppose"),
+        oppositeRoll: withDialog
+          ? typeof rollContext.difficulty === "string" && rollContext.difficulty.includes("@oppose")
+          : typeof dialogContext.oppositeRoll === "string" && dialogContext.oppositeRoll.includes("@oppose"),
         oppositeTarget: dialogContext.targets?.length > 0 ? dialogContext.targets[0].uuid : null,
         oppositeValue: withDialog ? rollContext.difficulty : dialogContext.difficulty,
         hasLuckyPoints: dialogContext.hasLuckyPoints,
@@ -657,7 +663,8 @@ export class COAttackRoll extends CORoll {
   _getAttackChatCardData(flavor, isPrivate) {
     const rollResults = CORoll.analyseRollResult(this, this.options.hasAttackSuccessThreshold, this.options.attackSuccessThreshold)
     if (CONFIG.debug.cog?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
-    const oppositeAbilityId = this.options.difficulty?.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
+    const oppositeAbilityId =
+      typeof this.options.difficulty === "string" && this.options.difficulty.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
     const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atp: "psychic", atm: "psychic" }
     const oppositeAbilityLabel = oppositeAbilityId
       ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)

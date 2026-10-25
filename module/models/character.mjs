@@ -1,4 +1,5 @@
 import { SYSTEM } from "../config/system.mjs"
+import { canRecoverFromWeakened, canRecoverFromWounded, getFullRestRecoveredStatuses } from "../helpers/status-rules.mjs"
 import { BaseValue } from "./schemas/base-value.mjs"
 import { AbilityValue } from "./schemas/ability-value.mjs"
 import ActorData from "./actor.mjs"
@@ -223,12 +224,8 @@ export default class CharacterData extends ActorData {
         await this.parent.setFlag("cog", "statuses.weakenedFromOneHP", true)
       }
 
-      // Cas des points de vie > 1 : suppression des statuts affaibli et inconscient
+      // Cas des points de vie > 1 : suppression de l'inconscience provoquée par 0 PV.
       if (changes.system.attributes.hp.value > 1) {
-        if (this.parent.statuses.has("weakened") && this.parent.getFlag("cog", "statuses.weakenedFromOneHP")) {
-          await this.parent.toggleStatusEffect("weakened", { active: false })
-          await this.parent.unsetFlag("cog", "statuses.weakenedFromOneHP")
-        }
         if (this.parent.statuses.has("unconscious") && this.parent.getFlag("cog", "statuses.unconsciousFromZeroHP")) {
           await this.parent.toggleStatusEffect("unconscious", { active: false })
           await this.parent.unsetFlag("cog", "statuses.unconsciousFromZeroHP")
@@ -762,7 +759,15 @@ export default class CharacterData extends ActorData {
     await this.recoverCapacityCharges()
     await this.parent.update({ "system.attributes.tempDm": 0 })
 
-    if (await this._isRecoveryHandledByModule()) return
+    if (this.parent.statuses.has("weakened")) {
+      await this.parent.setFlag("cog", "statuses.weakenedRested", true)
+    }
+
+    if (await this._isRecoveryHandledByModule()) {
+      await this.clearFullRestRecoveredStatuses()
+      await this.tryRecoverFromWeakened()
+      return
+    }
 
     const formula = this.getRecoveryHealFormula()
     await this.parent.rollHeal(null, {
@@ -772,7 +777,67 @@ export default class CharacterData extends ActorData {
       targets: [this.parent],
     })
 
+    await this.clearFullRestRecoveredStatuses()
+    await this.tryRecoverFromWeakened()
     Hooks.callAll("cog.postUseRecovery", this.parent, { isFullRest: true })
+  }
+
+  /**
+   * Retire les états qui prennent fin après une nuit complète de repos.
+   */
+  async clearFullRestRecoveredStatuses() {
+    const statuses = getFullRestRecoveredStatuses(this.parent.statuses)
+    for (const statusId of statuses) {
+      await this.parent.toggleStatusEffect(statusId, { active: false })
+    }
+  }
+
+  /**
+   * Retire Affaibli uniquement après une nuit de repos, une récupération complète des PV et la guérison
+   * de toute blessure grave.
+   *
+   * @returns {Promise<boolean>} true si l'état Affaibli a été retiré.
+   */
+  async tryRecoverFromWeakened() {
+    const actor = this.parent
+    if (!actor.statuses.has("weakened")) {
+      if (actor.getFlag("cog", "statuses.weakenedRested")) await actor.unsetFlag("cog", "statuses.weakenedRested")
+      if (actor.getFlag("cog", "statuses.weakenedFromOneHP")) await actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
+      return false
+    }
+
+    const { value: hpValue, max: hpMax } = this.attributes.hp
+    if (
+      !canRecoverFromWeakened({
+        hasRested: actor.getFlag("cog", "statuses.weakenedRested") === true,
+        hpValue,
+        hpMax,
+        hasSeriousWound: actor.statuses.has("seriousWound"),
+      })
+    ) {
+      return false
+    }
+
+    await actor.toggleStatusEffect("weakened", { active: false })
+    await actor.unsetFlag("cog", "statuses.weakenedRested")
+    await actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
+    return true
+  }
+
+  /**
+   * Retire Blessé lorsque les PV sont au maximum et qu'aucune blessure grave ne subsiste.
+   *
+   * @returns {Promise<boolean>} true si l'état Blessé a été retiré.
+   */
+  async tryRecoverFromWounded() {
+    const actor = this.parent
+    if (!actor.statuses.has("wounded")) return false
+
+    const { value: hpValue, max: hpMax } = this.attributes.hp
+    if (!canRecoverFromWounded({ hpValue, hpMax, hasSeriousWound: actor.statuses.has("seriousWound") })) return false
+
+    await actor.toggleStatusEffect("wounded", { active: false })
+    return true
   }
 
   /**

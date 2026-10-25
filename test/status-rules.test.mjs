@@ -1,7 +1,15 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 
-import { findAutomaticCriticalStatus, findCriticalOnHitStatus, isRangedAttackBlockedByBlindness, resolveStatusId } from "../module/helpers/status-rules.mjs"
+import {
+  canRecoverFromWeakened,
+  canRecoverFromWounded,
+  findAutomaticCriticalStatus,
+  findCriticalOnHitStatus,
+  getFullRestRecoveredStatuses,
+  isRangedAttackBlockedByBlindness,
+  resolveStatusId,
+} from "../module/helpers/status-rules.mjs"
 import Utils from "../module/helpers/utils.mjs"
 
 test("resolveStatusId suit les remplacements et résiste aux cycles", () => {
@@ -34,6 +42,28 @@ test("la cécité interdit les attaques à distance seulement", () => {
   assert.equal(isRangedAttackBlockedByBlindness(new Set(["blind"]), "ranged"), true)
   assert.equal(isRangedAttackBlockedByBlindness(new Set(["blind"]), "melee"), false)
   assert.equal(isRangedAttackBlockedByBlindness(new Set(), "ranged"), false)
+})
+
+test("Affaibli nécessite une nuit de repos, tous les PV et l'absence de blessure grave", () => {
+  const recovered = { hasRested: true, hpValue: 20, hpMax: 20, hasSeriousWound: false }
+
+  assert.equal(canRecoverFromWeakened(recovered), true)
+  assert.equal(canRecoverFromWeakened({ ...recovered, hasRested: false }), false)
+  assert.equal(canRecoverFromWeakened({ ...recovered, hpValue: 19 }), false)
+  assert.equal(canRecoverFromWeakened({ ...recovered, hasSeriousWound: true }), false)
+})
+
+test("Blessé nécessite tous les PV et l'absence de blessure grave, sans nuit de repos", () => {
+  const recovered = { hpValue: 20, hpMax: 20, hasSeriousWound: false }
+
+  assert.equal(canRecoverFromWounded(recovered), true)
+  assert.equal(canRecoverFromWounded({ ...recovered, hpValue: 19 }), false)
+  assert.equal(canRecoverFromWounded({ ...recovered, hasSeriousWound: true }), false)
+})
+
+test("une nuit complète de repos retire Confus, Épuisé et Fatigué seulement", () => {
+  assert.deepEqual(getFullRestRecoveredStatuses(new Set(["confused", "exhausted", "tired", "weakened", "wounded"])), ["confused", "exhausted", "tired"])
+  assert.deepEqual(getFullRestRecoveredStatuses(new Set(["weakened", "wounded"])), [])
 })
 
 test("un critique lié à Inconscient est recalculé selon la réussite après un point de chance", () => {

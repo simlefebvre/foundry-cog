@@ -23,24 +23,24 @@ export function createActor(document, options, userId) {
  * @param {object} updateData The data being updated on the actor
  * @param {object} options Additional options for the update operation
  * @param {string} userId The ID of the user performing the update
- * @returns {void}
+ * @returns {Promise<void>}
  */
-export function updateActor(actor, updateData, options, userId) {
+export async function updateActor(actor, updateData, options, userId) {
   if (!game.user.isActiveGM) return
 
   if (actor.type === "character" && updateData?.system?.attributes?.hp?.value === 0 && !actor.statuses.has("unconscious")) {
-    // Si déjà affaibli le statut est supprimé
-    if (actor.statuses.has("weakened")) {
-      actor.toggleStatusEffect("weakened", { active: false })
-      actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
-    }
-    actor.toggleStatusEffect("unconscious", { active: true })
-    actor.setFlag("cog", "statuses.unconsciousFromZeroHP", true)
+    await actor.toggleStatusEffect("unconscious", { active: true })
+    await actor.setFlag("cog", "statuses.unconsciousFromZeroHP", true)
+  }
+
+  if (actor.type === "character") {
+    await actor.system.tryRecoverFromWeakened()
+    await actor.system.tryRecoverFromWounded()
   }
 
   // Une rencontre est morte à 0 PV
   if (actor.type === "encounter" && updateData?.system?.attributes?.hp?.value === 0 && !actor.statuses.has("dead")) {
-    actor.toggleStatusEffect("dead", { active: true })
+    await actor.toggleStatusEffect("dead", { active: true })
   }
 }
 

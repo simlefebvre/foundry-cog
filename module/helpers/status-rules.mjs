@@ -60,3 +60,41 @@ export function findCriticalOnHitStatus(statuses, actionType, rules = {}) {
 export function isRangedAttackBlockedByBlindness(statuses, actionType) {
   return actionType === "ranged" && new Set(statuses ?? []).has("blind")
 }
+
+/**
+ * Vérifie si un personnage a satisfait toutes les conditions pour récupérer d'Affaibli.
+ *
+ * @param {object} options Conditions de récupération.
+ * @param {boolean} options.hasRested Une nuit de repos a été effectuée depuis l'affaiblissement.
+ * @param {number} options.hpValue Points de vie actuels.
+ * @param {number} options.hpMax Points de vie maximum.
+ * @param {boolean} options.hasSeriousWound Une blessure grave est encore active.
+ * @returns {boolean} true si l'état Affaibli peut être retiré.
+ */
+export function canRecoverFromWeakened({ hasRested, hpValue, hpMax, hasSeriousWound }) {
+  return hasRested && hpValue >= hpMax && !hasSeriousWound
+}
+
+/**
+ * Vérifie si un personnage a satisfait les conditions pour récupérer de Blessé.
+ *
+ * @param {object} options Conditions de récupération.
+ * @param {number} options.hpValue Points de vie actuels.
+ * @param {number} options.hpMax Points de vie maximum.
+ * @param {boolean} options.hasSeriousWound Une blessure grave est encore active.
+ * @returns {boolean} true si l'état Blessé peut être retiré.
+ */
+export function canRecoverFromWounded({ hpValue, hpMax, hasSeriousWound }) {
+  return hpValue >= hpMax && !hasSeriousWound
+}
+
+/**
+ * Retourne les états supprimés par une nuit complète de repos.
+ *
+ * @param {Iterable<string>} statuses États actuellement actifs.
+ * @returns {string[]} États récupérés après le repos.
+ */
+export function getFullRestRecoveredStatuses(statuses) {
+  const activeStatuses = new Set(statuses ?? [])
+  return ["confused", "exhausted", "tired"].filter((statusId) => activeStatuses.has(statusId))
+}

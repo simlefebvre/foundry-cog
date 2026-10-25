@@ -484,7 +484,16 @@ export default class COActor extends Actor {
    */
   async toggleStatusEffect(statusId, options) {
     const replacements = game.system.CONST.statusRules?.replacements ?? {}
-    return super.toggleStatusEffect(resolveStatusId(statusId, replacements), options)
+    const resolvedStatusId = resolveStatusId(statusId, replacements)
+    const result = await super.toggleStatusEffect(resolvedStatusId, options)
+
+    if (this.type === "character") {
+      if (resolvedStatusId === "seriousWound") await this.system.tryRecoverFromWeakened()
+      if (resolvedStatusId === "seriousWound") await this.system.tryRecoverFromWounded()
+      else if (resolvedStatusId === "weakened" && !this.statuses.has("weakened")) await this.system.tryRecoverFromWeakened()
+    }
+
+    return result
   }
 
   /**

@@ -15,16 +15,6 @@ export function registerSystemSettings() {
     requiresReload: true,
   })
 
-  game.settings.register("cog", "usevarInit", {
-    name: "CO.settings.varInit.name",
-    hint: "CO.settings.varInit.hint",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false,
-    requiresReload: true,
-  })
-
   game.settings.register("cog", "displayDifficulty", {
     name: "CO.settings.displayDifficulty.name",
     hint: "CO.settings.displayDifficulty.hint",

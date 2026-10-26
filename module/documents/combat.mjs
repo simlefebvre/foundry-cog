@@ -35,6 +35,20 @@ import Utils from "../helpers/utils.mjs"
 
 export default class CombatCO extends Combat {
   /** @override */
+  async _onStartRound(context) {
+    const updates = []
+    for (const combatant of this.combatants) {
+      const initiative = combatant.actor?.system.combat?.init?.value
+      if (Number.isFinite(initiative) && combatant.initiative !== initiative) {
+        updates.push({ _id: combatant.id, initiative })
+      }
+    }
+
+    if (updates.length > 0) await this.updateEmbeddedDocuments("Combatant", updates)
+    await super._onStartRound(context)
+  }
+
+  /** @override */
   async _onStartTurn(combatant) {
     if (CONFIG.debug.cog?.combat) console.debug(Utils.log(`Début du tour de ${combatant.actor?.name} !`))
     await super._onStartTurn(combatant)

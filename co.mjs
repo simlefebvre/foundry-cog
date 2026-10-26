@@ -128,16 +128,9 @@ Hooks.once("init", async function () {
   game.system.CONST.rules = Object.assign({ luckPoints: true, tempDamage: true }, game.system.CONST.rules)
 
   // Combat tracker
-  if (game.settings.get("cog", "usevarInit")) {
-    CONFIG.Combat.initiative = {
-      formula: "1d6x + @combat.init.value",
-      decimals: 0,
-    }
-  } else {
-    CONFIG.Combat.initiative = {
-      formula: "@combat.init.value",
-      decimals: 0,
-    }
+  CONFIG.Combat.initiative = {
+    formula: "@combat.init.value",
+    decimals: 0,
   }
   CONFIG.Combat.documentClass = documents.CombatCO
   // Un round dure 6s

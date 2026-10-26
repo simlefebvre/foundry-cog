@@ -504,12 +504,6 @@ export class COAttackRoll extends CORoll {
               })
             })
           }
-          // Dommages temporaires
-          const tempDamageCb = dialog.element.querySelector('input[name="tempDamage"]')
-          const radioButtons = dialog.element.querySelectorAll('input[type="radio"]')
-          if (tempDamageCb && radioButtons.length > 0) {
-            tempDamageCb.addEventListener("click", this._onCheckTempDamage.bind(this))
-          }
         },
       })
 
@@ -663,8 +657,7 @@ export class COAttackRoll extends CORoll {
   _getAttackChatCardData(flavor, isPrivate) {
     const rollResults = CORoll.analyseRollResult(this, this.options.hasAttackSuccessThreshold, this.options.attackSuccessThreshold)
     if (CONFIG.debug.cog?.chat) console.debug(Utils.log(`COAttackRoll - _getAttackChatCardData options`), this.options)
-    const oppositeAbilityId =
-      typeof this.options.difficulty === "string" && this.options.difficulty.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
+    const oppositeAbilityId = typeof this.options.difficulty === "string" && this.options.difficulty.startsWith("@oppose.") ? this.options.difficulty.replace("@oppose.", "") : null
     const COMBAT_STAT_MAP = { atc: "melee", atd: "ranged", atp: "psychic", atm: "psychic" }
     const oppositeAbilityLabel = oppositeAbilityId
       ? game.i18n.localize(COMBAT_STAT_MAP[oppositeAbilityId] ? `CO.combat.long.${COMBAT_STAT_MAP[oppositeAbilityId]}` : `CO.abilities.long.${oppositeAbilityId}`)
@@ -787,31 +780,6 @@ export class COAttackRoll extends CORoll {
       formulaDamageTooltip: isPrivate ? "" : this.options.formulaDamageTooltip || "",
       targetResults: this.options.targetResults ?? [],
       hasTargetResults: (this.options.targetResults?.length ?? 0) > 0,
-    }
-  }
-
-  /**
-   * Evènement déclenché lorsque l'on coche/décoche la case à cocher Dommages temporaires
-   * Si on coche alors que l'arme ne propose pas l'option de dégat temporaire on met le Dé en dé malus
-   * Par contre on ne peux pas faire l'inverse car si le dé était déjà un dé malus avant on lui donnerais un dé standard
-   * à la place ce qui n'est pas souhaitable
-   * @param {*} event évènement déclenché par le click
-   * @param {*} dialogContext Context de la fenetre avec son ensemble d'éléments
-   */
-  static _onCheckTempDamage(event, dialogContext) {
-    let checked = event.target.checked
-    let canBeTempDamage = event.target.dataset.canbetempdamage
-    if (checked === true && canBeTempDamage === "false") {
-      const form = event.target.closest("form")
-      let radio = form.querySelector("#diceMalus")
-      radio.checked = true
-      // Créer et déclencher un événement change
-      const changeEvent = new Event("change", {
-        bubbles: true, // Permet à l'événement de remonter dans le DOM
-        cancelable: true,
-      })
-
-      radio.dispatchEvent(changeEvent)
     }
   }
 }

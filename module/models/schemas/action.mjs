@@ -17,6 +17,7 @@ import { Resolver } from "./resolver.mjs"
  * @param {boolean} activable Si true : un bouton permet de l'activer ou de la désactiver
  * @param {boolean} enabled False tant que la Capacité à l'origine n'est pas activée. Les modifiers ne sont pris en compte que si enabled de l'action vaut true
  * @param {boolean} temporary true si le sort a une durée
+ * @param {boolean} temporaryDamage true si l'action inflige des dommages temporaires
  * Sort permanent : activable et temporary à false, enabled à true
  * Sort à durée : temporary à true et activable à true
  * Sort instantané : temporary à false, et activable à true
@@ -41,6 +42,7 @@ export class Action extends foundry.abstract.DataModel {
         activable: new fields.BooleanField(),
         enabled: new fields.BooleanField(),
         temporary: new fields.BooleanField(),
+        temporaryDamage: new fields.BooleanField(),
         noChargesUsed: new fields.BooleanField(),
       }),
       conditions: new fields.ArrayField(new fields.EmbeddedDataField(Condition)),

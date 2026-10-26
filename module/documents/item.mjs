@@ -105,10 +105,6 @@ export default class COItem extends Item {
     return modifiers
   }
 
-  get tags() {
-    return this.system.tags
-  }
-
   /**
    * An array of all the actions of the item or empty if no actions or if it's an item without actions
    */

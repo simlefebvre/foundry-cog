@@ -5,7 +5,6 @@ import { migratePsychicScore } from "../helpers/psychic-migration.mjs"
  * source : the uuid of the item or actor where the item comes from
  * origin : the name of the book where the item comes from
  * slug : slugify the name of the item
- * tags : a set of tags to categorize the item
  */
 export default class ItemData extends foundry.abstract.TypeDataModel {
   /** @override */

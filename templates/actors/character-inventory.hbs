@@ -48,29 +48,7 @@
         <li class="item flexrow draggable" data-item-uuid="{{item.uuid}}" data-item-id="{{item._id}}" data-item-type="{{item.type}}">
           <div class="item-name flexrow">
             <a class="item-img" data-action="editItem" style="background-image: url('{{item.img}}')" data-tooltip="{{item.enrichedTooltip}}"></a>
-            <h4>{{item.name}}
-                {{#if item.system.isWeapon}}
-                  {{#if (isTrainedWithWeapon @root.actor item._id)}}
-                    <i class="fa-solid fa-circle-check" data-tooltip="{{localize 'CO.ui.trained'}}" data-tooltip-direction="UP"></i>
-                  {{else}}
-                    <i class="fa-regular fa-circle-xmark" data-tooltip="{{localize 'CO.ui.notTrained'}}" data-tooltip-direction="UP"></i>
-                  {{/if}}
-                {{/if}}
-                {{#if item.system.isArmor}}
-                  {{#if (isTrainedWithArmor @root.actor item._id)}}
-                    <i class="fa-solid fa-circle-check" data-tooltip="{{localize 'CO.ui.trained'}}" data-tooltip-direction="UP"></i>
-                  {{else}}
-                    <i class="fa-regular fa-circle-xmark" data-tooltip="{{localize 'CO.ui.notTrained'}}" data-tooltip-direction="UP"></i>
-                  {{/if}}
-                {{/if}}
-                {{#if item.system.isShield}}
-                  {{#if (isTrainedWithShield @root.actor item._id)}}
-                    <i class="fa-solid fa-circle-check" data-tooltip="{{localize 'CO.ui.trained'}}" data-tooltip-direction="UP"></i>
-                  {{else}}
-                    <i class="fa-regular fa-circle-xmark" data-tooltip="{{localize 'CO.ui.notTrained'}}" data-tooltip-direction="UP"></i>
-                  {{/if}}
-                {{/if}}
-            </h4>
+            <h4>{{item.name}}</h4>
           </div>
           <!-- Usage -->
           {{#if group.showUsage}}

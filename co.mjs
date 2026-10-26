@@ -97,17 +97,6 @@ Hooks.once("init", async function () {
   helpers.registerSystemSettings()
   helpers.setupTextEnrichers()
 
-  // Load Martial Training
-  if (!game.system.CONST.martialTrainingsWeapons) {
-    game.system.CONST.martialTrainingsWeapons = []
-  }
-  if (!game.system.CONST.martialTrainingsArmors) {
-    game.system.CONST.martialTrainingsArmors = []
-  }
-  if (!game.system.CONST.martialTrainingsShields) {
-    game.system.CONST.martialTrainingsShields = []
-  }
-
   // Postures défensives : manœuvre propre à COF2, apportée par un module de contenu (cf. cof2-base).
   // Chaque entrée décrit le bouton de la barre d'outils des fiches : { id, icon, activateLabel, deactivateLabel }, le statut lui-même étant une entrée ordinaire de CONFIG.statusEffects.
   if (!game.system.CONST.defenseStances) {

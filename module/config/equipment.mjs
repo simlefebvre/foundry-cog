@@ -49,25 +49,6 @@ export const EQUIPMENT_RARITY = {
   },
 }
 
-export const EQUIPMENT_DAMAGETYPE = {
-  slashing: {
-    id: "slashing",
-    label: "CO.damage.slashing",
-  },
-  impact: {
-    id: "bludgeoning",
-    label: "CO.damage.bludgeoning",
-  },
-  piercing: {
-    id: "piercing",
-    label: "CO.damage.piercing",
-  },
-  magic: {
-    id: "magic",
-    label: "CO.damage.magic",
-  },
-}
-
 /**
  * Devise par défaut du système (crédit unique).
  * Un module de contenu d'univers peut REMPLACER l'ensemble à son hook
@@ -83,16 +64,3 @@ export const EQUIPMENT_CURRENCIES = {
     label: "CO.currency.credit",
   },
 }
-
-/**
- * Tags d'équipement, alimentés par un module de contenu (cf. cof2-base).
- * Les tags existants — DM temporaires, DM temporaires possibles, arme légère — sont propres à COF2 et
- * ne sont portés que par les compendiums de cof2-base, c'est donc lui qui les déclare.
- *
- * Cet objet alimente le picker de tags de la feuille d'équipement (via `context.equipmentTagChoices`).
- * Le champ `tags` du modèle n'impose plus `choices` : un équipement portant un tag non déclaré dans le monde
- * courant (module désactivé, compilation CLI des packs, timing d'init) est conservé sans échec de validation.
- *
- * Non figé afin qu'un module puisse le compléter au hook init.
- */
-export const EQUIPMENT_TAGS = {}

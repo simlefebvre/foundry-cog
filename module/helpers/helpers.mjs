@@ -170,21 +170,6 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper("isNull", function (value) {
     return value === null
   })
-  Handlebars.registerHelper("getKeyFromMartialTraining", function (training) {
-    return training.key
-  })
-  Handlebars.registerHelper("getMartialTrainingLabel", function (training) {
-    return game.i18n.localize(training.label)
-  })
-  Handlebars.registerHelper("isTrainedWithWeapon", function (actor, itemId) {
-    return actor.isTrainedWithWeapon(itemId)
-  })
-  Handlebars.registerHelper("isTrainedWithArmor", function (actor, itemId) {
-    return actor.isTrainedWithArmor(itemId)
-  })
-  Handlebars.registerHelper("isTrainedWithShield", function (actor, itemId) {
-    return actor.isTrainedWithShield(itemId)
-  })
   Handlebars.registerHelper("isActionSubtabActive", function (subtabs, tabId) {
     const id = `action-${tabId}`
     if (!subtabs || !subtabs[id]) return false

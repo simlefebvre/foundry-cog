@@ -65,26 +65,8 @@ export default class CoEquipmentSheet extends CoBaseItemSheet {
 
       case "details":
         // Select options
-        // Transformation du tableau d'objets en objet
-        context.martialTrainingsWeaponsList = game.system.CONST.martialTrainingsWeapons.reduce((acc, item) => {
-          acc[item.key] = item.label
-          return acc
-        }, {})
-
-        context.martialTrainingsArmorsList = game.system.CONST.martialTrainingsArmors.reduce((acc, item) => {
-          acc[item.key] = item.label
-          return acc
-        }, {})
-
-        context.martialTrainingsShieldsList = game.system.CONST.martialTrainingsShields.reduce((acc, item) => {
-          acc[item.key] = item.label
-          return acc
-        }, {})
-
-        // Select options
         context.choiceEquipmentSubTypes = SYSTEM.EQUIPMENT_SUBTYPES
         context.choiceEquipmentRarity = SYSTEM.EQUIPMENT_RARITY
-        context.choiceDamageType = SYSTEM.EQUIPMENT_DAMAGETYPE
 
         context.isWeapon = doc.system.isWeapon
         context.isArmor = doc.system.isArmor

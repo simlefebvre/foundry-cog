@@ -10,7 +10,6 @@ import { isRangedAttackBlockedByBlindness, resolveStatusId } from "../helpers/st
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
 import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
-import { DEFAULT_CHARACTER_ACTION_SLUGS } from "../config/default-character-actions.mjs"
 
 /**
  * @class COActor
@@ -442,21 +441,6 @@ export default class COActor extends Actor {
   }
 
   /**
-   * Checks if the actor can use capacities based on their equipped armor and shields
-   *
-   * @returns {boolean} Returns true if the actor is trained with the equipped armor and/or shield
-   */
-  get canUseCapacities() {
-    let armorTrained = true
-    const armor = this.mainArmor
-    if (armor) armorTrained = this.isTrainedWithArmor(armor.id)
-    let shieldTrained = true
-    const shield = this.mainShield
-    if (shield) shieldTrained = this.isTrainedWithShield(shield.id)
-    return armorTrained && shieldTrained
-  }
-
-  /**
    * Renvoi la liste des effets personnalisé actuellement sur l'acteur
    * @returns {Array<CustomEffectData>} Tableau de customEffectData
    */
@@ -541,8 +525,7 @@ export default class COActor extends Actor {
         const itemActions = await item.getVisibleActions(this)
         allActions.push(...itemActions)
       }
-      // Action des capacités : une armure non maîtrisée empêche leur utilisation
-      if (SYSTEM.ITEM_TYPE.capacity.id === item.type && (this.canUseCapacities || DEFAULT_CHARACTER_ACTION_SLUGS.has(item.system.slug))) {
+      if (SYSTEM.ITEM_TYPE.capacity.id === item.type) {
         const itemActions = await item.getVisibleActions(this)
         allActions.push(...itemActions)
       }
@@ -694,51 +677,6 @@ export default class COActor extends Actor {
     const id = foundry.utils.parseUuid(uuid)?.id
     if (!id) return undefined
     return this.items.get(id)
-  }
-
-  /**
-   * Vérifie si le personnage est entraîné avec une arme
-   * @param {*} itemId
-   * @returns {boolean}
-   */
-  isTrainedWithWeapon(itemId) {
-    const item = this.weapons.find((item) => item.id === itemId)
-    if (!item) return null
-    const profile = this.system.profile
-    if (!profile) return null
-    const training = item.system.martialCategory
-    if (profile.system.martialTrainingsWeapons[training]) return true
-    return false
-  }
-
-  /**
-   * Vérifie si le personnage est entraîné avec une armure
-   * @param {*} itemId
-   * @returns {boolean}
-   */
-  isTrainedWithArmor(itemId) {
-    const item = this.armors.find((item) => item.id === itemId)
-    if (!item) return null
-    const profile = this.system.profile
-    if (!profile) return null
-    const training = item.system.martialCategory
-    if (profile.system.martialTrainingsArmors[training]) return true
-    return false
-  }
-
-  /**
-   * Vérifie si le personnage est entraîné avec un bouclier
-   * @param {*} itemId
-   * @returns {boolean}
-   */
-  isTrainedWithShield(itemId) {
-    const item = this.shields.find((item) => item.id === itemId)
-    if (!item) return null
-    const profile = this.system.profile
-    if (!profile) return null
-    const training = item.system.martialCategory
-    if (profile.system.martialTrainingsShields[training]) return true
-    return false
   }
 
   /**
@@ -2048,6 +1986,7 @@ export default class COActor extends Actor {
       useComboRolls = game.settings.get("cog", "useComboRolls"),
       actionName = "",
       actionType = SYSTEM.ACTION_TYPES.melee.id,
+      temporaryDamage = false,
       chatFlavor = "",
       skillBonus = 0,
       skillMalus = 0,
@@ -2083,6 +2022,7 @@ export default class COActor extends Actor {
       useComboRolls,
       actionName,
       actionType,
+      temporaryDamage,
       chatFlavor,
       skillBonus,
       skillMalus,
@@ -2129,23 +2069,8 @@ export default class COActor extends Actor {
       return ui.notifications.warn(game.i18n.localize("CO.notif.warningNoAmmo"))
     }
 
-    // Gestion des dommages temporaires : règle propre à COF2, pilotée par les tags de l'arme.
-    // Les tags sont déclarés par le module de contenu qui les porte (cf. cof2-base), le système ne
-    // connaît que leurs identifiants et n'y réagit que si la règle est activée.
-    let tempDamage = false
-    let canBeTempDamage = false
-
-    if (game.system.CONST.rules.tempDamage && item.type === "equipment") {
-      // Le tag DM temporaires impose les dommages temporaires
-      if (item.tags.has("dmtemporaires")) {
-        tempDamage = true
-        canBeTempDamage = true
-      }
-      // Le tag DM temporaires possibles les propose (exemple : arme contondante)
-      if (item.tags.has("dmtemporairespossibles")) {
-        canBeTempDamage = true
-      }
-    }
+    const tempDamage = game.system.CONST.rules.tempDamage && temporaryDamage
+    const showTempDamageChoice = tempDamage
 
     // Gestion de l'option tactique : contrôle des valeurs
     if (tactical) {
@@ -2250,11 +2175,6 @@ export default class COActor extends Actor {
       if (this.system.hasBonusDiceForAttack(actionType)) bonusDices += 1
       // Gestion du dé malus : en fonction de la formule, on déduit le type d'attaque et on cherche dans les modifiers
       if (this.system.hasMalusDiceForAttack(actionType)) malusDices += 1
-    }
-
-    // Maitrise de l'arme : Si le personnage utilise une arme qu'il ne maîtrise pas, il subit un dé malus au test d'attaque.
-    if (item.type === SYSTEM.ITEM_TYPE.equipment.id && item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id) {
-      if (!this.isTrainedWithWeapon(item.id)) malusDices += 1
     }
 
     // Immobilisé : dé malus aux tests d'attaque
@@ -2413,7 +2333,7 @@ export default class COActor extends Actor {
       targets: dialogTargets,
       hasTargets: dialogTargets?.length > 0,
       tempDamage,
-      canBeTempDamage,
+      showTempDamageChoice,
       tactical,
       hasLuckyPoints,
       opposeResult: opposeResult,

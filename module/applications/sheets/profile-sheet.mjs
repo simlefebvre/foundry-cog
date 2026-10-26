@@ -38,16 +38,6 @@ export default class CoProfileSheet extends CoBaseItemSheet {
   async _prepareContext() {
     const context = await super._prepareContext()
 
-    // Tri alphabétique par libellé traduit
-    const sortByLabel = (list) => [...list].sort((a, b) => game.i18n.localize(a.label).localeCompare(game.i18n.localize(b.label)))
-    context.martialTrainingsWeaponsList = sortByLabel(game.system.CONST.martialTrainingsWeapons)
-    context.martialTrainingsArmorsList = sortByLabel(game.system.CONST.martialTrainingsArmors)
-    context.martialTrainingsShieldsList = sortByLabel(game.system.CONST.martialTrainingsShields)
-
-    context.martialTrainingsWeapons = context.martialTrainingsWeaponsList.filter((i) => this.item.system.martialTrainingsWeapons[i.key] === true)
-    context.martialTrainingsArmors = context.martialTrainingsArmorsList.filter((i) => this.item.system.martialTrainingsArmors[i.key] === true)
-    context.martialTrainingsShields = context.martialTrainingsShieldsList.filter((i) => this.item.system.martialTrainingsShields[i.key] === true)
-
     let infosPaths = []
     for (const path of this.item.system.paths) {
       let item = await fromUuid(path)

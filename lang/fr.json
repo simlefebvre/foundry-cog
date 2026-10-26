@@ -114,9 +114,6 @@
         "subtype": {
           "label": "Sous-type"
         },
-        "damagetype": {
-          "label": "Type de dommages"
-        },
         "defense": {
           "label": "Défense"
         },
@@ -196,9 +193,6 @@
           "destroyIfEmpty": {
             "label": "Détruire si vide"
           }
-        },
-        "tags": {
-          "label": "Tags"
         }
       }
     },
@@ -373,6 +367,9 @@
           },
           "temporary": {
             "label": "Temporaire"
+          },
+          "temporaryDamage": {
+            "label": "Inflige des dommages temporaires"
           },
           "noChargesUsed": {
             "label": "Ne consomme pas de charges"
@@ -571,9 +568,6 @@
         "tempDm": "Dommages temporaires",
         "woundThreshold": "Seuil de blessure",
         "seriousWound": "Blessure grave",
-        "martialCategory": "Catégorie martiale",
-        "martialTraining": "Formation martiale",
-        "martialTrainings": "Formations martiales",
         "current": "Actuel",
         "usageFrequency": "Fréquence d'utilisation",
         "usageNumber": "Nombre d'utilisation",
@@ -585,7 +579,6 @@
         "meters": "Mètres",
         "feet": "Pieds",
         "carac": "Caractéristique",
-        "damagetype": "Type de dommages",
         "skillBonus": "Bonus à l'attaque",
         "skillMalus": "Malus à l'attaque",
         "damageBonus": "Bonus aux dommages",
@@ -653,9 +646,6 @@
         "family": "Fam.",
         "source": "Src.",
         "spellcasting": "Mod. pour ATP",
-        "martialCategory": "Cat. martiale",
-        "martialTraining": "Form. martiale",
-        "martialTrainings": "Form. martiales",
         "melee": "Contact",
         "ranged": "Distance",
         "psychic": "Psychique",
@@ -787,8 +777,6 @@
       "perUsage": "Par utilisation",
       "learned": "Apprise",
       "equipped": "Équipé",
-      "trained": "Maîtrise",
-      "notTrained": "Pas de maîtrise",
       "biography": "Biographie",
       "appearance": "Apparence",
       "size": "Taille",
@@ -1141,8 +1129,7 @@
         "isEquipped": "est équipé",
         "isLearned": "est appris",
         "isOwned": "est possédé",
-        "isLinkedActionActivated": "l'action liée est activée",
-        "isTagged": "a le tag"
+        "isLinkedActionActivated": "l'action liée est activée"
       },
       "targets": {
         "item": "Objet",
@@ -1354,12 +1341,6 @@
       "rare": "Rare",
       "veryRare": "Très rare",
       "unique": "Unique"
-    },
-    "damage": {
-      "slashing": "Tranchants",
-      "piercing": "Perforants",
-      "bludgeoning": "Contondants",
-      "magic": "Magiques"
     },
     "size": {
       "tiny": "Minuscule",

@@ -75,6 +75,12 @@
                                             <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.temporary'}}" {{checked action.properties.temporary}} {{#if @root.locked}}class="disabled"{{/if}} />
                                             {{action.schema.fields.properties.fields.temporary.label}}
                                         </label>
+                                        {{#if action.hasResolversWithDomage}}
+                                            <label>
+                                                <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.temporaryDamage'}}" {{checked action.properties.temporaryDamage}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                                {{action.schema.fields.properties.fields.temporaryDamage.label}}
+                                            </label>
+                                        {{/if}}
                                         <label>
                                             <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.noChargesUsed'}}" {{checked action.properties.noChargesUsed}} {{#if @root.locked}}class="disabled"{{/if}} />
                                             {{action.schema.fields.properties.fields.noChargesUsed.label}}

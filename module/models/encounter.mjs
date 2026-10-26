@@ -303,24 +303,11 @@ export default class EncounterData extends ActorData {
     attackData = attackData instanceof Array ? attackData : [attackData]
     const newAttack = await this.parent.createEmbeddedDocuments("Item", attackData)
     // Update the source of all actions with the id of the new embedded capacity created
-    let newActions = Object.values(foundry.utils.deepClone(newAttack[0].system.actions)).map((m) => {
-      const action = new Action(
-        m.source,
-        m.indice,
-        m.type,
-        m.img,
-        m.label,
-        m.chatFlavor,
-        m.properties.visible,
-        m.properties.activable,
-        m.properties.enabled,
-        m.properties.temporary,
-        m.conditions,
-        m.modifiers,
-        m.resolvers,
-      )
-      // Update the source and source's modifiers for the action
-      action.updateSource(newAttack[0].id)
+    let newActions = foundry.utils.deepClone(newAttack[0].system.actions).map((action) => {
+      action.source = newAttack[0].uuid
+      for (const modifier of action.modifiers) {
+        modifier.source = newAttack[0].uuid
+      }
       return action
     })
 

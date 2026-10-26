@@ -22,6 +22,10 @@ export default class EquipmentData extends ItemData {
     const fields = foundry.data.fields
     return foundry.utils.mergeObject(super.defineSchema(), {
       subtype: new fields.StringField({ required: true }),
+      ranged: new fields.BooleanField(),
+      rangedType: new fields.StringField({ required: false, nullable: true, initial: null, choices: SYSTEM.RANGED_WEAPON_TYPES }),
+      misfireThreshold: new fields.NumberField({ required: false, nullable: true, initial: null, integer: true, min: 1, max: 20 }),
+      rangedState: new fields.StringField({ required: true, initial: "normal", choices: SYSTEM.RANGED_WEAPON_STATES }),
       defense: new fields.NumberField({ integer: true, positive: true }),
       magicalDefense: new fields.NumberField({ integer: true }),
       quantity: new fields.SchemaField({
@@ -69,6 +73,42 @@ export default class EquipmentData extends ItemData {
 
   get isArmor() {
     return this.subtype === SYSTEM.EQUIPMENT_SUBTYPES.armor.id
+  }
+
+  /** Arme à distance dont le type gère les états incident de tir / cassé */
+  get hasRangedStates() {
+    return this.isWeapon && this.ranged && SYSTEM.RANGED_WEAPON_TYPES[this.rangedType]?.hasStates === true
+  }
+
+  /** Arme à distance dont l'état n'est pas normal : seules les actions "availableWhenBroken" restent disponibles */
+  get isRangedImpaired() {
+    return this.hasRangedStates && this.rangedState !== SYSTEM.RANGED_WEAPON_STATES.normal.id
+  }
+
+  /**
+   * Action virtuelle (non stockée) de réparation d'une arme à distance, selon son état.
+   * Incident de tir : "repair" ; Cassé : "repairImpossible". Son indice suit celui des actions réelles.
+   * @returns {Action|null}
+   */
+  get rangedStateAction() {
+    if (!this.isRangedImpaired) return null
+    if (this.properties.equipable && !this.equipped) return null
+    const isMisfire = this.rangedState === SYSTEM.RANGED_WEAPON_STATES.misfire.id
+    const base = `CO.equipment.rangedRepair.${this.rangedType}.${isMisfire ? "repair" : "broken"}`
+    const action = new Action(
+      {
+        source: this.parent.uuid,
+        indice: this.actions.length,
+        type: isMisfire ? "repair" : "repairImpossible",
+        img: this.parent.img,
+        label: game.i18n.localize(`${base}.name`),
+        actionType: SYSTEM.CAPACITY_ACTION_TYPE.m.id,
+        properties: { visible: true, activable: true },
+      },
+      { parent: this },
+    )
+    action.tooltipDescription = game.i18n.localize(`${base}.description`)
+    return action
   }
 
   get isShield() {

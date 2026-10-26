@@ -244,7 +244,7 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
     // Actions activables affichées dans l'onglet Principal
     context.visibleActivableActions = await this.document.getVisibleActivableActions()
     for (const action of context.visibleActivableActions) {
-      action.enrichedTooltip = await enrichHTML(action.parent?.description ?? "")
+      action.enrichedTooltip = await enrichHTML(action.tooltipDescription ?? action.parent?.description ?? "")
     }
     context.actionsSorting = this.actionsSorting
     context.isActionsSortedByDefault = this.actionsSorting === "default"

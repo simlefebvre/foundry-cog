@@ -85,6 +85,12 @@
                                             <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.noChargesUsed'}}" {{checked action.properties.noChargesUsed}} {{#if @root.locked}}class="disabled"{{/if}} />
                                             {{action.schema.fields.properties.fields.noChargesUsed.label}}
                                         </label>
+                                        {{#if @root.isRangedWeapon}}
+                                            <label>
+                                                <input type="checkbox" name="{{concat 'system.actions.' idx '.properties.availableWhenBroken'}}" {{checked action.properties.availableWhenBroken}} {{#if @root.locked}}class="disabled"{{/if}} />
+                                                {{action.schema.fields.properties.fields.availableWhenBroken.label}}
+                                            </label>
+                                        {{/if}}
                                     </div>
                                 </fieldSet>
                                 {{#if @root.debugMode}}

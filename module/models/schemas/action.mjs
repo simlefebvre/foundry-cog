@@ -44,6 +44,7 @@ export class Action extends foundry.abstract.DataModel {
         temporary: new fields.BooleanField(),
         temporaryDamage: new fields.BooleanField(),
         noChargesUsed: new fields.BooleanField(),
+        availableWhenBroken: new fields.BooleanField(),
       }),
       conditions: new fields.ArrayField(new fields.EmbeddedDataField(Condition)),
       modifiers: new fields.ArrayField(new fields.EmbeddedDataField(Modifier)),
@@ -90,12 +91,21 @@ export class Action extends foundry.abstract.DataModel {
         return "fa-solid fa-thumbs-down"
       case "consumable":
         return "fa-solid fa-bottle-droplet"
+      case "repair":
+        return "fas fa-fw fa-wrench"
+      case "repairImpossible":
+        return "fas fa-fw fa-ban"
     }
     return ""
   }
 
   get iconTypeLabel() {
     return game.i18n.localize(`CO.action.types.${this.type}`)
+  }
+
+  /** Action virtuelle de réparation d'une arme à distance (voir EquipmentData#rangedStateAction) */
+  get isRepair() {
+    return ["repair", "repairImpossible"].includes(this.type)
   }
 
   /**
@@ -107,6 +117,7 @@ export class Action extends foundry.abstract.DataModel {
    * - "green" : capacité sans fréquence ou équipement standard
    */
   get iconColor() {
+    if (this.isRepair) return "green"
     const parentType = this.parent?.parent?.type
 
     // Validation : pas de parent ou type inconnu

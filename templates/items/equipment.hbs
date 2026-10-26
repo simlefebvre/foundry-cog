@@ -90,6 +90,42 @@
                     </div>
                 </div>
 
+                <!-- si ARME -->
+                {{#if isWeapon}}
+                    <div class="flexrow">
+                        <label>
+                            <input type="checkbox" name="system.ranged" {{checked systemSource.ranged}} {{#if @root.locked}}class="disabled"{{/if}}/>
+                            {{localize "CO.Equipment.FIELDS.ranged.label"}}
+                        </label>
+                    </div>
+                    {{#if systemSource.ranged}}
+                        <div class="form-group">
+                            <label>{{localize "CO.Equipment.FIELDS.rangedType.label"}}</label>
+                            <div class="form-fields border-right">
+                                <select name="system.rangedType" data-type="String" {{#if locked}}disabled{{/if}}>
+                                    {{selectOptions @root.choiceRangedTypes selected=systemSource.rangedType localize=true blank="" }}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{localize "CO.Equipment.FIELDS.misfireThreshold.label"}}</label>
+                            <div class="form-fields border-right">
+                                {{formInput systemFields.misfireThreshold value=systemSource.misfireThreshold localize=true disabled=locked}}
+                            </div>
+                        </div>
+                        {{#if hasRangedStates}}
+                        <div class="form-group">
+                            <label>{{localize "CO.Equipment.FIELDS.rangedState.label"}}</label>
+                            <div class="form-fields border-right">
+                                <select name="system.rangedState" data-type="String" {{#if locked}}disabled{{/if}}>
+                                    {{selectOptions @root.choiceRangedStates selected=systemSource.rangedState localize=true}}
+                                </select>
+                            </div>
+                        </div>
+                        {{/if}}
+                    {{/if}}
+                {{/if}}
+
                 <!-- si ARMURE -->
                 {{#if (or isArmor isShield)}}
                     {{formGroup systemFields.defense value=systemSource.defense localize=true disabled=locked}}

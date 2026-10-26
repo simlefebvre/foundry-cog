@@ -21,6 +21,23 @@ export const EQUIPMENT_SUBTYPES = {
   },
 }
 
+export const RANGED_WEAPON_STATES = {
+  normal: { id: "normal", label: "CO.equipment.rangedStates.normal" },
+  misfire: { id: "misfire", label: "CO.equipment.rangedStates.misfire" },
+  broken: { id: "broken", label: "CO.equipment.rangedStates.broken" },
+}
+
+// hasStates : false si l'arme n'a que l'état normal (pas d'incident de tir ni de casse)
+export const RANGED_WEAPON_TYPES = {
+  archaic: { id: "archaic", label: "CO.equipment.rangedTypes.archaic", hasStates: true },
+  firearm: { id: "firearm", label: "CO.equipment.rangedTypes.firearm", hasStates: true },
+  heavy: { id: "heavy", label: "CO.equipment.rangedTypes.heavy", hasStates: true },
+  sonic: { id: "sonic", label: "CO.equipment.rangedTypes.sonic", hasStates: false },
+  plasma: { id: "plasma", label: "CO.equipment.rangedTypes.plasma", hasStates: true },
+  laser: { id: "laser", label: "CO.equipment.rangedTypes.laser", hasStates: true },
+  ionic: { id: "ionic", label: "CO.equipment.rangedTypes.ionic", hasStates: true },
+}
+
 // COF2 Livre de Règles, Page 193
 export const EQUIPMENT_RARITY = {
   common: {

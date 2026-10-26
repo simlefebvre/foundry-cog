@@ -67,16 +67,20 @@ export default class CoEquipmentSheet extends CoBaseItemSheet {
         // Select options
         context.choiceEquipmentSubTypes = SYSTEM.EQUIPMENT_SUBTYPES
         context.choiceEquipmentRarity = SYSTEM.EQUIPMENT_RARITY
+        context.choiceRangedTypes = SYSTEM.RANGED_WEAPON_TYPES
+        context.choiceRangedStates = SYSTEM.RANGED_WEAPON_STATES
 
         context.isWeapon = doc.system.isWeapon
         context.isArmor = doc.system.isArmor
         context.isShield = doc.system.isShield
         context.isMisc = doc.system.isMisc
         context.isConsumable = doc.system.isConsumable
+        context.hasRangedStates = doc.system.hasRangedStates
         break
 
       case "actions":
         context.subtabs = this._prepareActionsTabs()
+        context.isRangedWeapon = doc.system.isWeapon && doc.system.ranged
         break
     }
     if (CONFIG.debug.cog?.sheets) console.debug(Utils.log(`CoEquipmentSheet - context`), context)
@@ -176,6 +180,10 @@ export default class CoEquipmentSheet extends CoBaseItemSheet {
           twoHand: false,
         },
         range: null,
+        ranged: false,
+        rangedType: null,
+        misfireThreshold: null,
+        rangedState: "normal",
       },
     })
   }

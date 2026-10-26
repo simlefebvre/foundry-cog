@@ -774,6 +774,20 @@ export default class COActor extends Actor {
     const item = this.items.get(id)
     if (!item) return
 
+    // Action virtuelle de réparation d'une arme à distance : seule la réparation après incident de tir a un effet
+    const stateAction = item.type === SYSTEM.ITEM_TYPE.equipment.id ? item.system.rangedStateAction : null
+    if (stateAction && stateAction.indice === Number(indice)) {
+      if (state && stateAction.type === "repair") {
+        await item.update({ "system.rangedState": SYSTEM.RANGED_WEAPON_STATES.normal.id })
+      }
+      return true
+    }
+
+    // Une arme en incident de tir ou cassée n'autorise que les actions "availableWhenBroken"
+    if (state && item.system.isRangedImpaired && !item.system.actions[Number(indice)]?.properties.availableWhenBroken) {
+      return ui.notifications.warn(game.i18n.localize("CO.notif.warningWeaponImpaired"))
+    }
+
     // Point d'extension asynchrone : un module (ex. cof2-compagnon / Points d'Ego) peut enregistrer une promesse-garde
     // via la fonction `guard`. Si l'une des gardes résout sur false, l'activation est annulée.
     const coActivateGuards = []

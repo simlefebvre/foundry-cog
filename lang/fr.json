@@ -114,6 +114,18 @@
         "subtype": {
           "label": "Sous-type"
         },
+        "ranged": {
+          "label": "Arme à distance"
+        },
+        "rangedType": {
+          "label": "Type d'arme à distance"
+        },
+        "misfireThreshold": {
+          "label": "Seuil d'incident de tir"
+        },
+        "rangedState": {
+          "label": "État de l'arme"
+        },
         "defense": {
           "label": "Défense"
         },
@@ -373,6 +385,9 @@
           },
           "noChargesUsed": {
             "label": "Ne consomme pas de charges"
+          },
+          "availableWhenBroken": {
+            "label": "Disponible si l'arme est en incident ou cassée"
           }
         }
       }
@@ -421,6 +436,7 @@
       "warningApplyDamageNoTarget": "Aucun token sélectionné",
       "warningNoMoreRecoveryPoints": "Vous n'avez plus de dés de récupération.",
       "warningNoAmmo": "Vous n'avez plus de munitions.",
+      "warningWeaponImpaired": "Cette action n'est pas disponible : l'arme est en incident de tir ou cassée.",
       "warningNoCharge": "Votre nombre d'utilisations restantes est insuffisant",
       "cantUseAllDef": "Vous ne pouvez pas utiliser les deux types de défense simultanément",
       "orphanDefenseStancesRemoved": "{count} effet(s) de posture défensive retiré(s) : ces postures ne sont plus fournies par aucun module actif.",
@@ -1150,7 +1166,9 @@
         "buff": "Amélioration",
         "debuff": "Affaiblissement",
         "consumable": "Consommable",
-        "save": "Sauvegarde"
+        "save": "Sauvegarde",
+        "repair": "Réparation",
+        "repairImpossible": "Réparation impossible"
       },
       "equip": "Équiper",
       "unequip": "Déséquiper",
@@ -1305,6 +1323,82 @@
       "customEffect": "Effet personnalisé"
     },
     "equipment": {
+      "rangedRepair": {
+        "archaic": {
+          "repair": {
+            "name": "Réparation rapide",
+            "description": "Fait une réparation rapide de l'arme pour la remettre en état de fonctionnement"
+          },
+          "broken": {
+            "name": "Réparation lourde",
+            "description": "L'arme est cassé, seul un spécialiste peut remettre en état cette vieillerie"
+          }
+        },
+        "firearm": {
+          "repair": {
+            "name": "Changement de chargeur",
+            "description": "On remet en route ce bon vieux flingue"
+          },
+          "broken": {
+            "name": "Déraillement",
+            "description": "Seul un passage dans un atelier pourras donner un espoir de revoir cette arme fonctionner"
+          }
+        },
+        "heavy": {
+          "repair": {
+            "name": "Remise en état rapide",
+            "description": "Débloque le mécanisme de l'arme lourde pour la remettre en état de tirer"
+          },
+          "broken": {
+            "name": "Réparation de l'arme lourde",
+            "description": "L'arme lourde est hors d'usage, seul un atelier équipé pourra la remettre en état"
+          }
+        },
+        "plasma": {
+          "repair": {
+            "name": "Réparation rapide de la chambre à plasma",
+            "description": "Deux trois petite manipulation permettrons de refaire cracher cette machine"
+          },
+          "broken": {
+            "name": "Changement de la chambre",
+            "description": "La chambre à plasma ou un autre composant à fondu, il va falloir s'arréter plus longtemps sur ce dégat avant de pouvoir s'en servir à nouveau"
+          }
+        },
+        "laser": {
+          "repair": {
+            "name": "Refroidissment de l'arme",
+            "description": "Souffle sur l'arme pour la faire se refroidir, ça a toujours fonctionner quand elle commence à faire des petit bip"
+          },
+          "broken": {
+            "name": "Recharge de la batterie",
+            "description": "Trouve un système de rechargement pour brancher ton pistolet avant de pouvoir repartir à l'attaque"
+          }
+        },
+        "ionic": {
+          "repair": {
+            "name": "Refroidissment de l'arme",
+            "description": "Souffle sur l'arme pour la faire se refroidir, ça a toujours fonctionner quand elle commence à faire des petit bip"
+          },
+          "broken": {
+            "name": "Recharge de la batterie",
+            "description": "Trouve un système de rechargement pour brancher ton pistolet avant de pouvoir repartir à l'attaque"
+          }
+        }
+      },
+      "rangedStates": {
+        "normal": "Normal",
+        "misfire": "Incident de tir",
+        "broken": "Cassé"
+      },
+      "rangedTypes": {
+        "archaic": "Archaïque",
+        "firearm": "À feu",
+        "heavy": "Lourde",
+        "sonic": "Sonique",
+        "plasma": "Plasmique",
+        "laser": "Laser",
+        "ionic": "Ionique"
+      },
       "subtypes": {
         "armor": "Armure",
         "shield": "Bouclier",

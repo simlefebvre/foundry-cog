@@ -381,10 +381,10 @@ export default class COCharacterSheet extends COBaseActorSheet {
       const indice = target.dataset.indice
       const item = this.document.items.get(id)
       // Get source (item uuid) and indice
-      dragData = item.actions[indice].toDragData()
+      dragData = item.getAction(indice).toDragData()
       dragData.name = item.name
       dragData.img = item.img
-      dragData.actionName = item.actions[indice].actionName
+      dragData.actionName = item.getAction(indice).actionName
       event.dataTransfer.setData("text/plain", JSON.stringify(dragData))
       return
     }

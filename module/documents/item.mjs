@@ -120,9 +120,32 @@ export default class COItem extends Item {
    * @returns {Promise<Array>} A promise that resolves to an array of visible actions.
    */
   async getVisibleActions(actor) {
-    if (foundry.utils.isEmpty(this.system.actions)) return []
-    const visibilityResults = await Promise.all(this.actions.map((action) => action.isVisible(this, actor)))
-    return this.actions.filter((_, index) => visibilityResults[index])
+    const isEquipment = this.type === SYSTEM.ITEM_TYPE.equipment.id
+    let visibleActions = []
+    if (!foundry.utils.isEmpty(this.system.actions)) {
+      const visibilityResults = await Promise.all(this.actions.map((action) => action.isVisible(this, actor)))
+      visibleActions = this.actions.filter((_, index) => visibilityResults[index])
+    }
+    if (!isEquipment) return visibleActions
+
+    // Arme à distance en incident de tir ou cassée : seules les actions explicitement autorisées restent disponibles
+    if (this.system.isRangedImpaired) visibleActions = visibleActions.filter((action) => action.properties.availableWhenBroken)
+    const stateAction = this.system.rangedStateAction
+    if (stateAction) visibleActions.push(stateAction)
+    return visibleActions
+  }
+
+  /**
+   * Retourne l'action d'indice donné : action réelle ou action virtuelle de réparation d'une arme à distance.
+   * @param {number|string} indice
+   * @returns {Action|undefined}
+   */
+  getAction(indice) {
+    const index = Number(indice)
+    if (this.actions[index]) return this.actions[index]
+    if (this.type !== SYSTEM.ITEM_TYPE.equipment.id) return undefined
+    const stateAction = this.system.rangedStateAction
+    return stateAction?.indice === index ? stateAction : undefined
   }
 
   /**
@@ -158,7 +181,7 @@ export default class COItem extends Item {
           actions.push(...(await action.getChatData(item, actor)))
         }
       } else if (chatType === "action") {
-        const action = this.actions.find((a) => a.indice === parseInt(indice))
+        const action = this.getAction(indice)
         if (action) actions.push(...(await action.getChatData(item, actor)))
       }
       return {

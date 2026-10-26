@@ -225,7 +225,7 @@ export default class OpposedRollHandler {
   }
 
   /**
-   * Dépense un point de chance du défenseur : +10 sur la difficulté du jet opposé.
+   * Dépense un point de chance du défenseur : +5 sur la difficulté du jet opposé.
    * @param {object} params
    * @param {Actor} params.defenderActor L'acteur défenseur
    * @param {ChatMessage} params.message Le message de chat
@@ -247,7 +247,7 @@ export default class OpposedRollHandler {
       const attackerResult = CORoll.analyseRollResult(rolls[0])
       const newTargetResults = currentTargetResults.map((tr) => {
         if (tr.uuid !== targetUuid || tr.needsOppositeRoll) return tr
-        const newDifficulty = parseInt(tr.difficulty) + 10
+        const newDifficulty = parseInt(tr.difficulty) + 5
         const isSuccess = attackerResult.isCritical ? true : attackerResult.isFumble ? false : rolls[0].total >= newDifficulty
         const isFailure = !isSuccess
         return { ...tr, difficulty: newDifficulty, isSuccess, isFailure, isCritical: attackerResult.isCritical, isFumble: attackerResult.isFumble, opposeHasLuckyPoints: false }
@@ -256,7 +256,7 @@ export default class OpposedRollHandler {
       await this.updateDamageMessageTargets({ linkedDamageMessageId: message.system.linkedDamageMessageId, targetResults: newTargetResults })
       await OpposedRollHandler.updateMessage({ message, updateData: { rolls, "system.targetResults": newTargetResults } })
     } else {
-      rolls[0].options.difficulty = parseInt(rolls[0].options.difficulty) + 10
+      rolls[0].options.difficulty = parseInt(rolls[0].options.difficulty) + 5
       rolls[0].options.opposeHasLuckyPoints = false
       const newResult = CORoll.analyseRollResult(rolls[0])
       await OpposedRollHandler.updateMessage({ message, updateData: { rolls, "system.result": newResult } })

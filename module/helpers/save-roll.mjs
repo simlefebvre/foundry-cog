@@ -28,7 +28,7 @@ export default class SaveRollHandler {
   }
 
   /**
-   * Dépense un point de chance du sauveur : +10 sur le jet de sauvegarde.
+   * Dépense un point de chance du sauveur : +5 sur le jet de sauvegarde.
    * @param {object} params
    * @param {Actor} params.saverActor L'acteur qui dépense son point de chance
    * @param {ChatMessage} params.message Le message de chat
@@ -48,10 +48,10 @@ export default class SaveRollHandler {
     if (rollIndex < 0) return
 
     const roll = rolls[rollIndex]
-    roll.options.bonus = String(parseInt(roll.options.bonus) + 10)
+    roll.options.bonus = String(parseInt(roll.options.bonus) + 5)
     roll.options.hasLuckyPoints = false
     roll.options.luckyPointUsed = true
-    roll._total = parseInt(roll.total) + 10
+    roll._total = parseInt(roll.total) + 5
 
     const newResult = CORoll.analyseRollResult(roll)
 

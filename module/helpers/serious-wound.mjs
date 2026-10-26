@@ -13,6 +13,7 @@ export async function createShockTestRequest(actor, stage) {
     description: game.i18n.format(`CO.notif.shockTest.${stage}.description`, { actorName: actor.name }),
     buttonLabel: game.i18n.localize(`CO.notif.shockTest.${stage}.button`),
     buttonClass: stage === "repeat" || stage === "recover" ? "gm-only" : "",
+    hasLuckyPoints: stage === "initial" && actor.hasLuckyPoints,
   })
 
   return ChatMessage.create({
@@ -22,6 +23,22 @@ export async function createShockTestRequest(actor, stage) {
     whisper: [],
     blind: false,
   })
+}
+
+/**
+ * Dépense un point de chance pour annuler une blessure grave et l'état Affaibli associé.
+ * @param {Actor} actor Personnage concerné.
+ * @returns {Promise<boolean>} true si la blessure grave a été annulée.
+ */
+export async function cancelSeriousWound(actor) {
+  if (!actor?.hasLuckyPoints || !actor.statuses?.has("seriousWound")) return false
+
+  await actor.spendLuckyPoints(1)
+  await actor.toggleStatusEffect("seriousWound", { active: false })
+  await actor.activateCOStatusEffect({ state: false, effectid: "weakened" })
+  await actor.unsetFlag("cog", "statuses.weakenedRested")
+  await actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
+  return true
 }
 
 /**

@@ -4416,6 +4416,8 @@ a.roll-check-enricher:hover {
 #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose,
 #interface #sidebar .chat-message .message-content .lp-button-oppose-target,
 #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose-target,
+#interface #sidebar .chat-message .message-content .cancel-serious-wound,
+#interface #ui-right-column-1 .chat-message .message-content .cancel-serious-wound,
 #interface #sidebar .chat-message .message-content .accept-result-button,
 #interface #ui-right-column-1 .chat-message .message-content .accept-result-button {
   cursor: pointer;
@@ -4428,6 +4430,8 @@ a.roll-check-enricher:hover {
 .theme-dark #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose,
 .theme-dark #interface #sidebar .chat-message .message-content .lp-button-oppose-target,
 .theme-dark #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose-target,
+.theme-dark #interface #sidebar .chat-message .message-content .cancel-serious-wound,
+.theme-dark #interface #ui-right-column-1 .chat-message .message-content .cancel-serious-wound,
 .theme-dark #interface #sidebar .chat-message .message-content .accept-result-button,
 .theme-dark #interface #ui-right-column-1 .chat-message .message-content .accept-result-button {
   color: var(--co-text-light);
@@ -4440,6 +4444,8 @@ a.roll-check-enricher:hover {
 .theme-light #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose,
 .theme-light #interface #sidebar .chat-message .message-content .lp-button-oppose-target,
 .theme-light #interface #ui-right-column-1 .chat-message .message-content .lp-button-oppose-target,
+.theme-light #interface #sidebar .chat-message .message-content .cancel-serious-wound,
+.theme-light #interface #ui-right-column-1 .chat-message .message-content .cancel-serious-wound,
 .theme-light #interface #sidebar .chat-message .message-content .accept-result-button,
 .theme-light #interface #ui-right-column-1 .chat-message .message-content .accept-result-button {
   color: var(--co-text-dark);
@@ -4742,6 +4748,14 @@ a.roll-check-enricher:hover {
 #interface #ui-right-column-1 .co.chat-card.roll-card.check-card .card-content .result-sentence button {
   font-size: var(--font-size-24);
   padding: 8px 16px;
+}
+#interface #sidebar .co.chat-card.roll-card.check-card .card-content .result-sentence button.cancel-serious-wound,
+#interface #ui-right-column-1 .co.chat-card.roll-card.check-card .card-content .result-sentence button.cancel-serious-wound {
+  font-size: var(--font-size-20);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 #interface #sidebar .co.chat-card.roll-card.check-card .card-content .consequences,
 #interface #ui-right-column-1 .co.chat-card.roll-card.check-card .card-content .consequences {

@@ -436,6 +436,8 @@
         "rollFlavor": "Test de choc",
         "shockRollDetails": "Cliquer pour voir le résultat du test de choc",
         "error": "Échec du test de choc : {error}",
+        "cancelSeriousWound": "Dépenser un point de chance pour annuler la blessure grave et l'état Affaibli",
+        "cancelSeriousWoundUnavailable": "La blessure grave ou le point de chance n'est plus disponible.",
         "initial": {
           "title": "Blessure grave : test de choc",
           "description": "{actorName} doit réussir un test de CON difficulté 10.",

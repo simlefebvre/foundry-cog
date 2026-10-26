@@ -15,6 +15,11 @@
           <i class="fa-solid fa-dice-d20"></i>
           {{buttonLabel}}
         </button>
+        {{#if hasLuckyPoints}}
+          <button type="button" class="cancel-serious-wound" data-actor-uuid="{{actorUuid}}" data-tooltip="{{localize 'CO.notif.shockTest.cancelSeriousWound'}}" data-tooltip-direction="UP">
+            <i class="fa-regular fa-clover"></i>
+          </button>
+        {{/if}}
       {{/if}}
     </section>
   </div>

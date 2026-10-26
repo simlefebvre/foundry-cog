@@ -1,6 +1,6 @@
 import BaseMessageData from "./base-message.mjs"
 import Macros from "../helpers/macros.mjs"
-import { createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
+import { cancelSeriousWound, createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
 
 /**
  * Data model for check messages created by the @Test enricher.
@@ -32,6 +32,33 @@ export default class CheckMessageData extends BaseMessageData {
    * @param {HTMLElement} html Élément HTML représentant le message à modifier.
    */
   async addListeners(html) {
+    const cancelWoundButton = html.querySelector(".cancel-serious-wound")
+    if (cancelWoundButton) {
+      const actor = fromUuidSync(cancelWoundButton.dataset.actorUuid)
+      if (!actor || (!game.user.isGM && !actor.isOwner)) {
+        cancelWoundButton.remove()
+      } else {
+        cancelWoundButton.addEventListener("click", async (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          cancelWoundButton.disabled = true
+          cancelWoundButton.setAttribute("aria-disabled", "true")
+          try {
+            const cancelled = await cancelSeriousWound(actor)
+            cancelWoundButton.remove()
+            if (!cancelled) ui.notifications.warn(game.i18n.localize("CO.notif.shockTest.cancelSeriousWoundUnavailable"))
+          } catch (error) {
+            console.error("Erreur lors de l'annulation de la blessure grave", error)
+            ui.notifications.error(
+              game.i18n.format("CO.notif.shockTest.error", {
+                error: error instanceof Error ? error.message : String(error),
+              }),
+            )
+          }
+        })
+      }
+    }
+
     const recoverButton = html.querySelector(".remove-unconscious")
     if (recoverButton) {
       const actor = fromUuidSync(recoverButton.dataset.actorUuid)
@@ -106,7 +133,7 @@ export default class CheckMessageData extends BaseMessageData {
 
           const analysis = rollResult.result
           const hasLuckyPoints = actor.hasLuckyPoints
-          const couldSucceedWithLuck = !analysis.difficulty || analysis.total + 10 >= analysis.difficulty
+          const couldSucceedWithLuck = !analysis.difficulty || analysis.total + 5 >= analysis.difficulty
           const shouldDefer = hasLuckyPoints && analysis.isFailure && couldSucceedWithLuck
           const consequences = { shockStage: rollStage }
 
@@ -200,9 +227,9 @@ export default class CheckMessageData extends BaseMessageData {
         // Use the already-analyzed result from rollSkill
         const analysis = rollResult.result
 
-        // Check if consequences should be deferred (player has lucky points, roll is a failure, and +10 could change the outcome)
+        // Check if consequences should be deferred (player has lucky points, roll is a failure, and +5 could change the outcome)
         const hasLuckyPoints = actor.hasLuckyPoints
-        const couldSucceedWithLuck = !analysis.difficulty || analysis.total + 10 >= analysis.difficulty
+        const couldSucceedWithLuck = !analysis.difficulty || analysis.total + 5 >= analysis.difficulty
         const shouldDefer = hasLuckyPoints && analysis.isFailure && couldSucceedWithLuck
 
         const consequences = { ability, successDamage, failureDamage, successStatuses, failureStatuses }

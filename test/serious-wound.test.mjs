@@ -1,7 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 
-import { createShockTestRequest, resolveShockTest } from "../module/helpers/serious-wound.mjs"
+import { cancelSeriousWound, createShockTestRequest, resolveShockTest } from "../module/helpers/serious-wound.mjs"
 
 function installFoundryMocks() {
   const previousGlobals = {
@@ -172,11 +172,12 @@ test("la demande de nouveau test est publique et peut être lancée par le joueu
 
 test("une demande de test identifie le personnage et l'étape dans sa carte de chat", async () => {
   const mocks = installFoundryMocks()
-  const actor = { name: "Aventurière", uuid: "Actor.test" }
+  const actor = { name: "Aventurière", uuid: "Actor.test", hasLuckyPoints: true }
 
   try {
     const message = await createShockTestRequest(actor, "initial")
 
+    assert.equal(mocks.renderedTemplates[0].hasLuckyPoints, true)
     assert.equal(message.content, "initial")
     assert.equal(message.type, "check")
     assert.deepEqual(message.speaker, {})
@@ -189,4 +190,50 @@ test("une demande de test identifie le personnage et l'étape dans sa carte de c
   } finally {
     mocks.restore()
   }
+})
+
+test("annuler une blessure grave dépense un point et retire aussi Affaibli", async () => {
+  const statuses = new Set(["seriousWound", "weakened"])
+  const calls = []
+  const actor = {
+    hasLuckyPoints: true,
+    statuses,
+    spendLuckyPoints: async (amount) => calls.push(["spend", amount]),
+    toggleStatusEffect: async (status, options) => {
+      calls.push(["toggle", status, options.active])
+      statuses.delete(status)
+    },
+    activateCOStatusEffect: async (options) => {
+      calls.push(["activate", options.effectid, options.state])
+      statuses.delete(options.effectid)
+    },
+    unsetFlag: async (...args) => calls.push(["unsetFlag", ...args]),
+  }
+
+  const cancelled = await cancelSeriousWound(actor)
+
+  assert.equal(cancelled, true)
+  assert.deepEqual(calls, [
+    ["spend", 1],
+    ["toggle", "seriousWound", false],
+    ["activate", "weakened", false],
+    ["unsetFlag", "cog", "statuses.weakenedRested"],
+    ["unsetFlag", "cog", "statuses.weakenedFromOneHP"],
+  ])
+  assert.equal(statuses.has("seriousWound"), false)
+  assert.equal(statuses.has("weakened"), false)
+})
+
+test("l'annulation de blessure grave ne dépense rien si les conditions ne sont plus réunies", async () => {
+  let spent = false
+  const actor = {
+    hasLuckyPoints: false,
+    statuses: new Set(["seriousWound"]),
+    spendLuckyPoints: async () => {
+      spent = true
+    },
+  }
+
+  assert.equal(await cancelSeriousWound(actor), false)
+  assert.equal(spent, false)
 })

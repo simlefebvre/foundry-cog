@@ -30,11 +30,11 @@ export default class SkillMessageData extends BaseMessageData {
         const message = game.messages.get(messageId)
 
         let rolls = message.rolls
-        rolls[0].options.bonus = String(parseInt(rolls[0].options.bonus) + 10)
+        rolls[0].options.bonus = String(parseInt(rolls[0].options.bonus) + 5)
         rolls[0].options.hasLuckyPoints = false
         rolls[0].options.hasPendingConsequences = false
         rolls[0].options.luckyPointUsed = true
-        rolls[0]._total = parseInt(rolls[0].total) + 10
+        rolls[0]._total = parseInt(rolls[0].total) + 5
 
         let newResult = CORoll.analyseRollResult(rolls[0])
         // L'acteur consomme son point de chance

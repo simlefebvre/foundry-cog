@@ -1,0 +1,9 @@
+<div class="co chat-card status-card {{#if active}}applied{{else}}removed{{/if}}" data-actor-id="{{actorId}}" data-status-id="{{statusId}}">
+  <header class="card-header">
+    {{#if img}}<img class="status-icon" src="{{img}}" alt="{{statusName}}" />{{/if}}
+    <div class="action-name">{{title}}</div>
+  </header>
+  <div class="card-content">
+    <p>{{reason}}</p>
+  </div>
+</div>

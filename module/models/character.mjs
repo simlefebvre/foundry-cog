@@ -1,5 +1,7 @@
 import { SYSTEM } from "../config/system.mjs"
 import { canRecoverFromWeakened, canRecoverFromWounded, getFullRestRecoveredStatuses } from "../helpers/status-rules.mjs"
+import { createShockTestRequest } from "../helpers/serious-wound.mjs"
+import { postStatusChangeCard } from "../helpers/status-log.mjs"
 import { BaseValue } from "./schemas/base-value.mjs"
 import { AbilityValue } from "./schemas/ability-value.mjs"
 import ActorData from "./actor.mjs"
@@ -247,22 +249,11 @@ export default class CharacterData extends ActorData {
   /** @inheritDoc */
   async _preUpdate(changes, options, user) {
     if (foundry.utils.hasProperty(changes, "system.attributes.hp.value")) {
-      // Cas des points de vie à 1 : statut affaibli
-      if (changes.system.attributes.hp.value === 1 && !this.parent.statuses.has("weakened")) {
-        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("cog", "statuses.unconsciousFromZeroHP")) {
-          await this.parent.toggleStatusEffect("unconscious", { active: false })
-          await this.parent.unsetFlag("cog", "statuses.unconsciousFromZeroHP")
-        }
+      // Cas des points de vie à 0 : statut affaibli
+      if (changes.system.attributes.hp.value === 0 && !this.parent.statuses.has("weakened")) {
         await this.parent.toggleStatusEffect("weakened", { active: true })
         await this.parent.setFlag("cog", "statuses.weakenedFromOneHP", true)
-      }
-
-      // Cas des points de vie > 1 : suppression de l'inconscience provoquée par 0 PV.
-      if (changes.system.attributes.hp.value > 1) {
-        if (this.parent.statuses.has("unconscious") && this.parent.getFlag("cog", "statuses.unconsciousFromZeroHP")) {
-          await this.parent.toggleStatusEffect("unconscious", { active: false })
-          await this.parent.unsetFlag("cog", "statuses.unconsciousFromZeroHP")
-        }
+        await postStatusChangeCard(this.parent, "weakened", true, "weakenedAtZeroHP")
       }
     }
   }
@@ -792,6 +783,7 @@ export default class CharacterData extends ActorData {
     if (await this._isRecoveryHandledByModule()) {
       await this.clearFullRestRecoveredStatuses()
       await this.tryRecoverFromWeakened()
+      await this.requestSeriousWoundRecovery()
       return
     }
 
@@ -805,7 +797,19 @@ export default class CharacterData extends ActorData {
 
     await this.clearFullRestRecoveredStatuses()
     await this.tryRecoverFromWeakened()
+    await this.requestSeriousWoundRecovery()
     Hooks.callAll("cog.postUseRecovery", this.parent, { isFullRest: true })
+  }
+
+  /**
+   * Publie la carte de test de CON (ND 8) permettant de guérir une blessure grave après un repos.
+   *
+   * @returns {Promise<boolean>} true si la carte a été publiée.
+   */
+  async requestSeriousWoundRecovery() {
+    if (!this.parent.statuses.has("seriousWound")) return false
+    await createShockTestRequest(this.parent, "woundRecovery")
+    return true
   }
 
   /**
@@ -815,6 +819,7 @@ export default class CharacterData extends ActorData {
     const statuses = getFullRestRecoveredStatuses(this.parent.statuses)
     for (const statusId of statuses) {
       await this.parent.toggleStatusEffect(statusId, { active: false })
+      await postStatusChangeCard(this.parent, statusId, false, "restRecovered")
     }
   }
 
@@ -845,6 +850,7 @@ export default class CharacterData extends ActorData {
     }
 
     await actor.toggleStatusEffect("weakened", { active: false })
+    await postStatusChangeCard(actor, "weakened", false, "weakenedRecovered")
     await actor.unsetFlag("cog", "statuses.weakenedRested")
     await actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
     return true
@@ -863,6 +869,7 @@ export default class CharacterData extends ActorData {
     if (!canRecoverFromWounded({ hpValue, hpMax, hasSeriousWound: actor.statuses.has("seriousWound") })) return false
 
     await actor.toggleStatusEffect("wounded", { active: false })
+    await postStatusChangeCard(actor, "wounded", false, "woundedRecovered")
     return true
   }
 

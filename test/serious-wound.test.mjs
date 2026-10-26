@@ -93,7 +93,7 @@ test("un échec au test de choc inflige inconscient et demande 1d6 minutes", asy
     await resolveShockTest({ isFailure: true, isSuccess: false }, "initial", actor)
 
     assert.deepEqual(toggles, [["unconscious", true]])
-    assert.equal(mocks.chatMessages[0].content, "minutes")
+    assert.equal(mocks.chatMessages.at(-1).content, "minutes")
   } finally {
     mocks.restore()
   }
@@ -117,7 +117,7 @@ test("une réussite au test de choc du MJ retire inconscient", async () => {
 
     assert.equal(statuses.has("unconscious"), false)
     assert.equal(mocks.chatMessages.length, 1)
-    assert.match(mocks.chatMessages[0].content, /wakesUp/)
+    assert.equal(mocks.chatMessages[0].content, "shockSucceeded")
   } finally {
     mocks.restore()
   }
@@ -193,6 +193,7 @@ test("une demande de test identifie le personnage et l'étape dans sa carte de c
 })
 
 test("annuler une blessure grave dépense un point et retire aussi Affaibli", async () => {
+  const mocks = installFoundryMocks()
   const statuses = new Set(["seriousWound", "weakened"])
   const calls = []
   const actor = {
@@ -210,7 +211,12 @@ test("annuler une blessure grave dépense un point et retire aussi Affaibli", as
     unsetFlag: async (...args) => calls.push(["unsetFlag", ...args]),
   }
 
-  const cancelled = await cancelSeriousWound(actor)
+  let cancelled
+  try {
+    cancelled = await cancelSeriousWound(actor)
+  } finally {
+    mocks.restore()
+  }
 
   assert.equal(cancelled, true)
   assert.deepEqual(calls, [

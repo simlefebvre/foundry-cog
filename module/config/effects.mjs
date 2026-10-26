@@ -95,7 +95,7 @@ export const CUSTOM_STATUS_EFFECT = [
         value: 0,
       },
     ],
-    description: "CO.CustomStatus.immobilizedDescription",
+    description: "CO.customStatus.immobilizedDescription",
   },
   {
     id: "stun",

@@ -1,0 +1,34 @@
+.co.chat-card.status-card {
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--co-chat-status);
+    border-bottom: 1px dashed var(--co-chat-status);
+    color: var(--co-chat-status);
+
+    .status-icon {
+      width: 24px;
+      height: 24px;
+      border: 0;
+    }
+
+    .action-name {
+      margin-left: 0;
+      font-weight: bold;
+    }
+  }
+
+  .card-content p {
+    margin: 4px 0;
+    font-size: var(--font-size-14);
+    font-style: italic;
+  }
+
+  &.removed {
+    .card-header {
+      border-color: var(--co-chat-status-removed);
+      color: var(--co-chat-status-removed);
+    }
+  }
+}

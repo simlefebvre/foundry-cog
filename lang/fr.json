@@ -430,7 +430,6 @@
       "damagedBy": "{actorName} perd {amount} point(s) de vigueur par {source}",
       "tmpDamaged": "{actorName} prend {amount} point(s) de dommages temporaires",
       "tmpDamagedBy": "{actorName} prend {amount} point(s) de dommages temporaires par {source}",
-      "unconsciousFromTempDm": "{actorName} tombe inconscient car ses dommages temporaires dépassent ses PV restants.",
       "seriousWoundCheck": "Blessure grave : {finalDamage} dégât(s) après RD, seuil {threshold} — effet présent : {hasSeriousWoundAfter}",
       "shockTest": {
         "rollFlavor": "Test de choc",
@@ -438,6 +437,13 @@
         "error": "Échec du test de choc : {error}",
         "cancelSeriousWound": "Dépenser un point de chance pour annuler la blessure grave et l'état Affaibli",
         "cancelSeriousWoundUnavailable": "La blessure grave ou le point de chance n'est plus disponible.",
+        "woundRecovery": {
+          "title": "Repos : guérison de la blessure grave",
+          "description": "{actorName} doit réussir un test de CON difficulté 8 pour guérir sa blessure grave.",
+          "button": "Tester CON (ND 8)",
+          "bonus": "Bonus de +3",
+          "rollFlavor": "Guérison de la blessure grave"
+        },
         "initial": {
           "title": "Blessure grave : test de choc",
           "description": "{actorName} doit réussir un test de CON difficulté 10.",
@@ -469,8 +475,7 @@
           "button": "Retirer l'effet Inconscient"
         },
         "minuteResult": "{actorName} est évanoui durant {duration} minute(s).",
-        "hourResult": "{actorName} est évanoui durant {duration} heure(s).",
-        "wakesUp": "{actorName} reprend connaissance."
+        "hourResult": "{actorName} est évanoui durant {duration} heure(s)."
       },
       "warningNeedLearnedCapacities": "Vous devez apprendre les capacités des rangs précédents avant d'apprendre celle-ci",
       "consume": "{actorName} a consommé un(e) {itemName}",
@@ -656,37 +661,59 @@
         "feet": "ft"
       }
     },
+    "statusLog": {
+      "title": {
+        "applied": "{status} : état appliqué",
+        "removed": "{status} : état retiré"
+      },
+      "reason": {
+        "weakenedAtZeroHP": "{actorName} tombe à 0 PV.",
+        "seriousWound": "{actorName} subit des dégâts atteignant son seuil de blessure grave ou tombe à 0 PV.",
+        "seriousWoundWeakened": "{actorName} est atteint d'une blessure grave : il est automatiquement affaibli.",
+        "unconsciousAtZeroHP": "{actorName} subit des dégâts alors qu'il est déjà à 0 PV.",
+        "deadAtZeroHP": "{actorName} tombe à 0 PV.",
+        "weakenedRecovered": "{actorName} a passé une nuit de repos, a récupéré tous ses PV et n'a plus de blessure grave.",
+        "woundedRecovered": "{actorName} a récupéré tous ses PV et n'a plus de blessure grave.",
+        "restRecovered": "{actorName} a bénéficié d'une nuit complète de repos.",
+        "seriousWoundHealed": "{actorName} a réussi son test de CON de guérison après le repos.",
+        "luckyPointCancelled": "Un point de chance a été dépensé pour annuler la blessure grave de {actorName}.",
+        "shockFailed": "{actorName} a raté son test de choc.",
+        "shockSucceeded": "{actorName} a réussi son nouveau test de choc et reprend connaissance.",
+        "shockRecovered": "Le délai d'inconscience est écoulé : {actorName} reprend connaissance.",
+        "checkConsequence": "Conséquence du résultat du test de {actorName}."
+      }
+    },
     "customStatus": {
       "blind": "Aveuglé",
-      "blindDescription": "‑5 en Init., aux attaques de mêlée et en DEF. Les attaques à distance et les attaques magiques nécessitant de voir la cible sont impossibles",
+      "blindDescription": "‑5 en Init., aux attaques de mêlée et en DEF. Les attaques à distance et les attaques magiques nécessitant de voir la cible sont impossibles.\nSuppression : manuelle (retirer l'état).",
       "confused": "Confus",
-      "confusedDescription": "Le personnage est confus et fait des actions aléatoires. Utilise un d12 à la place d'un d20 pour les tests d'INT, PER et CHA. Une nuit complète de repos met fin à cet état.",
+      "confusedDescription": "Le personnage est confus et fait des actions aléatoires. Utilise un d12 à la place d'un d20 pour les tests d'INT, PER et CHA.\nSuppression : automatique après une nuit complète de repos.",
       "weakened": "Affaibli",
-      "weakenedDescription": "Utilise un d12 à la place d'un d20 pour tous les tests. Pour retrouver son état normal, le personnage doit récupérer tous ses PV, ne plus avoir de blessure grave et bénéficier d'une nuit de repos.",
+      "weakenedDescription": "Utilise un d12 à la place d'un d20 pour tous les tests. Appliqué à 0 PV ou lors d'une blessure grave.\nSuppression : automatique une fois que le personnage a bénéficié d'une nuit de repos, récupéré tous ses PV et ne subit plus de blessure grave.",
       "wounded": "Blessé",
-      "woundedDescription": "Utilise un d12 à la place d'un d20 pour les tests de FOR, DEX et CON. Pour retrouver son état normal, le personnage doit récupérer tous ses PV et ne plus avoir de blessure grave.",
+      "woundedDescription": "Utilise un d12 à la place d'un d20 pour les tests de FOR, DEX et CON.\nSuppression : automatique dès que le personnage a récupéré tous ses PV et n'a plus de blessure grave.",
       "exhausted": "Épuisé",
-      "exhaustedDescription": "Applique un malus de −5 à tous les jets. Une nuit complète de repos met fin à cet état.",
+      "exhaustedDescription": "Applique un malus de −5 à tous les jets.\nSuppression : automatique après une nuit complète de repos.",
       "tired": "Fatigué",
-      "tiredDescription": "Applique un malus de −2 à tous les jets. Si Épuisé est aussi actif, seul le malus de −5 s'applique. Une nuit complète de repos met fin à cet état.",
+      "tiredDescription": "Applique un malus de −2 à tous les jets. Si Épuisé est aussi actif, seul le malus de −5 s'applique.\nSuppression : automatique après une nuit complète de repos.",
       "seriousWound": "Blessure grave",
-      "seriousWoundDescription": "A subi une blessure grave",
+      "seriousWoundDescription": "A subi une blessure grave.\nSuppression : après un repos, une carte de chat propose un jet de CON de ND 8 (bonus de +3 possible) ; en cas de réussite, la blessure grave est supprimée. Un point de chance peut aussi l'annuler.",
       "stun": "Étourdi",
-      "stunDescription": "Aucune action possible et ‑5 en DEF",
+      "stunDescription": "Aucune action possible et ‑5 en DEF.\nSuppression : manuelle (retirer l'état).",
       "immobilized": "Immobilisé",
-      "immobilizedDescription": "Pas de déplacement, dé malus aux tests d’attaque et utilise un d12 à la place d'un d20 pour tous les tests.",
+      "immobilizedDescription": "Pas de déplacement, dé malus aux tests d’attaque et utilise un d12 à la place d'un d20 pour tous les tests.\nSuppression : manuelle (retirer l'état).",
       "invalid": "Invalide",
-      "invalidDescription": "Le déplacement est limité à 5 m par action de mouvement",
+      "invalidDescription": "Le déplacement est limité à 5 m par action de mouvement.\nSuppression : manuelle (retirer l'état).",
       "dead": "Mort",
-      "deadDescription": "Vous êtes mort",
+      "deadDescription": "Vous êtes mort.\nSuppression : manuelle (retirer l'état).",
       "slowed": "Ralenti",
-      "slowedDescription": "Une seule action par round (action d’attaque ou de mouvement).",
+      "slowedDescription": "Une seule action par round (action d’attaque ou de mouvement).\nSuppression : manuelle (retirer l'état).",
       "overturned": "Renversé",
-      "overturnedDescription": "‑5 en attaque et DEF, nécessite une action d’attaque pour se relever",
+      "overturnedDescription": "‑5 en attaque et DEF, nécessite une action d’attaque pour se relever.\nSuppression : manuelle (retirer l'état).",
       "surprised": "Surpris",
-      "surprisedDescription": "Pas d’action et ‑5 en DEF au premier round de combat.",
+      "surprisedDescription": "Pas d’action et ‑5 en DEF au premier round de combat.\nSuppression : manuelle (retirer l'état).",
       "unconscious": "Inconscient",
-      "unconsciousDescription": "Une attaque réussie contre cette cible est toujours un coup critique"
+      "unconsciousDescription": "Appliqué lorsque le personnage subit des dégâts alors qu'il est déjà à 0 PV. Une attaque réussie contre cette cible est toujours un coup critique.\nSuppression : manuelle (retirer l'état) ou via la carte de test de choc."
     },
     "ui": {
       "none": "--",

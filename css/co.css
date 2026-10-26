@@ -32,6 +32,8 @@
 #interface #sidebar .chat-log,
 #interface #ui-right-column-1 .chat-log {
   --co-chat-skill: inherit;
+  --co-chat-status: inherit;
+  --co-chat-status-removed: inherit;
   --co-chat-attack: inherit;
   --co-chat-damages: inherit;
   --co-chat-heal: inherit;
@@ -60,6 +62,8 @@
   --co-stat-damages: #800080;
   --co-stat-resource: #2f4f4f;
   --co-chat-skill: #084f7b;
+  --co-chat-status: #7a3b8f;
+  --co-chat-status-removed: #1f7a6d;
   --co-chat-attack: #702900;
   --co-chat-damages: darkred;
   --co-chat-heal: #2c532c;
@@ -114,6 +118,8 @@
   --co-stat-damages: #4d004d;
   --co-stat-resource: #1c2f2f;
   --co-chat-skill: #3f9fda;
+  --co-chat-status: #c27ddb;
+  --co-chat-status-removed: #4fc4b2;
   --co-chat-attack: #db5305;
   --co-chat-damages: #cb0909;
   --co-chat-heal: #3fa13f;
@@ -274,6 +280,9 @@ a.roll-check-enricher i {
 }
 a.roll-check-enricher:hover {
   text-decoration: underline;
+}
+#tooltip {
+  white-space: pre-line;
 }
 #tooltip.cog-encounter-attack-tooltip,
 .locked-tooltip.cog-encounter-attack-tooltip {
@@ -5674,6 +5683,37 @@ a.roll-check-enricher:hover {
 #interface #sidebar .co.chat-card.roll-card.skill-card .card-content .bloc-result,
 #interface #ui-right-column-1 .co.chat-card.roll-card.skill-card .card-content .bloc-result {
   padding: 8px 0 3px 0;
+}
+#interface #sidebar .co.chat-card.status-card .card-header,
+#interface #ui-right-column-1 .co.chat-card.status-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--co-chat-status);
+  border-bottom: 1px dashed var(--co-chat-status);
+  color: var(--co-chat-status);
+}
+#interface #sidebar .co.chat-card.status-card .card-header .status-icon,
+#interface #ui-right-column-1 .co.chat-card.status-card .card-header .status-icon {
+  width: 24px;
+  height: 24px;
+  border: 0;
+}
+#interface #sidebar .co.chat-card.status-card .card-header .action-name,
+#interface #ui-right-column-1 .co.chat-card.status-card .card-header .action-name {
+  margin-left: 0;
+  font-weight: bold;
+}
+#interface #sidebar .co.chat-card.status-card .card-content p,
+#interface #ui-right-column-1 .co.chat-card.status-card .card-content p {
+  margin: 4px 0;
+  font-size: var(--font-size-14);
+  font-style: italic;
+}
+#interface #sidebar .co.chat-card.status-card.removed .card-header,
+#interface #ui-right-column-1 .co.chat-card.status-card.removed .card-header {
+  border-color: var(--co-chat-status-removed);
+  color: var(--co-chat-status-removed);
 }
 .icon.co {
   background-image: url('/systems/cog/ui/icone_co.webp');

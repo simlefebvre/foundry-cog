@@ -1,7 +1,9 @@
+import { postStatusChangeCard } from "./status-log.mjs"
+
 /**
  * Publie une demande de test ou de durée liée à une blessure grave.
  * @param {Actor} actor Personnage concerné.
- * @param {"initial"|"minutes"|"repeat"|"repeatRoll"|"hours"|"recover"} stage Étape à afficher.
+ * @param {"initial"|"minutes"|"repeat"|"repeatRoll"|"hours"|"recover"|"woundRecovery"} stage Étape à afficher.
  * @returns {Promise<ChatMessage>}
  */
 export async function createShockTestRequest(actor, stage) {
@@ -14,6 +16,7 @@ export async function createShockTestRequest(actor, stage) {
     buttonLabel: game.i18n.localize(`CO.notif.shockTest.${stage}.button`),
     buttonClass: stage === "repeat" || stage === "recover" ? "gm-only" : "",
     hasLuckyPoints: stage === "initial" && actor.hasLuckyPoints,
+    isWoundRecovery: stage === "woundRecovery",
   })
 
   return ChatMessage.create({
@@ -35,7 +38,11 @@ export async function cancelSeriousWound(actor) {
 
   await actor.spendLuckyPoints(1)
   await actor.toggleStatusEffect("seriousWound", { active: false })
-  await actor.activateCOStatusEffect({ state: false, effectid: "weakened" })
+  await postStatusChangeCard(actor, "seriousWound", false, "luckyPointCancelled")
+  if (actor.statuses.has("weakened")) {
+    await actor.activateCOStatusEffect({ state: false, effectid: "weakened" })
+    await postStatusChangeCard(actor, "weakened", false, "luckyPointCancelled")
+  }
   await actor.unsetFlag("cog", "statuses.weakenedRested")
   await actor.unsetFlag("cog", "statuses.weakenedFromOneHP")
   return true
@@ -49,6 +56,13 @@ export async function cancelSeriousWound(actor) {
  * @returns {Promise<void>}
  */
 export async function resolveShockTest(result, stage, actor) {
+  if (stage === "woundRecovery") {
+    if (!result.isSuccess || !actor.statuses.has("seriousWound")) return
+    await actor.toggleStatusEffect("seriousWound", { active: false })
+    await postStatusChangeCard(actor, "seriousWound", false, "seriousWoundHealed")
+    return
+  }
+
   if (stage === "minutes" || stage === "hours") {
     const durationRoll = await new Roll("1d6").evaluate()
     const unit = stage === "minutes" ? "minute" : "hour"
@@ -72,12 +86,7 @@ export async function resolveShockTest(result, stage, actor) {
   if (result.isSuccess) {
     if (stage === "repeat" && actor.statuses.has("unconscious")) {
       await actor.toggleStatusEffect("unconscious", { active: false })
-      await ChatMessage.create({
-        content: game.i18n.format("CO.notif.shockTest.wakesUp", { actorName: actor.name }),
-        speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
-        whisper: [],
-        blind: false,
-      })
+      await postStatusChangeCard(actor, "unconscious", false, "shockSucceeded")
     }
     return
   }
@@ -86,6 +95,7 @@ export async function resolveShockTest(result, stage, actor) {
 
   if (!actor.statuses.has("unconscious")) {
     await actor.toggleStatusEffect("unconscious", { active: true })
+    await postStatusChangeCard(actor, "unconscious", true, "shockFailed")
   }
   await createShockTestRequest(actor, stage === "initial" ? "minutes" : "hours")
 }

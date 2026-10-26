@@ -11,6 +11,12 @@
           {{buttonLabel}}
         </button>
       {{else}}
+        {{#if isWoundRecovery}}
+          <label class="wound-recovery-bonus-label">
+            <input type="checkbox" class="wound-recovery-bonus" />
+            {{localize "CO.notif.shockTest.woundRecovery.bonus"}}
+          </label>
+        {{/if}}
         <button class="roll-shock-test" data-actor-uuid="{{actorUuid}}" data-stage="{{stage}}" data-tooltip="{{buttonLabel}}" data-tooltip-direction="UP">
           <i class="fa-solid fa-dice-d20"></i>
           {{buttonLabel}}

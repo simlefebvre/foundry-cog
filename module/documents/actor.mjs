@@ -10,6 +10,7 @@ import { isRangedAttackBlockedByBlindness, resolveStatusId } from "../helpers/st
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
 import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
+import { postStatusChangeCard } from "../helpers/status-log.mjs"
 
 /**
  * @class COActor
@@ -2748,14 +2749,22 @@ export default class COActor extends Actor {
     else {
       const hp = this.system.attributes.hp
       const newValue = Math.max(0, hp.value - finalDamage)
-      if (newValue === 0 && this.type !== "character") {
+      if (newValue === 0 && this.type !== "character" && !this.statuses.has("dead")) {
         await this.toggleStatusEffect("dead", { active: true })
+        await postStatusChangeCard(this, "dead", true, "deadAtZeroHP")
       }
       await this.update({ "system.attributes.hp.value": newValue })
     }
+    if (this.type === "character" && hpBefore === 0 && !this.statuses.has("unconscious")) {
+      await this.toggleStatusEffect("unconscious", { active: true })
+      await postStatusChangeCard(this, "unconscious", true, "unconsciousAtZeroHP")
+    }
     if (shouldApplySeriousWound) {
+      const wasWeakened = this.statuses.has("weakened")
       await this.toggleStatusEffect("seriousWound", { active: true })
+      await postStatusChangeCard(this, "seriousWound", true, "seriousWound")
       await this.activateCOStatusEffect({ state: true, effectid: "weakened" })
+      if (!wasWeakened && this.statuses.has("weakened")) await postStatusChangeCard(this, "weakened", true, "seriousWoundWeakened")
       await createShockTestRequest(this, "initial")
     }
     const hasSeriousWoundAfter = this.statuses.has("seriousWound")

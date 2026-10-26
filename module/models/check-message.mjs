@@ -1,6 +1,7 @@
 import BaseMessageData from "./base-message.mjs"
 import Macros from "../helpers/macros.mjs"
 import { cancelSeriousWound, createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
+import { postStatusChangeCard } from "../helpers/status-log.mjs"
 
 /**
  * Data model for check messages created by the @Test enricher.
@@ -72,12 +73,7 @@ export default class CheckMessageData extends BaseMessageData {
         event.stopPropagation()
         recoverButton.disabled = true
         await actor.toggleStatusEffect("unconscious", { active: false })
-        await ChatMessage.create({
-          content: game.i18n.format("CO.notif.shockTest.wakesUp", { actorName: actor.name }),
-          speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
-          whisper: [],
-          blind: false,
-        })
+        await postStatusChangeCard(actor, "unconscious", false, "shockRecovered")
       })
       return
     }
@@ -120,14 +116,16 @@ export default class CheckMessageData extends BaseMessageData {
             return
           }
 
+          const isWoundRecovery = stage === "woundRecovery"
           const rollResult = await actor.rollSkill("con", {
             rollMode: "publicroll",
-            difficulty: 10,
+            difficulty: isWoundRecovery ? 8 : 10,
+            bonus: isWoundRecovery && html.querySelector(".wound-recovery-bonus")?.checked ? 3 : 0,
             useDifficulty: true,
             showDifficulty: true,
             withDialog: false,
             showResult: false,
-            chatFlavor: game.i18n.localize("CO.notif.shockTest.rollFlavor"),
+            chatFlavor: game.i18n.localize(isWoundRecovery ? "CO.notif.shockTest.woundRecovery.rollFlavor" : "CO.notif.shockTest.rollFlavor"),
           })
           if (!rollResult) return
 
@@ -331,6 +329,7 @@ export async function applyCheckConsequences(result, consequences, actor) {
     for (const statusId of statusIds) {
       if (statusId) {
         await actor.toggleStatusEffect(statusId, { active: true })
+        await postStatusChangeCard(actor, statusId, true, "checkConsequence")
       }
     }
   }

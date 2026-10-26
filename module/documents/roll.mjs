@@ -1,4 +1,5 @@
 import Utils from "../helpers/utils.mjs"
+import RollHelp from "../helpers/roll-help.mjs"
 import { getDiceFormula } from "../helpers/dice-formula.mjs"
 export class CORoll extends Roll {
   static ROLL_TYPE = "standard"
@@ -93,6 +94,7 @@ export class COSkillRoll extends CORoll {
     const withDialog = options.withDialog ?? true
     let formula
     let rollContext
+    let help = null
 
     if (withDialog) {
       const content = await foundry.applications.handlebars.renderTemplate(this.DIALOG_TEMPLATE, dialogContext)
@@ -157,6 +159,7 @@ export class COSkillRoll extends CORoll {
           },
         ],
         render: (event, dialog) => {
+          this._initHelpPicker(dialog.element)
           const inputs = dialog.element.querySelectorAll(".bonus-item")
           if (inputs) {
             inputs.forEach((input) => {
@@ -201,11 +204,23 @@ export class COSkillRoll extends CORoll {
       rollContext.label = dialogContext.label
       if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll - rollContext`), rollContext)
 
+      const helperActorIds = (rollContext.helpers ?? "").split(",").filter(Boolean)
+      if (helperActorIds.length) {
+        help = await RollHelp.requestHelp({ helperActorIds, skillId: dialogContext.skillId, actor: dialogContext.actor })
+        if (help.cancelModifiers) {
+          rollContext.bonus = 0
+          rollContext.malus = 0
+          rollContext.totalSkillBonuses = 0
+          dialogContext.skillUsed = []
+        }
+      }
+
       formula = `${rollContext.formula}`
       if (parseInt(rollContext.bonus) > 0) formula += `+${parseInt(rollContext.bonus)}`
       if (parseInt(rollContext.malus) !== 0) formula += `-${parseInt(Math.abs(rollContext.malus))}`
       const totalSkillBonuses = parseInt(rollContext.totalSkillBonuses)
       if (totalSkillBonuses) formula += `${totalSkillBonuses > 0 ? "+" : ""}${totalSkillBonuses}`
+      if (help?.bonus) formula += `+${help.bonus}`
     }
     // Pas de prompt
     else {
@@ -229,7 +244,9 @@ export class COSkillRoll extends CORoll {
       actorId: dialogContext.actor.id,
       actorName: dialogContext.actor.name,
       rollMode: withDialog ? rollContext.rollMode : dialogContext.rollMode,
-      flavor: dialogContext.flavor,
+      flavor: help?.helpers.length
+        ? `${dialogContext.flavor} (${game.i18n.format("CO.help.flavorHelpedBy", { names: help.helpers.map((h) => h.name).join(", ") })})`
+        : dialogContext.flavor,
       bonus: withDialog ? rollContext.bonus : dialogContext.bonus,
       malus: withDialog ? rollContext.malus : dialogContext.malus,
       critical: withDialog ? rollContext.critical : dialogContext.critical,
@@ -251,6 +268,54 @@ export class COSkillRoll extends CORoll {
 
     if (CONFIG.debug.cog?.rolls) console.debug(Utils.log(`COSkillRoll - roll`), roll)
     return roll
+  }
+
+  /**
+   * Initialise le sélecteur de personnages en aide (champ de recherche + tags).
+   * @param {HTMLElement} element Racine de la fenêtre de jet
+   */
+  static _initHelpPicker(element) {
+    const input = element.querySelector(".help-search")
+    const hidden = element.querySelector('input[name="helpers"]')
+    const tags = element.querySelector(".help-tags")
+    if (!input || !hidden || !tags) return
+    const options = new Map(Array.from(element.querySelectorAll("#helpCandidates option")).map((o) => [o.value, o.dataset.id]))
+    const selected = new Map()
+
+    const refresh = () => {
+      hidden.value = Array.from(selected.keys()).join(",")
+      tags.replaceChildren(
+        ...Array.from(selected, ([id, name]) => {
+          const tag = document.createElement("span")
+          tag.className = "help-tag"
+          tag.textContent = name
+          const remove = document.createElement("button")
+          remove.type = "button"
+          remove.className = "help-tag-remove"
+          remove.textContent = "×"
+          remove.setAttribute("aria-label", game.i18n.format("CO.help.remove", { name }))
+          remove.addEventListener("click", () => {
+            selected.delete(id)
+            refresh()
+          })
+          tag.append(remove)
+          return tag
+        }),
+      )
+    }
+
+    const add = () => {
+      const id = options.get(input.value)
+      if (!id) return
+      selected.set(id, input.value)
+      input.value = ""
+      refresh()
+    }
+    input.addEventListener("change", add)
+    input.addEventListener("input", add)
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") event.preventDefault()
+    })
   }
 
   static _onToggleCheckSkillBonus(event) {

@@ -237,6 +237,8 @@ Hooks.once("ready", async function () {
   // Migration : retirer les statuts qui ne sont plus proposés par le système.
   if (game.user.isGM) await helpers.Utils.removeRemovedStatusEffects()
 
+  helpers.RollHelp.initialize()
+
   // Statistics
   registerWorldCount("cog")
 

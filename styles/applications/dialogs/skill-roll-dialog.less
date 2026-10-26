@@ -36,10 +36,20 @@
     background-color: var(--co-dialog-skill-bg);
     padding: 10px;
     .skill-roll-1 {
-      display: grid;
-      grid-template-columns: 0.5fr 1.3fr 0.3fr 1.4fr 0.3fr 2.2fr;
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
       padding-bottom: 6px;
       border-bottom: 2px solid var(--co-dialog-skill-accent);
+      > .icone {
+        flex: 0 0 40px;
+      }
+      > .form-group {
+        flex: 1 1 0;
+      }
+      > .form-group.helpGroup {
+        flex: 2 1 0;
+      }
     }
     .skill-roll-2 {
       display: grid;
@@ -115,6 +125,41 @@
         white-space: nowrap;
       }
     }
+  }
+
+  .form-group.helpGroup {
+    .form-fields,
+    .help-search {
+      width: 100%;
+    }
+    .help-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .help-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px;
+      border: 1px solid var(--co-dialog-skill-accent);
+      border-radius: 10px;
+      background-color: var(--co-dialog-overlay);
+      font-weight: bold;
+    }
+    .help-tag-remove {
+      all: unset;
+      cursor: pointer;
+      font-weight: bolder;
+      &:hover,
+      &:focus-visible {
+        color: #b00020;
+      }
+    }
+  }
+  .fa-solid.fa-heart {
+    color: #c0392b;
   }
 
   .form-group.rollMode {

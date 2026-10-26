@@ -6,6 +6,7 @@ import { CORoll, COSkillRoll, COAttackRoll, COHealRoll } from "./roll.mjs"
 import { CoFeatureModifierChoiceDialog } from "../dialogs/feature-modifier-choice-dialog.mjs"
 import CoChat from "../chat.mjs"
 import Utils from "../helpers/utils.mjs"
+import RollHelp from "../helpers/roll-help.mjs"
 import { isRangedAttackBlockedByBlindness, resolveStatusId } from "../helpers/status-rules.mjs"
 import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
 import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
@@ -1912,6 +1913,7 @@ export default class COActor extends Actor {
       skills,
       skillUsed: selectedSkillBonuses.skillUsed, // Tableau de clef valeur pour stocker les noms des skill activés et leur bonus
       showOppositeRoll,
+      helperCandidates: withDialog ? RollHelp.getCandidates(this) : [],
     }
 
     let roll = await COSkillRoll.prompt(dialogContext, { withDialog: withDialog })

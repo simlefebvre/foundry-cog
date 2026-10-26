@@ -902,10 +902,20 @@ a.roll-check-enricher:hover {
   padding: 10px;
 }
 .co.application.dialog.skill-roll .window-content .skill-roll-1 {
-  display: grid;
-  grid-template-columns: 0.5fr 1.3fr 0.3fr 1.4fr 0.3fr 2.2fr;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
   padding-bottom: 6px;
   border-bottom: 2px solid var(--co-dialog-skill-accent);
+}
+.co.application.dialog.skill-roll .window-content .skill-roll-1 > .icone {
+  flex: 0 0 40px;
+}
+.co.application.dialog.skill-roll .window-content .skill-roll-1 > .form-group {
+  flex: 1 1 0;
+}
+.co.application.dialog.skill-roll .window-content .skill-roll-1 > .form-group.helpGroup {
+  flex: 2 1 0;
 }
 .co.application.dialog.skill-roll .window-content .skill-roll-2 {
   display: grid;
@@ -975,6 +985,38 @@ a.roll-check-enricher:hover {
 .co.application.dialog.skill-roll .diffGroup .standard-difficulty label {
   margin: 0;
   white-space: nowrap;
+}
+.co.application.dialog.skill-roll .form-group.helpGroup .form-fields,
+.co.application.dialog.skill-roll .form-group.helpGroup .help-search {
+  width: 100%;
+}
+.co.application.dialog.skill-roll .form-group.helpGroup .help-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.co.application.dialog.skill-roll .form-group.helpGroup .help-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--co-dialog-skill-accent);
+  border-radius: 10px;
+  background-color: var(--co-dialog-overlay);
+  font-weight: bold;
+}
+.co.application.dialog.skill-roll .form-group.helpGroup .help-tag-remove {
+  all: unset;
+  cursor: pointer;
+  font-weight: bolder;
+}
+.co.application.dialog.skill-roll .form-group.helpGroup .help-tag-remove:hover,
+.co.application.dialog.skill-roll .form-group.helpGroup .help-tag-remove:focus-visible {
+  color: #b00020;
+}
+.co.application.dialog.skill-roll .fa-solid.fa-heart {
+  color: #c0392b;
 }
 .co.application.dialog.skill-roll .form-group.rollMode {
   padding: 0px 0px 0px 10px;

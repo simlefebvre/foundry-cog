@@ -1108,6 +1108,26 @@
         "cancel": "Annuler"
       }
     },
+    "help": {
+      "label": "Personnage en aide",
+      "placeholder": "Rechercher un personnage…",
+      "remove": "Retirer {name}",
+      "waitTitle": "Aide en attente",
+      "waiting": "En attente de l'aide de {names}…",
+      "rollWithoutHelp": "Lancer sans aide",
+      "requestTitle": "Demande d'aide",
+      "requestContent": "{requester} demande l'aide de {actor} pour un test de {ability}.",
+      "roll": "Lancer le test",
+      "decline": "Refuser",
+      "flavor": "Aide : {ability} pour {requester}",
+      "flavorHelpedBy": "aidé par {names}",
+      "failed": "{actor} n'a pas réussi à aider {requester}.",
+      "chooseTitle": "Choisir l'aide apportée",
+      "chooseContent": "Résultat de {total} : choisissez comment aider {requester}.",
+      "optionLuck": "Dépenser 1 PC : +{value}",
+      "optionCancel": "Annuler les modificateurs",
+      "optionBonus": "Bonus de +{value}"
+    },
     "roll": {
       "visibility": "Jet visible par",
       "skillcheck": "Test de compétence",

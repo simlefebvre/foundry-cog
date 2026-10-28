@@ -12,6 +12,7 @@ import { summarizeSelectedSkillBonuses } from "../helpers/skill-bonuses.mjs"
 import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty } from "../helpers/dice-formula.mjs"
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
 import { postStatusChangeCard } from "../helpers/status-log.mjs"
+import { triggerMisfire } from "../helpers/misfire.mjs"
 
 /**
  * @class COActor
@@ -211,7 +212,7 @@ export default class COActor extends Actor {
   /**
    * Gets the inventory organized by equipment categories.
    *
-   * Retrieves all equipment items grouped by their subtypes (weapon, armor, shield, consumable, misc),
+   * Retrieves all equipment items grouped by their subtypes (weapon, armor, consumable, misc),
    * sorted by their sort property. For each category, it also retrieves the expanded state from
    * localStorage to remember the user's UI preferences.
    *
@@ -224,13 +225,7 @@ export default class COActor extends Actor {
    */
   get inventory() {
     let inventory = []
-    const categories = [
-      SYSTEM.EQUIPMENT_SUBTYPES.weapon.id,
-      SYSTEM.EQUIPMENT_SUBTYPES.armor.id,
-      SYSTEM.EQUIPMENT_SUBTYPES.shield.id,
-      SYSTEM.EQUIPMENT_SUBTYPES.consumable.id,
-      SYSTEM.EQUIPMENT_SUBTYPES.misc.id,
-    ]
+    const categories = [SYSTEM.EQUIPMENT_SUBTYPES.weapon.id, SYSTEM.EQUIPMENT_SUBTYPES.armor.id, SYSTEM.EQUIPMENT_SUBTYPES.consumable.id, SYSTEM.EQUIPMENT_SUBTYPES.misc.id]
 
     // Les objets rangés dans un contenant ne sont affichés que dans le contenant : on les exclut
     // des catégories de l'inventaire libre.
@@ -309,13 +304,6 @@ export default class COActor extends Actor {
   }
 
   /**
-   * Retourne les Items de type equipment et de sous-type shield
-   */
-  get shields() {
-    return this.equipments.filter((item) => item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.shield.id)
-  }
-
-  /**
    * Retourne les Items de type equipment et de sous-type weapon
    */
   get weapons() {
@@ -357,18 +345,6 @@ export default class COActor extends Actor {
   }
 
   /**
-   * Retourne les Items équipés de type equipment et de sous-type shield
-   */
-  get equippedShields() {
-    return this.shields.filter((item) => item.system.equipped)
-  }
-
-  get mainShield() {
-    if (this.equippedShields.length > 0) return this.equippedShields[0]
-    return undefined
-  }
-
-  /**
    * Renvoi true si l'acteur est en incapacité de faire quelque chose
    */
   get isIncapacitated() {
@@ -389,39 +365,12 @@ export default class COActor extends Actor {
   }
 
   /**
-   * Calcule la défense de l'armure et du bouclier équipés
-   * Retourne  {Int} la somme des DEF
-   */
-  get defenseFromArmorAndShield() {
-    return this.defenseFromArmor + this.defenseFromShield
-  }
-
-  /**
    * Calcule la valeur totale de défense des armures équipées.
    *
-   * @returns {number} La valeur totale de défense de la première armure équipée, ou 0 si aucune armure n'est équipée.
+   * @returns {number} La valeur totale de défense des armures équipées.
    */
   get defenseFromArmor() {
-    const armors = this.equippedArmors
-    if (armors.length > 0) {
-      const armor = armors[0]
-      return armor.system.totalDefense
-    }
-    return 0
-  }
-
-  /**
-   * Récupère la valeur totale de défense du premier bouclier équipé.
-   *
-   * @returns {number} La valeur totale de défense du premier bouclier équipé, ou 0 si aucun bouclier n'est équipé.
-   */
-  get defenseFromShield() {
-    const armors = this.equippedShields
-    if (armors.length > 0) {
-      const armor = armors[0]
-      return armor.system.totalDefense
-    }
-    return 0
+    return this.equippedArmors.reduce((total, armor) => total + armor.system.totalDefense, 0)
   }
 
   /**
@@ -1130,14 +1079,10 @@ export default class COActor extends Actor {
     // Nombre de mains nécessaire pour l'objet que l'on veux équipper
     let neededHands = item.system.usage.twoHand ? 2 : 1
 
-    // Calcul du nombre de mains déjà utilisées : on récupère les armes, les boucliers et les objets divers qui utilisent des mains et sont équipés
+    // Calcul du nombre de mains déjà utilisées : on récupère les armes et objets divers équipés qui utilisent des mains
     let itemsInHands = this.items.filter(
       (item) =>
-        (item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id ||
-          item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.shield.id ||
-          item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.misc.id) &&
-        item.system.useHands &&
-        item.system.equipped,
+        (item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.weapon.id || item.system.subtype === SYSTEM.EQUIPMENT_SUBTYPES.misc.id) && item.system.useHands && item.system.equipped,
     )
     let usedHands = itemsInHands.reduce((total, item) => total + (item.system.usage.twoHand ? 2 : 1), 0)
 
@@ -2480,6 +2425,12 @@ export default class COActor extends Actor {
     // Si l'attaque a lieu avec une arme qui a la propriété "reloadable", on consomme une munition
     if (item.system.properties.reloadable) {
       await this.consumeAmmunition(item)
+    }
+
+    // Incident de tir : le d20 naturel du jet d'attaque est sous le seuil de l'arme
+    if (type === "attack" && item?.system?.hasRangedStates && item.system.rangedState === "normal") {
+      const threshold = item.system.misfireThreshold
+      if (threshold && results[0]?.diceResult <= threshold) await triggerMisfire(this, item)
     }
 
     return { results, selectedStatuses, targetResults }

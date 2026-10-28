@@ -1,0 +1,21 @@
+<div class="co chat-card roll-card check-card">
+  <header class="card-header flexcol">
+    <div class="action-name">{{title}}</div>
+  </header>
+  <div class="card-content">
+    <p>{{description}}</p>
+    {{#if isRequest}}
+      <section class="result-sentence">
+        <button class="roll-misfire" data-actor-uuid="{{actorUuid}}" data-item-uuid="{{itemUuid}}" data-tooltip="{{localize 'CO.notif.misfire.button'}}" data-tooltip-direction="UP">
+          <i class="fa-solid fa-dice-d20"></i>
+          {{localize "CO.notif.misfire.button"}}
+        </button>
+        {{#if hasLuckyPoints}}
+          <button type="button" class="cancel-misfire" data-actor-uuid="{{actorUuid}}" data-item-uuid="{{itemUuid}}" data-tooltip="{{localize 'CO.notif.misfire.luckButton'}}" data-tooltip-direction="UP">
+            <i class="fa-regular fa-clover"></i>
+          </button>
+        {{/if}}
+      </section>
+    {{/if}}
+  </div>
+</div>

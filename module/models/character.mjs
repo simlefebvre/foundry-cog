@@ -563,7 +563,7 @@ export default class CharacterData extends ActorData {
 
   /**
    * Calcule la défense
-   * Dans COF : 10 + AGILITE + Modificateurs (Bonus Armure + Bonus Bouclier + Bonus Capacités)
+   * Dans COF : 10 + AGILITE + Modificateurs (Bonus Armure + Bonus Capacités)
    * @param {*} skill
    * @param {*} abilityBonus
    * @param {*} bonuses
@@ -579,18 +579,11 @@ export default class CharacterData extends ActorData {
 
     skill.value = skill.base
 
-    // Ajout du bonus de l'armure
+    // Ajout du bonus des armures
     const armorDef = this.parent.defenseFromArmor
     if (armorDef > 0) {
       skill.value += armorDef
       skill.tooltipBase = skill.tooltipBase.concat(Utils.getTooltip("Armure", armorDef))
-    }
-
-    // Ajout du bonus du bouclier
-    const shieldDef = this.parent.defenseFromShield
-    if (shieldDef > 0) {
-      skill.value += shieldDef
-      skill.tooltipBase = skill.tooltipBase.concat(Utils.getTooltip("Bouclier", shieldDef))
     }
 
     skill.value += bonuses + defModifiers.total
@@ -629,8 +622,11 @@ export default class CharacterData extends ActorData {
 
     // Somme du bonus de la feuille et du bonus des actives effects
     const bonuses = Object.values(this.combat.dr.bonuses).reduce((prev, curr) => prev + curr)
-    this.combat.dr.value = this.combat.dr.base + bonuses + drModifiers.total
-    this.combat.dr.tooltipValue = this.combat.dr.tooltipBase.concat(drModifiers.tooltip, Utils.getTooltip("Bonus", bonuses))
+    const armorDR = this.parent.equippedArmors.reduce((total, armor) => total + (armor.system.dr ?? 0), 0)
+    this.combat.dr.value = this.combat.dr.base + bonuses + drModifiers.total + armorDR
+    this.combat.dr.tooltipValue = this.combat.dr.tooltipBase.concat(drModifiers.tooltip)
+    if (armorDR > 0) this.combat.dr.tooltipValue = this.combat.dr.tooltipValue.concat(Utils.getTooltip("Armures", armorDR))
+    this.combat.dr.tooltipValue = this.combat.dr.tooltipValue.concat(Utils.getTooltip("Bonus", bonuses))
   }
 
   /**

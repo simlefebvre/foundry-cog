@@ -132,6 +132,9 @@
         "magicalDefense": {
           "label": "Défense magique"
         },
+        "dr": {
+          "label": "RD"
+        },
         "properties": {
           "equipable": {
             "label": "Équipable"
@@ -447,6 +450,17 @@
       "tmpDamaged": "{actorName} prend {amount} point(s) de dommages temporaires",
       "tmpDamagedBy": "{actorName} prend {amount} point(s) de dommages temporaires par {source}",
       "seriousWoundCheck": "Blessure grave : {finalDamage} dégât(s) après RD, seuil {threshold} — effet présent : {hasSeriousWoundAfter}",
+      "misfire": {
+        "title": "Incident de tir",
+        "request": "{actorName} subit un incident de tir avec {itemName} ! Relancez un d20 (sans modificateur) : un résultat inférieur ou égal à {threshold} casse l'arme.",
+        "stillMisfire": "Résultat {result} : l'arme {itemName} reste en incident de tir. Elle peut être réparée.",
+        "broken": "Résultat {result} : l'arme {itemName} est cassée !",
+        "luck": "{actorName} dépense un point de chance : l'incident de tir de {itemName} est annulé.",
+        "safe": "L'arme {itemName} est en état de marche.",
+        "button": "Relancer un d20",
+        "luckButton": "Utiliser un point de chance pour éviter l'incident de tir",
+        "rollFlavor": "Incident de tir : {itemName}"
+      },
       "shockTest": {
         "rollFlavor": "Test de choc",
         "shockRollDetails": "Cliquer pour voir le résultat du test de choc",
@@ -835,7 +849,6 @@
       "weapons": "Armes",
       "consumables": "Consommables",
       "miscs": "Divers",
-      "shields": "Boucliers",
       "containers": "Contenants",
       "containerContents": "Contenu",
       "containerEmpty": "Ce contenant est vide.",
@@ -1401,7 +1414,6 @@
       },
       "subtypes": {
         "armor": "Armure",
-        "shield": "Bouclier",
         "weapon": "Arme",
         "consumable": "Consommable",
         "misc": "Divers"

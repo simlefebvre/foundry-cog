@@ -127,9 +127,10 @@
                 {{/if}}
 
                 <!-- si ARMURE -->
-                {{#if (or isArmor isShield)}}
+                {{#if isArmor}}
                     {{formGroup systemFields.defense value=systemSource.defense localize=true disabled=locked}}
                     {{formGroup systemFields.magicalDefense value=systemSource.magicalDefense localize=true disabled=locked}}
+                    {{formGroup systemFields.dr value=systemSource.dr localize=true disabled=locked}}
                 {{/if}}
             </fieldSet>
 
@@ -137,7 +138,7 @@
             <fieldSet class="properties">
                 <legend>{{localize "CO.label.long.properties"}}</legend>
                 <div class="flexrow">
-                    {{#if (or isWeapon isArmor isShield isMisc)}}
+                    {{#if (or isWeapon isArmor isMisc)}}
                         <label>
                             <input type="checkbox" name="system.properties.equipable" {{checked systemSource.properties.equipable}} {{#if @root.locked}}class="disabled"{{/if}}/>
                             {{systemFields.properties.fields.equipable.label}}
@@ -159,7 +160,7 @@
             </fieldSet>
 
         <!-- USAGE UNE OU DEUX MAINS -->
-            {{#if (or isWeapon isShield isMisc)}}
+            {{#if (or isWeapon isMisc)}}
                 <fieldset class="usages">
                     <legend>{{localize "CO.ui.usage"}}</legend>
                     <div class="flexrow">

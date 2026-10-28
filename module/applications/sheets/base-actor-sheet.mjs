@@ -478,9 +478,6 @@ export default class COBaseActorSheet extends HandlebarsApplicationMixin(sheets.
           case "armor":
             subtype = SYSTEM.EQUIPMENT_SUBTYPES.armor.id
             break
-          case "shield":
-            subtype = SYSTEM.EQUIPMENT_SUBTYPES.shield.id
-            break
           case "weapon":
             subtype = SYSTEM.EQUIPMENT_SUBTYPES.weapon.id
             break

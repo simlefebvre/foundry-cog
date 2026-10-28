@@ -3,10 +3,6 @@ export const EQUIPMENT_SUBTYPES = {
     id: "armor",
     label: "CO.equipment.subtypes.armor",
   },
-  shield: {
-    id: "shield",
-    label: "CO.equipment.subtypes.shield",
-  },
   weapon: {
     id: "weapon",
     label: "CO.equipment.subtypes.weapon",

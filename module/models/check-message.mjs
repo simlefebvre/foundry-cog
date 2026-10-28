@@ -1,6 +1,7 @@
 import BaseMessageData from "./base-message.mjs"
 import Macros from "../helpers/macros.mjs"
 import { cancelSeriousWound, createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
+import { cancelMisfire, rollMisfireCheck } from "../helpers/misfire.mjs"
 import { postStatusChangeCard } from "../helpers/status-log.mjs"
 
 /**
@@ -33,6 +34,38 @@ export default class CheckMessageData extends BaseMessageData {
    * @param {HTMLElement} html Élément HTML représentant le message à modifier.
    */
   async addListeners(html) {
+    const misfireButton = html.querySelector(".roll-misfire")
+    if (misfireButton) {
+      const cancelButton = html.querySelector(".cancel-misfire")
+      const actor = fromUuidSync(misfireButton.dataset.actorUuid)
+      const item = fromUuidSync(misfireButton.dataset.itemUuid)
+      const message = game.messages.get(html.dataset.messageId)
+      if (!actor || !item || !message || (!game.user.isGM && !actor.isOwner)) {
+        misfireButton.remove()
+        cancelButton?.remove()
+        return
+      }
+      misfireButton.addEventListener("click", async (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        misfireButton.disabled = true
+        if (cancelButton) cancelButton.disabled = true
+        await rollMisfireCheck(message, actor, item)
+      })
+      cancelButton?.addEventListener("click", async (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        misfireButton.disabled = true
+        cancelButton.disabled = true
+        if (!(await cancelMisfire(message, actor, item))) {
+          misfireButton.disabled = false
+          cancelButton.disabled = false
+          ui.notifications.warn(game.i18n.localize("CO.notif.shockTest.cancelSeriousWoundUnavailable"))
+        }
+      })
+      return
+    }
+
     const cancelWoundButton = html.querySelector(".cancel-serious-wound")
     if (cancelWoundButton) {
       const actor = fromUuidSync(cancelWoundButton.dataset.actorUuid)

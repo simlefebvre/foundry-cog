@@ -72,7 +72,6 @@ export default class CoEquipmentSheet extends CoBaseItemSheet {
 
         context.isWeapon = doc.system.isWeapon
         context.isArmor = doc.system.isArmor
-        context.isShield = doc.system.isShield
         context.isMisc = doc.system.isMisc
         context.isConsumable = doc.system.isConsumable
         context.hasRangedStates = doc.system.hasRangedStates

@@ -20,7 +20,7 @@ export class CORoll extends Roll {
     const isRoll = roll instanceof Roll
 
     // terms[0] n'est un dé (avec "results") que pour un jet de d20 direct : un jet de dommages/soins
-    // peut commencer par un ParentheticalTerm (formule entre parenthèses, ex: options tactiques), qui n'en a pas
+    // peut commencer par un ParentheticalTerm qui n'en a pas
     const diceTerm = roll.terms[0]
 
     if ((isAttackRoll || isSkillRoll || isRoll) && diceTerm?.results) {
@@ -475,7 +475,6 @@ export class COAttackRoll extends CORoll {
                     "damageBonus": "0",
                     "damageMalus": "0",
                     "tempDamage": true,
-                    "tactical": "violent",
                     "flavor": "Mains nues "
                 }
               */
@@ -508,51 +507,6 @@ export class COAttackRoll extends CORoll {
                   break
               }
               dialog.element.querySelector('input[name="formulaAttack"]').value = newFormula
-            })
-          })
-          // Options tactiques
-          const radiosTactical = dialog.element.querySelectorAll('input[name="tactical"]')
-          radiosTactical.forEach((radio) => {
-            radio.addEventListener("change", (event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              let newBonus
-              let newDamage
-              let newMalus
-              switch (event.target.value) {
-                case "none":
-                  newBonus = `${dialogContext.skillBonus}`
-                  newDamage = `${dialogContext.formulaDamage}`
-                  newMalus = `${dialogContext.skillMalus}`
-                  break
-                case "confident":
-                  newBonus = `${dialogContext.skillBonus + 5}`
-                  newDamage = `(${dialogContext.formulaDamage})/2`
-                  newMalus = `${dialogContext.skillMalus}`
-                  break
-                case "precise":
-                  newBonus = `${dialogContext.skillBonus}`
-                  newDamage = `(${dialogContext.formulaDamage})+1d4°`
-                  newMalus = `${dialogContext.skillMalus - 3}`
-                  break
-                case "violent":
-                  newBonus = `${dialogContext.skillBonus}`
-                  newDamage = `(${dialogContext.formulaDamage})+2d4°`
-                  newMalus = `${dialogContext.skillMalus - 7}`
-                  break
-              }
-              const skillBonusElement = dialog.element.querySelector('input[name="skillBonus"]')
-              if (skillBonusElement) {
-                skillBonusElement.value = newBonus
-              }
-              const skillMalusElement = dialog.element.querySelector('input[name="skillMalus"]')
-              if (skillMalusElement) {
-                skillMalusElement.value = newMalus
-              }
-              const formulaDamageElement = dialog.element.querySelector('input[name="formulaDamage"]')
-              if (formulaDamageElement) {
-                formulaDamageElement.value = newDamage
-              }
             })
           })
           // Skill bonuses (pour les attaques basées sur une caractéristique)
@@ -618,7 +572,6 @@ export class COAttackRoll extends CORoll {
         difficulty: withDialog ? rollContext.difficulty : dialogContext.difficulty,
         tooltip,
         tempDamage: withDialog ? rollContext.tempDamage : dialogContext.tempDamage,
-        tactical: withDialog ? rollContext.tactical : dialogContext.tactical,
         opposeResult: dialogContext.opposeResult,
         opposeTooltip: dialogContext.opposeTooltip,
         hasAttackSuccessThreshold: dialogContext.hasAttackSuccessThreshold,
@@ -743,24 +696,6 @@ export class COAttackRoll extends CORoll {
       }
     }
 
-    // Option tactique
-    const hasTactical = this.options.tactical !== "none"
-    // Libellé de l'option tactique
-    let tactical = ""
-    if (hasTactical) {
-      switch (this.options.tactical) {
-        case "confident":
-          tactical = game.i18n.localize("CO.ui.tactiqueAssuree")
-          break
-        case "precise":
-          tactical = game.i18n.localize("CO.ui.tactiquePrecise")
-          break
-        case "violent":
-          tactical = game.i18n.localize("CO.ui.tactiqueViolente")
-          break
-      }
-    }
-
     // Affichage de la difficulté
     const displayDifficulty = game.settings.get("cog", "displayDifficulty")
     const viewerCanSeeDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
@@ -801,8 +736,6 @@ export class COAttackRoll extends CORoll {
       isSuccess: rollResults.isSuccess,
       isFailure: rollResults.isFailure,
       tempDamage: this.options.tempDamage,
-      hasTactical,
-      tactical,
       opposeResult: this.options.opposeResult,
       opposeTooltip: this.options.opposeTooltip,
       opposeHasLuckyPoints: this.options.opposeHasLuckyPoints ?? false,

@@ -6,7 +6,7 @@
       <select name="system.actions.{{idx}}.resolvers.{{id}}.type" data-type="String" {{#if @root.locked}}class="disabled"{{/if}}>
         {{selectOptions @root.choiceResolverTypes selected=r.type localize=true}}
       </select>
-      {{#if (eq r.type @root.choiceResolverTypes.attack.id)}}
+      {{#if (and (eq r.type @root.choiceResolverTypes.attack.id) (ne @root.itemType "equipment"))}}
         <label class="checkbox">
           <input type="checkbox" name="system.actions.{{idx}}.resolvers.{{id}}.bonusDiceAdd" {{checked r.bonusDiceAdd}} {{#if @root.locked}}class="disabled"{{/if}}/>
           {{localize "CO.modifier.subtype.bonusDice"}}

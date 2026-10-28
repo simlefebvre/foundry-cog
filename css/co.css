@@ -1209,17 +1209,11 @@ a.roll-check-enricher:hover {
   border-bottom: 2px solid var(--co-dialog-attack-accent);
   gap: 0;
 }
-.co.application.dialog.attack-roll .window-content .tacticalTargets {
+.co.application.dialog.attack-roll .window-content .attackTargets {
   display: grid;
-  grid-template-columns: 0.6fr 1fr;
   padding-bottom: 6px;
   margin-bottom: 8px;
   border-bottom: 2px solid var(--co-dialog-attack-accent);
-}
-.co.application.dialog.attack-roll .window-content .tacticalOptions {
-  display: grid;
-  grid-template-columns: 0.7fr 2.7fr;
-  gap: 0;
 }
 .co.application.dialog.attack-roll .window-content .form-fields {
   border: none;
@@ -4652,7 +4646,6 @@ a.roll-check-enricher:hover {
 #interface #sidebar .co.chat-card.roll-card .card-header .card-details .card-item-icon-block,
 #interface #ui-right-column-1 .co.chat-card.roll-card .card-header .card-details .card-item-icon-block {
   display: grid;
-  grid-template-rows: 1fr 1fr;
 }
 #interface #sidebar .co.chat-card.roll-card .card-header .card-details[open] .card-item-icon,
 #interface #ui-right-column-1 .co.chat-card.roll-card .card-header .card-details[open] .card-item-icon {
@@ -4673,9 +4666,7 @@ a.roll-check-enricher:hover {
   margin-bottom: 4px;
 }
 #interface #sidebar .co.chat-card.roll-card .card-header .card-details .card-details-content section.options .display-dice-type,
-#interface #ui-right-column-1 .co.chat-card.roll-card .card-header .card-details .card-details-content section.options .display-dice-type,
-#interface #sidebar .co.chat-card.roll-card .card-header .card-details .card-details-content section.options .display-tactical,
-#interface #ui-right-column-1 .co.chat-card.roll-card .card-header .card-details .card-details-content section.options .display-tactical {
+#interface #ui-right-column-1 .co.chat-card.roll-card .card-header .card-details .card-details-content section.options .display-dice-type {
   font-size: var(--font-size-14);
 }
 #interface #sidebar .co.chat-card.roll-card .card-header .card-details .card-details-content .dice-roll,

@@ -141,31 +141,7 @@
     </section>
 {{/if}}
 
-<section class="tacticalTargets">       
-    <fieldset class="tacticalOptions">      
-        <legend>{{localize "CO.ui.optionsTactiques"}}</legend>
-        <div class="icone"><i class="fa-solid fa-sliders-up"></i></div>
-        <div class="form-group">            
-            <div class="form-fields-radio">
-                <div>
-                    <input type="radio" name="tactical" id="tacticalNone" value="none" {{#if (eq tactical "none")}}checked{{/if}} />
-                    <label for="tacticalNone">{{localize 'CO.ui.tacticalNone'}}</label>
-                </div>
-                <div>
-                    <input type="radio" name="tactical" id="tacticalConfident" value="confident" {{#if (eq tactical "confident")}}checked{{/if}}/>
-                    <label for="tacticalConfident" data-tooltip="{{localize 'CO.ui.tacticalConfidentAttackTooltip'}}">{{localize 'CO.ui.tacticalConfidentAttack'}}</label>
-                </div>
-                <div>
-                    <input type="radio" name="tactical" id="tacticalPrecise" value="precise" {{#if (eq tactical "precise")}}checked{{/if}}/>
-                    <label for="tacticalPrecise" data-tooltip="{{localize 'CO.ui.tacticalPreciseAttackTooltip'}}">{{localize 'CO.ui.tacticalPreciseAttack'}}</label>
-                </div>
-                <div>
-                    <input type="radio" name="tactical" id="tacticalViolent" value="violent" {{#if (eq tactical "violent")}}checked{{/if}}/>
-                    <label for="tacticalViolent" data-tooltip="{{localize 'CO.ui.tacticalViolentAttackTooltip'}}">{{localize 'CO.ui.tacticalViolentAttack'}}</label>
-                </div>
-            </div>
-        </div>
-    </fieldset>
+<section class="attackTargets">
     <fieldset class="targetsBox">
         <legend>{{localize "CO.ui.attackTarget"}}</legend>
         <div class="targets center">

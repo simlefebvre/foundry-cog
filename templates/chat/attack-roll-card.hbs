@@ -17,9 +17,6 @@
             {{#if hasDice}}
               <span class="card-item-icon" data-tooltip="{{diceType}}" data-tooltip-direction="UP"><i class="fa-solid fa-dice"></i></span>
             {{/if}}
-            {{#if hasTactical}}
-              <span class="card-item-icon" data-tooltip="{{tactical}}" data-tooltip-direction="UP"><i class="fa-solid fa-sliders-up"></i></span>
-            {{/if}}
           </div>
         </div>
       </summary>
@@ -27,9 +24,6 @@
         <section class="options">
           {{#if hasDice}}
             <strong class="display-dice-type"><i class="fa-solid fa-dice"></i> {{diceType}}&nbsp;&nbsp;</strong>
-          {{/if}}
-          {{#if hasTactical}}
-            <strong class="display-tactical"><i class="fa-solid fa-sliders-up"></i> {{tactical}}</strong>
           {{/if}}
         </section>
         <div class="dice-roll" data-action="expandRoll">

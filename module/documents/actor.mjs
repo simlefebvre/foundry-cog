@@ -1972,7 +1972,6 @@ export default class COActor extends Actor {
       targets = undefined,
       customEffect,
       additionalEffect,
-      tactical = undefined, // Values : confident, precise, violent
       hasAttackSuccessThreshold = false,
       attackSuccessThreshold = undefined,
     } = {},
@@ -2007,7 +2006,6 @@ export default class COActor extends Actor {
       targets,
       customEffect,
       additionalEffect,
-      tactical,
       hasAttackSuccessThreshold,
       attackSuccessThreshold,
     }
@@ -2033,13 +2031,6 @@ export default class COActor extends Actor {
 
     const tempDamage = game.system.CONST.rules.tempDamage && temporaryDamage
     const showTempDamageChoice = tempDamage
-
-    // Gestion de l'option tactique : contrôle des valeurs
-    if (tactical) {
-      if (tactical !== "confident" && tactical !== "precise" && tactical !== "violent") {
-        tactical = "none"
-      }
-    } else tactical = "none"
 
     // Gestion de la visibilité du jet
     if (rollMode === undefined) {
@@ -2296,7 +2287,6 @@ export default class COActor extends Actor {
       hasTargets: dialogTargets?.length > 0,
       tempDamage,
       showTempDamageChoice,
-      tactical,
       hasLuckyPoints,
       opposeResult: opposeResult,
       opposeTooltip: opposeTooltip,

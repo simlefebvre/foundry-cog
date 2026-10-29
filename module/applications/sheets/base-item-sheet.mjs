@@ -466,11 +466,12 @@ export default class COBaseItemSheet extends HandlebarsApplicationMixin(sheets.I
     const actionId = li.dataset.itemId
 
     const actions = this.item.toObject().system.actions
+    const skillFormula = this.document.type === SYSTEM.ITEM_TYPE.equipment.id && this.document.system.isWeapon && this.document.system.ranged ? "@atd" : "@atc"
     actions[actionId].resolvers.push(
       new Resolver({
         type: SYSTEM.RESOLVER_TYPE.attack.id,
         skill: {
-          formula: "@atc",
+          formula: skillFormula,
           crit: "",
           difficulty: "@cible.def",
         },

@@ -825,6 +825,7 @@
       "crit": "Critique",
       "difficulty": "Difficulté",
       "dmg": "Dommages",
+      "rollDamage": "Lancer les dégâts",
       "saves": "Sauvegarde",
       "saveAbility": "Sauvegarde basé sur :",
       "saveDifficulty": "Seuil de difficulté :",
@@ -1513,8 +1514,8 @@
         "gm": "Uniquement au MJ"
       },
       "useComboRolls": {
-        "name": "Activer les jets combinés attaque et dommages",
-        "hint": "Permet de lancer les jets d'attaque et de dommages simultanément."
+        "name": "Lancer les dommages depuis la carte d'attaque",
+        "hint": "Permet de lancer les dégâts depuis la carte d'attaque après le jet de touche."
       },
       "allowPlayersToModifyTargets": {
         "name": "Autoriser les joueurs à modifier les cibles",

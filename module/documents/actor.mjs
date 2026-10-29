@@ -2299,7 +2299,7 @@ export default class COActor extends Actor {
       totalSkillBonuses: 0,
     }
 
-    // Rolls contient le jet d'attaque et le jet de dommages si le type est "attack"
+    // Le jet de dommages d'une attaque combinée sera lancé depuis sa carte de chat.
     let rolls = await COAttackRoll.prompt(dialogContext, { withDialog: withDialog })
     if (!rolls) return null
 
@@ -2379,6 +2379,7 @@ export default class COActor extends Actor {
             targetResults,
             result: results[0],
             linkedRoll,
+            linkedDamageFormula: rolls[0].options.linkedDamageFormula ?? "",
             customEffect: effectiveCustomEffect,
             additionalEffect,
             selectedStatuses,
@@ -2387,21 +2388,6 @@ export default class COActor extends Actor {
         },
         { messageMode: rolls[0].options.rollMode },
       )
-
-      // Affichage du jet de dommages dans le cas d'un jet combiné, si ce n'est pas un jet opposé
-      // Si la difficulté n'est visible que par le MJ, on affiche systématiquement les dommages pour ne pas révéler le résultat au joueur
-      if (game.settings.get("cog", "useComboRolls")) {
-        const displayDifficulty = game.settings.get("cog", "displayDifficulty")
-        const anyTargetHit = results[0].isSuccess || targetResults.some((tr) => tr.isSuccess)
-        if (!rolls[0].options.oppositeRoll && (displayDifficulty === "gm" || anyTargetHit)) {
-          if (rolls[1]) {
-            await rolls[1].toMessage(
-              { style: CONST.CHAT_MESSAGE_STYLES.OTHER, type: "action", system: { subtype: "damage", targets: targetsUuid, targetResults }, speaker },
-              { messageMode: rolls[1].options.rollMode },
-            )
-          }
-        }
-      }
     }
 
     // Jet de dommages

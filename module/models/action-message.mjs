@@ -1,6 +1,6 @@
 import BaseMessageData from "./base-message.mjs"
 import CustomEffectData from "./schemas/custom-effect.mjs"
-import { CORoll } from "../documents/roll.mjs"
+import { CORoll, COAttackRoll } from "../documents/roll.mjs"
 import Hitpoints from "../helpers/hitpoints.mjs"
 import { Resolver } from "./schemas/resolver.mjs"
 import Utils from "../helpers/utils.mjs"
@@ -41,6 +41,7 @@ export default class ActionMessageData extends BaseMessageData {
       ),
       appliedTempDamage: new fields.BooleanField({ required: false, nullable: true, initial: null }),
       linkedRoll: new fields.ObjectField(),
+      linkedDamageFormula: new fields.StringField({ required: false, blank: true }),
       linkedDamageMessageId: new fields.StringField({ required: false, nullable: true, blank: true }),
       oppositeValue: new fields.StringField({ required: false, nullable: true, blank: true }),
       customEffect: new fields.EmbeddedDataField(CustomEffectData),
@@ -123,7 +124,7 @@ export default class ActionMessageData extends BaseMessageData {
 
       // Bouton "Appliquer les effets" pour les jets opposés sans dommages
       const hasCustomEffect = message.system.customEffect && message.system.additionalEffect?.active
-      const hasLinkedDamage = message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0
+      const hasLinkedDamage = (message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0) || !!message.system.linkedDamageFormula
       const hasOpposedRoll = !!message.system.oppositeValue
       if (hasCustomEffect && !hasLinkedDamage && hasOpposedRoll && !message.system.effectsApplied) {
         const targetResults = message.system.targetResults ?? []
@@ -140,6 +141,58 @@ export default class ActionMessageData extends BaseMessageData {
               btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> ${game.i18n.localize("CO.ui.applyEffects")}`
               footer.appendChild(btn)
             }
+          }
+        }
+      }
+
+      const rollDamageButton = html.querySelector(".roll-damage-btn")
+      if (rollDamageButton) {
+        if (message.system.linkedDamageMessageId) {
+          rollDamageButton.remove()
+        } else {
+          const attackRoll = message.rolls?.[0]
+          const actor = attackRoll?.options?.actorId ? game.actors.get(attackRoll.options.actorId) : null
+          if (game.user.isGM || message.isAuthor || actor?.isOwner) {
+            rollDamageButton.addEventListener("click", async (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              if (message.system.linkedDamageMessageId) return
+
+              const formula = message.system.linkedDamageFormula
+              if (!formula) return
+
+              rollDamageButton.disabled = true
+              const damageRoll = new COAttackRoll(formula)
+              await damageRoll.evaluate()
+              damageRoll.options = {
+                ...attackRoll.options,
+                type: "damage",
+                tooltip: await damageRoll.getTooltip(),
+                formulaDamage: formula,
+                itemUuid: undefined,
+                itemId: undefined,
+              }
+
+              const targetResults = message.system.targetResults?.filter((target) => !target.needsOppositeRoll) ?? []
+              const damageMessage = await damageRoll.toMessage(
+                {
+                  style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+                  type: "action",
+                  system: {
+                    subtype: "damage",
+                    targets: message.system.targets,
+                    targetResults,
+                    customEffect: message.system.customEffect,
+                    additionalEffect: message.system.additionalEffect,
+                  },
+                  speaker: message.speaker,
+                },
+                { messageMode: attackRoll.options.rollMode },
+              )
+              await message.update({ "system.linkedDamageMessageId": damageMessage.id })
+            })
+          } else {
+            rollDamageButton.remove()
           }
         }
       }
@@ -313,7 +366,9 @@ export default class ActionMessageData extends BaseMessageData {
             const hasOpposedRoll = !!message.system.oppositeValue
             const customEffect = message.system.customEffect
             const additionalEffect = message.system.additionalEffect
-            const damageCardWillHandleEffect = hasOpposedRoll || (hasLinkedRoll && (!!message.system.linkedDamageMessageId || game.settings.get("cog", "useComboRolls")))
+            const hasLinkedDamageFormula = !!message.system.linkedDamageFormula
+            const damageCardWillHandleEffect =
+              hasOpposedRoll || ((hasLinkedRoll || hasLinkedDamageFormula) && (!!message.system.linkedDamageMessageId || game.settings.get("cog", "useComboRolls")))
             if (customEffect && additionalEffect && additionalEffect.active && !damageCardWillHandleEffect && Resolver.shouldManageAdditionalEffect(newResult, additionalEffect)) {
               const target = message.system.targets.length > 0 ? message.system.targets[0] : null
               if (target) {
@@ -426,7 +481,12 @@ export default class ActionMessageData extends BaseMessageData {
 
             // Gestion du message de dommages (création ou mise à jour)
             let damageMessageId = null
-            if (hasTargetResults) {
+            if (hasTargetResults && message.system.linkedDamageMessageId) {
+              await OpposedRollHandler.updateDamageMessageTargets({
+                linkedDamageMessageId: message.system.linkedDamageMessageId,
+                targetResults: newTargetResults,
+              })
+            } else if (hasTargetResults && message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0) {
               damageMessageId = await OpposedRollHandler.createOrUpdateDamageMessage({
                 linkedRoll: message.system.linkedRoll,
                 linkedDamageMessageId: message.system.linkedDamageMessageId,
@@ -436,7 +496,7 @@ export default class ActionMessageData extends BaseMessageData {
                 customEffect: message.system.customEffect,
                 additionalEffect: message.system.additionalEffect,
               })
-            } else if (outcome.isSuccess) {
+            } else if (outcome.isSuccess && message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0) {
               await OpposedRollHandler.triggerLinkedDamage({
                 linkedRoll: message.system.linkedRoll,
                 speaker: message.speaker,
@@ -447,7 +507,7 @@ export default class ActionMessageData extends BaseMessageData {
             }
 
             // Gestion des custom effects — différée au bouton "Appliquer les DM" ou "Appliquer les effets"
-            const hasLinkedDamage = message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0
+            const hasLinkedDamage = (message.system.linkedRoll && Object.keys(message.system.linkedRoll).length > 0) || !!message.system.linkedDamageFormula
             if (!hasLinkedDamage) {
               if (message.system.effectsApplied) {
                 const rowResultForEffect = { ...attackerResult, ...outcome }

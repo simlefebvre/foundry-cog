@@ -164,6 +164,9 @@
   </div>
 
   <footer class="card-footer">
+    {{#if canRollDamage}}
+      <button type="button" class="roll-damage-btn">{{localize "CO.ui.rollDamage"}}</button>
+    {{/if}}
   </footer>
 
 </div>

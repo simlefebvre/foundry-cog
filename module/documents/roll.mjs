@@ -421,7 +421,7 @@ export class COAttackRoll extends CORoll {
 
   static async prompt(dialogContext, options = {}) {
     const withDialog = options.withDialog ?? true
-    // Le résultat est un jet d'attaque ou un jet d'attaque et un jet de dommages
+    // Le jet d'attaque est lancé ici; les éventuels dégâts sont conservés pour une action ultérieure.
     let rolls = []
     let rollContext
 
@@ -579,38 +579,20 @@ export class COAttackRoll extends CORoll {
         selectedStatuses: withDialog ? rollContext.selectedStatuses : undefined,
         formulaAttackTooltip: dialogContext.formulaAttackTooltip || "",
         formulaDamageTooltip: dialogContext.formulaDamageTooltip || "",
+        useComboRolls: dialogContext.useComboRolls,
         ...options,
       }
 
       rolls.push(roll)
 
-      // Si l'option Jet combiné est activée, on lance le jet de dommages immédiatement
-      // Jet de dommages enregistré si la formule de dommages n'est pas vide ou égale à 0
+      // Le jet de dommages est conservé comme formule et ne sera évalué qu'au clic sur la carte.
       let damageFormula
       const formulaToEvaluate = COAttackRoll._buildDamageFormula(withDialog ? rollContext : dialogContext)
       if (formulaToEvaluate) damageFormula = Utils.evaluateFormulaCustomValues(dialogContext.actor, formulaToEvaluate)
 
-      if (damageFormula && damageFormula !== "" && Roll.validate(damageFormula)) {
-        const damageRoll = new this(damageFormula, dialogContext.actor.getRollData())
-        await damageRoll.evaluate()
-        const damageRollTooltip = await damageRoll.getTooltip()
-        // Pas d'itemUuid ni d'itemId ici : la carte d'attaque porte déjà l'identité de l'objet.
-        // Les dupliquer ferait jouer deux fois les animations des modules qui repèrent l'objet dans la carte de chat.
-        damageRoll.options = {
-          actorId: dialogContext.actor.id,
-          rollMode: rolls[0].options.rollMode,
-          type: "damage",
-          flavor: dialogContext.flavor,
-          itemName: dialogContext.itemName,
-          itemImg: dialogContext.itemImg,
-          actionName: dialogContext.actionName,
-          tooltip: damageRollTooltip,
-          formulaDamage: damageFormula,
-          formulaDamageTooltip: dialogContext.formulaDamageTooltip || "",
-          tempDamage: rollContext.tempDamage,
-          ...options,
-        }
-        rolls.push(damageRoll)
+      if (damageFormula && damageFormula !== "") {
+        const resolvedDamageFormula = Roll.replaceFormulaData(damageFormula, dialogContext.actor.getRollData())
+        if (Roll.validate(resolvedDamageFormula)) rolls[0].options.linkedDamageFormula = resolvedDamageFormula
       }
     } else if (dialogContext.type === "damage") {
       const formula = Utils.evaluateFormulaCustomValues(dialogContext.actor, COAttackRoll._buildDamageFormula(withDialog ? rollContext : dialogContext) || "0")
@@ -701,6 +683,15 @@ export class COAttackRoll extends CORoll {
     const viewerCanSeeDifficulty = displayDifficulty === "all" || (displayDifficulty === "gm" && game.user.isGM)
     const showDifficulty = !!this.options.useDifficulty && viewerCanSeeDifficulty
 
+    const hasDamage = (this.options.useComboRolls || this.options.oppositeRoll) && !!this.options.linkedDamageFormula
+    const hasSuccessfulTarget = this.options.targetResults?.some((target) => target.isSuccess) ?? false
+    const canRollDamage =
+      hasDamage &&
+      (!this.options.oppositeRoll || hasSuccessfulTarget) &&
+      (this.options.targetResults?.length
+        ? hasSuccessfulTarget
+        : this.options.useDifficulty === false || !this.options.difficulty || rollResults.isSuccess)
+
     // On peut utiliser un point de chance si on en a et que ce n'est pas déjà un critique
     // Si la difficulté est visible par tous, on n'affiche le bouton que sur un échec (global ou par cible)
     const anyTargetFailure = this.options.targetResults?.some((tr) => tr.isFailure) ?? false
@@ -736,6 +727,7 @@ export class COAttackRoll extends CORoll {
       isSuccess: rollResults.isSuccess,
       isFailure: rollResults.isFailure,
       tempDamage: this.options.tempDamage,
+      canRollDamage,
       opposeResult: this.options.opposeResult,
       opposeTooltip: this.options.opposeTooltip,
       opposeHasLuckyPoints: this.options.opposeHasLuckyPoints ?? false,

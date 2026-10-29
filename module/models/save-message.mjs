@@ -224,6 +224,26 @@ export default class SaveMessageData extends BaseMessageData {
           infoLine.appendChild(totalSpan)
         }
 
+        if (showDifficulty && tr.rollTooltip) {
+          const diceRoll = document.createElement("div")
+          diceRoll.classList.add("dice-roll")
+          diceRoll.dataset.action = "expandRoll"
+
+          const diceResult = document.createElement("div")
+          diceResult.classList.add("dice-result")
+
+          const diceFormula = document.createElement("div")
+          diceFormula.classList.add("dice-formula")
+          diceFormula.textContent = `${game.i18n.localize("CO.ui.formula")} : ${tr.rollFormula}`
+
+          const tooltip = document.createElement("div")
+          tooltip.innerHTML = tr.rollTooltip
+
+          diceResult.append(diceFormula, tooltip)
+          diceRoll.appendChild(diceResult)
+          li.appendChild(diceRoll)
+        }
+
         // Montant DM sur la ligne 1 (si DM défini et jet résolu)
         if (hasDmg) {
           const targetActor = fromUuidSync(tr.uuid)
@@ -538,7 +558,7 @@ export default class SaveMessageData extends BaseMessageData {
             saveActorId: resolved.actorId,
             saveHasLuckyPoints: resolved.saveHasLuckyPoints,
             rollFormula: resolved.roll.formula,
-            rollTooltip: resolved.roll.options?.toolTip ?? "",
+            rollTooltip: resolved.rollTooltip,
           }
         })
 

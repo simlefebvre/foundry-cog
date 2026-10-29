@@ -28,23 +28,11 @@
 
     {{#if hasDmg}}
       <section class="save-dmg-section">
-        <details class="save-dmg-details">
-          <summary>
-            <div class="save-dmg-total-group">
-              <div class="form-group total-result">
-                <div>{{dmgTotal}}</div><div class="dm-text"> DM</div>
-              </div>
-            </div>
-          </summary>
-          <div class="save-dmg-details-content">
-            <div class="dice-roll">
-              <div class="dice-result">
-                <div class="dice-formula">{{localize "CO.ui.formula"}} : {{dmgFormula}}</div>
-                {{{dmgTooltip}}}
-              </div>
-            </div>
+        <div class="save-dmg-total-group">
+          <div class="form-group total-result">
+            <div>{{dmgTotal}}</div><div class="dm-text"> DM</div>
           </div>
-        </details>
+        </div>
         <div class="save-dmg-options">
           <div class="temp-dm">
             <label for="saveTempDm" class="temp-dm-checkbox" data-tooltip="{{localize 'CO.ui.tempText'}}" data-tooltip-direction="UP">{{localize "CO.ui.temp"}}</label>
@@ -52,6 +40,12 @@
           </div>
         </div>
       </section>
+      <div class="dice-roll" data-action="expandRoll">
+        <div class="dice-result">
+          <div class="dice-formula">{{localize "CO.ui.formula"}} : {{dmgFormula}}</div>
+          {{{dmgTooltip}}}
+        </div>
+      </div>
     {{/if}}
 
     <section class="targets"></section>

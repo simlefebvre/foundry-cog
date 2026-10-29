@@ -26,20 +26,6 @@
             <strong class="display-dice-type"><i class="fa-solid fa-dice"></i> {{diceType}}&nbsp;&nbsp;</strong>
           {{/if}}
         </section>
-        <div class="dice-roll" data-action="expandRoll">
-          <div class="dice-result">
-            <div class="dice-formula" data-tooltip="{{formulaAttackTooltip}}" data-tooltip-direction="UP">{{localize "CO.ui.formula"}} : {{formula}}</div>
-            {{{tooltip}}}
-          </div>
-          {{#if showDifficulty}}
-            {{#if opposeResult}}
-              <div class="dice-result">
-                <div class="dice-formula">{{localize "CO.ui.oppositeFormula"}} : {{opposeResult}}</div>
-                {{{opposeTooltip}}}
-              </div>
-            {{/if}}
-          {{/if}}
-        </div>
       </div>
     </details>
   </header>
@@ -164,6 +150,20 @@
   </div>
 
   <footer class="card-footer">
+    <div class="dice-roll" data-action="expandRoll">
+      <div class="dice-result">
+        <div class="dice-formula" data-tooltip="{{formulaAttackTooltip}}" data-tooltip-direction="UP">{{localize "CO.ui.formula"}} : {{formula}}</div>
+        {{{tooltip}}}
+      </div>
+      {{#if showDifficulty}}
+        {{#if opposeResult}}
+          <div class="dice-result">
+            <div class="dice-formula">{{localize "CO.ui.oppositeFormula"}} : {{opposeResult}}</div>
+            {{{opposeTooltip}}}
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
     {{#if canRollDamage}}
       <button type="button" class="roll-damage-btn">{{localize "CO.ui.rollDamage"}}</button>
     {{/if}}

@@ -1,3 +1,5 @@
+import { waitForDiceAnimation } from "./dice-animation.mjs"
+
 const SOCKET_EVENT = "system.cog"
 const SUCCESS_THRESHOLD = 10
 const LUCK_BONUS = 5
@@ -156,7 +158,7 @@ export default class RollHelp {
     if (!rolled) return respond(null)
 
     const { roll, result } = rolled
-    await roll.toMessage(
+    const rollMessage = await roll.toMessage(
       {
         speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
         style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -165,6 +167,7 @@ export default class RollHelp {
       },
       { messageMode: roll.options.rollMode },
     )
+    await waitForDiceAnimation(rollMessage)
 
     if (roll.total <= SUCCESS_THRESHOLD) {
       await ChatMessage.create({

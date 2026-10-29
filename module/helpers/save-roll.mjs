@@ -22,6 +22,7 @@ export default class SaveRollHandler {
     return {
       roll: targetRollSkill.roll,
       rollResult,
+      rollTooltip: await targetRollSkill.roll.getTooltip(),
       actorId,
       saveHasLuckyPoints: hasLucky && !rollResult.isCritical,
     }

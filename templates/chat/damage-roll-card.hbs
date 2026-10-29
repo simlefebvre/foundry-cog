@@ -1,29 +1,17 @@
 {{!log "Chroniques Oubliées | hbs | damage-card" this}}
 <div class="co chat-card roll-card damage-card" data-actor-id="{{actorId}}" data-total="{{total}}" {{#if itemUuid}}data-item-uuid="{{itemUuid}}" data-item-id="{{itemId}}"{{/if}}>
   <header class="card-header flexcol">
-    <details class="card-details damage-details">
-      <summary>
-        <div class="card-item-card damage-item-card" data-tooltip="{{flavor}}" data-tooltip-direction="LEFT">
-          {{#if itemImg}}
-            <img class="card-item-image" src="{{itemImg}}" alt="{{itemName}}" />
-          {{/if}}
-          <div class="card-item-text">
-            <div class="card-item-name">{{itemName}}</div>
-            {{#if actionName}}
-              <div class="card-item-subtitle">{{actionName}}</div>
-            {{/if}}
-          </div>
-        </div>
-      </summary>
-      <div class="card-details-content">
-        <div class="dice-roll" data-action="expandRoll">
-          <div class="dice-result">
-            <div class="dice-formula" data-tooltip="{{formulaDamageTooltip}}" data-tooltip-direction="UP">{{localize "CO.ui.formula"}} : {{formula}}</div>
-            {{{tooltip}}}
-          </div>
-        </div>
+    <div class="card-item-card damage-item-card" data-tooltip="{{flavor}}" data-tooltip-direction="LEFT">
+      {{#if itemImg}}
+        <img class="card-item-image" src="{{itemImg}}" alt="{{itemName}}" />
+      {{/if}}
+      <div class="card-item-text">
+        <div class="card-item-name">{{itemName}}</div>
+        {{#if actionName}}
+          <div class="card-item-subtitle">{{actionName}}</div>
+        {{/if}}
       </div>
-    </details>
+    </div>
   </header>
 
   <div class="card-content">
@@ -92,6 +80,12 @@
   </div>
 
   <footer class="card-footer">
+    <div class="dice-roll" data-action="expandRoll">
+      <div class="dice-result">
+        <div class="dice-formula" data-tooltip="{{formulaDamageTooltip}}" data-tooltip-direction="UP">{{localize "CO.ui.formula"}} : {{formula}}</div>
+        {{{tooltip}}}
+      </div>
+    </div>
   </footer>
 
 </div>

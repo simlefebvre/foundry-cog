@@ -1,3 +1,5 @@
+import { waitForDiceAnimation } from "./dice-animation.mjs"
+
 const TEMPLATE = "systems/cog/templates/chat/misfire-card.hbs"
 
 /**
@@ -49,10 +51,11 @@ export async function rollMisfireCheck(message, actor, item) {
   const roll = await new Roll("1d20").evaluate()
   const diceResult = roll.total
   const broken = diceResult <= item.system.misfireThreshold
-  await roll.toMessage({
+  const rollMessage = await roll.toMessage({
     speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
     flavor: game.i18n.format("CO.notif.misfire.rollFlavor", { itemName: item.name }),
   })
+  await waitForDiceAnimation(rollMessage)
   if (broken) await item.update({ "system.rangedState": "broken" })
   const content = await foundry.applications.handlebars.renderTemplate(TEMPLATE, buildCardData(actor, item, broken ? "broken" : "stillMisfire", diceResult))
   await message.update({ content })

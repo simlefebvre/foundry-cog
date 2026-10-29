@@ -1,4 +1,5 @@
 import { postStatusChangeCard } from "./status-log.mjs"
+import { waitForDiceAnimation } from "./dice-animation.mjs"
 
 /**
  * Publie une demande de test ou de durée liée à une blessure grave.
@@ -71,7 +72,7 @@ export async function resolveShockTest(result, stage, actor) {
       duration: durationRoll.total,
     })
 
-    await durationRoll.toMessage(
+    const durationMessage = await durationRoll.toMessage(
       {
         speaker: ChatMessage.getSpeaker({ actor, scene: canvas.scene }),
         flavor,
@@ -79,6 +80,7 @@ export async function resolveShockTest(result, stage, actor) {
       },
       { messageMode: "publicroll" },
     )
+    await waitForDiceAnimation(durationMessage)
     await createShockTestRequest(actor, stage === "hours" ? "recover" : "repeat")
     return
   }

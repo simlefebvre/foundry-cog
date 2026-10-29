@@ -3,6 +3,7 @@ import Macros from "../helpers/macros.mjs"
 import { cancelSeriousWound, createShockTestRequest, resolveShockTest } from "../helpers/serious-wound.mjs"
 import { cancelMisfire, rollMisfireCheck } from "../helpers/misfire.mjs"
 import { postStatusChangeCard } from "../helpers/status-log.mjs"
+import { waitForDiceAnimation } from "../helpers/dice-animation.mjs"
 
 /**
  * Data model for check messages created by the @Test enricher.
@@ -175,7 +176,7 @@ export default class CheckMessageData extends BaseMessageData {
           }
           rollResult.roll.options.shockTest = true
 
-          await rollResult.roll.toMessage(
+          const rollMessage = await rollResult.roll.toMessage(
             {
               speaker: ChatMessage.getSpeaker({ actor }),
               style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -191,7 +192,10 @@ export default class CheckMessageData extends BaseMessageData {
           )
           rollWasPosted = true
 
-          if (!shouldDefer) await resolveShockTest(analysis, rollStage, actor)
+          if (!shouldDefer) {
+            await waitForDiceAnimation(rollMessage)
+            await resolveShockTest(analysis, rollStage, actor)
+          }
         } catch (error) {
           console.error("Erreur lors du test de choc", error)
           ui.notifications.error(
@@ -272,7 +276,7 @@ export default class CheckMessageData extends BaseMessageData {
         }
 
         // Create the skill roll message with proper type for SkillMessageData
-        await rollResult.roll.toMessage(
+        const rollMessage = await rollResult.roll.toMessage(
           {
             speaker: ChatMessage.getSpeaker({ actor }),
             style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -287,6 +291,7 @@ export default class CheckMessageData extends BaseMessageData {
 
         // If not deferred, apply consequences immediately
         if (!shouldDefer) {
+          await waitForDiceAnimation(rollMessage)
           await applyCheckConsequences(analysis, consequences, actor)
         }
       } else {

@@ -4836,10 +4836,6 @@ a.roll-check-enricher:hover {
 #interface #ui-right-column-1 .co.chat-card.roll-card.damage-card .card-header .damage-item-card {
   border-color: color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
 }
-#interface #sidebar .co.chat-card.roll-card.damage-card .card-header .damage-details .card-details-content,
-#interface #ui-right-column-1 .co.chat-card.roll-card.damage-card .card-header .damage-details .card-details-content {
-  border-color: color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
-}
 #interface #sidebar .co.chat-card.roll-card.damage-card .card-content .result,
 #interface #ui-right-column-1 .co.chat-card.roll-card.damage-card .card-content .result {
   width: 100%;
@@ -5392,15 +5388,6 @@ a.roll-check-enricher:hover {
   gap: 12px;
   padding: 4px 0;
 }
-#interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details summary,
-#interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details summary {
-  list-style: none;
-  cursor: pointer;
-}
-#interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details summary::-webkit-details-marker,
-#interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details summary::-webkit-details-marker {
-  display: none;
-}
 #interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-total-group .total-result,
 #interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-total-group .total-result {
   margin: 0;
@@ -5411,12 +5398,6 @@ a.roll-check-enricher:hover {
 #interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-total-group .dm-text,
 #interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-total-group .dm-text {
   font-size: var(--font-size-18);
-}
-#interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details-content,
-#interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-details-content {
-  border-top: 1px solid color-mix(in srgb, var(--co-chat-damages) 60%, #8f7656);
-  margin-top: 4px;
-  padding-top: 4px;
 }
 #interface #sidebar .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-options .temp-dm,
 #interface #ui-right-column-1 .co.chat-card.roll-card.save-card .card-content .save-dmg-section .save-dmg-options .temp-dm {

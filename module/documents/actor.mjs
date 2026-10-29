@@ -13,6 +13,7 @@ import { getAttackAbilityId, getDiceFormula, getTestDieFaces, getTestRollPenalty
 import { createShockTestRequest } from "../helpers/serious-wound.mjs"
 import { postStatusChangeCard } from "../helpers/status-log.mjs"
 import { triggerMisfire } from "../helpers/misfire.mjs"
+import { waitForDiceAnimation } from "../helpers/dice-animation.mjs"
 
 /**
  * @class COActor
@@ -2365,10 +2366,12 @@ export default class COActor extends Actor {
       effectiveCustomEffect = { ...customEffect, statuses: new Set(selectedStatuses) }
     }
 
+    let attackMessage
+
     // Jet d'attaque
     if (type === "attack") {
       // Affichage du jet d'attaque
-      await rolls[0].toMessage(
+      attackMessage = await rolls[0].toMessage(
         {
           speaker,
           style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -2406,7 +2409,10 @@ export default class COActor extends Actor {
     // Incident de tir : le d20 naturel du jet d'attaque est sous le seuil de l'arme
     if (type === "attack" && item?.system?.hasRangedStates && item.system.rangedState === "normal") {
       const threshold = item.system.misfireThreshold
-      if (threshold && results[0]?.diceResult <= threshold) await triggerMisfire(this, item)
+      if (threshold && results[0]?.diceResult <= threshold) {
+        await waitForDiceAnimation(attackMessage)
+        await triggerMisfire(this, item)
+      }
     }
 
     return { results, selectedStatuses, targetResults }

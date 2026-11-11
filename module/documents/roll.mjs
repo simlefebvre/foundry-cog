@@ -101,7 +101,7 @@ export class COSkillRoll extends CORoll {
 
       rollContext = await foundry.applications.api.DialogV2.wait({
         window: { title: dialogContext.title },
-        position: { width: 800 },
+        position: { width: 1067 },
         classes: this.ROLL_CSS,
         content,
         rejectClose: false,

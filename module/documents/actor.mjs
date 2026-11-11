@@ -2406,10 +2406,10 @@ export default class COActor extends Actor {
       await this.consumeAmmunition(item)
     }
 
-    // Incident de tir : le d20 naturel du jet d'attaque est sous le seuil de l'arme
+    // Incident de tir : le total du jet d'attaque, modificateurs inclus, est sous le seuil de l'arme
     if (type === "attack" && item?.system?.hasRangedStates && item.system.rangedState === "normal") {
       const threshold = item.system.misfireThreshold
-      if (threshold && results[0]?.diceResult <= threshold) {
+      if (threshold && results[0]?.total <= threshold) {
         await waitForDiceAnimation(attackMessage)
         await triggerMisfire(this, item)
       }

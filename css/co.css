@@ -986,6 +986,9 @@ a.roll-check-enricher:hover {
   margin: 0;
   white-space: nowrap;
 }
+.co.application.dialog.skill-roll .form-group.helpGroup label.near {
+  margin-bottom: -8px;
+}
 .co.application.dialog.skill-roll .form-group.helpGroup .form-fields,
 .co.application.dialog.skill-roll .form-group.helpGroup .help-search {
   width: 100%;
